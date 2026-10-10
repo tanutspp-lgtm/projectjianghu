@@ -205,6 +205,7 @@ def update_guest(p: Guest, dt, tick_now):
         p.x += p.vx * dt
         physics(p, dt)
         if p.dead <= 0:
+            p.dead = 0.0
             p.x, p.y, p.vx, p.vy, p.hp, p.stun, p.down, p.inv, p.cool, p.climb = (175 + len(players) * 23, 550, 0, 0, p.max_hp, 0, 0, 1, .3, None)
             p.ground = True
             event('respawn', p.x, p.y, victim=p.id)
@@ -250,6 +251,8 @@ def update_mob(m, dt):
         m.dead -= dt
         if m.dead <= 0:
             m.hp, m.x, m.y, m.vx, m.vy, m.stun, m.down, m.broken, m.guard = m.max_hp, m.home, m.spawn_y, 0, 0, 0, 0, 0, False
+            # Clamp the death timer: a negative value is truthy in JavaScript and hid respawned mobs.
+            m.dead = 0.0
             m.ground = True
         return
     m.stun = max(0, m.stun - dt)
