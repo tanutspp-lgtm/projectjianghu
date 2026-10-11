@@ -1,0 +1,23 @@
+WUXIA FLUTE ARENA v7.8 GUEST ONLINE — AFK / BACKGROUND TAB / RESUME FIX
+
+ปรับจากเซิร์ฟเวอร์ v7.7 เดิมเท่านั้น ไม่เปลี่ยนสมดุลการต่อสู้ หรือโครงข้อมูล HP / Damage
+
+สิ่งที่แก้:
+- ขยายเวลา ping_timeout จาก 20 เป็น 120 วินาที และ ping ทุก 25 วินาที ช่วยลดการหลุดเมื่อแท็บพักชั่วคราว
+- แยก Snapshot Sender ต่อผู้เล่น คิวละ 1 snapshot; ลูกค้าที่เน็ตช้าหรือแท็บค้างไม่ทำให้ทั้งเกมหยุดรอส่ง
+- Guest หลุดกะทันหันสามารถต่อกลับด้วย resume token ที่เซิร์ฟเวอร์ออกให้ภายใน 5 นาที
+- คืน Guest ID, HP, ตำแหน่ง และสถานะเดิมถ้าเซิร์ฟเวอร์ยังทำงานและยังอยู่ในช่วง grace
+- token แบบสุ่ม ไม่รับ user-supplied Guest ID, ไม่อนุญาตให้ยึดบัญชีที่ยังเชื่อมต่ออยู่
+- ไม่มี AFK kick โดยอาศัยเวลาไม่กดปุ่ม; ไม่มีการรับ HP, Damage หรือพิกัดจากเว็บ
+- ทำความสะอาด Guest ที่ไม่ได้เชื่อมต่อเกินช่วงพัก 5 นาที
+
+อัปเดต:
+1. อัปโหลด server.py จาก ZIP นี้ทับไฟล์ server.py ที่ root ของ repo GitHub projectjianghu แล้ว Commit
+2. Render Singapore จะ Auto Deploy เมื่อ commit ถ้าเปิดไว้ หรือกด Manual Deploy > Deploy latest commit
+3. รอ Log ขึ้น WUXIA online server ready และ Your service is live
+4. อัปเดตเว็บ Netlify เป็น v7.8 ถัดมา (ต้องอัปเดตทั้งเว็บและเซิร์ฟเวอร์)
+
+ข้อจำกัด:
+- ไม่สามารถบังคับให้ Safari/iOS เก็บ WebSocket ไว้ได้เสมอ หาก OS พักแท็บหรือฆ่าแท็บ
+- ระบบจะพยายามต่อกลับเมื่อแท็บตื่น หากหลุดเกิน 5 นาที, Server Restart หรือ Render sleep แล้วเริ่มใหม่ จะได้ Guest ใหม่
+- Guest mode ไม่มีข้อมูลตัวละครถาวรบนเซิร์ฟเวอร์; ระบบนี้สำหรับทดสอบเท่านั้น

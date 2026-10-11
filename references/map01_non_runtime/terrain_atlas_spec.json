@@ -1,0 +1,41 @@
+{
+  "atlas": "terrain_kit_v1",
+  "format": "PNG_RGBA",
+  "layout": "4 columns x 4 rows",
+  "cell_size": [
+    256,
+    256
+  ],
+  "atlas_size": [
+    1024,
+    1024
+  ],
+  "intended_style": "soft 2D pixel-art for wuxia side scrolling",
+  "rows": [
+    [
+      "grass_top_left",
+      "grass_top_repeat",
+      "grass_top_right",
+      "grass_top_inner_corner"
+    ],
+    [
+      "soil_wall_left",
+      "soil_wall_repeat",
+      "soil_wall_right",
+      "soil_fill"
+    ],
+    [
+      "moss_rock_left",
+      "moss_rock_repeat",
+      "moss_rock_right",
+      "rock_cliff_fill"
+    ],
+    [
+      "wood_platform_left",
+      "wood_platform_repeat",
+      "wood_platform_right",
+      "wood_support"
+    ]
+  ],
+  "tiling": "repeat cells must align horizontally; transparent empty area outside components; exact seam verification required"
+}

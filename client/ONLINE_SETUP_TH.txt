@@ -1,0 +1,55 @@
+WUXIA FLUTE ARENA v7.6 — GUEST ONLINE PROTOTYPE
+================================================
+นี่คือระบบออนไลน์ทดสอบ ไม่ใช่ MMORPG production ที่รองรับผู้เล่นจำนวนมาก
+
+ไฟล์สำหรับอัปโหลดแยก 2 ชุด:
+1) WUXIA_FLUTE_ARENA_v7_6_GUEST_ONLINE_WEB.zip -> Netlify Drop (เกมหน้าเว็บ + ตัวละคร 30 แบบ)
+2) WUXIA_FLUTE_ARENA_v7_6_GUEST_ONLINE_SERVER.zip -> Render (Python WebSocket Server)
+
+วิธีทำให้คน 2 เครื่องเล่นเจอกันทางอินเทอร์เน็ต
+------------------------------------------------
+ขั้น A: เปิดเซิร์ฟเวอร์ก่อน
+1. แตก ZIP ฝั่ง SERVER แล้วอัปไฟล์ server.py, requirements.txt และ render.yaml เข้า GitHub repository ใหม่
+2. Render.com > New > Web Service > เชื่อม repository นี้
+3. เลือก runtime Python, Build Command: pip install -r requirements.txt
+   Start Command: python server.py
+   Health Check Path: /healthz
+   ใช้ Instance 1 ตัวเท่านั้นในช่วงทดสอบ (สถานะโลกอยู่ในหน่วยความจำของ process)
+4. เมื่อ deploy สำเร็จ ทดสอบเปิด https://<service>.onrender.com/healthz
+   จะต้องเห็น "wuxia-online ok"
+5. URL ในเกมจะเป็น wss://<service>.onrender.com/ws
+   โปรดใช้ wss:// เท่านั้นสำหรับเว็บไซต์ https://
+
+ขั้น B: อัปเกมหน้าเว็บ
+1. อัปไฟล์ ZIP ฝั่ง WEB ไป Netlify Drop เป็นไซต์ใหม่ (index.html อยู่ระดับบนสุด)
+2. เปิดไซต์บนคอม/มือถือ 2 เครื่อง เลือกเพศ + ผม + สี
+3. กรอก wss://<service>.onrender.com/ws ในช่อง Guest Online แล้วกดเข้าออนไลน์
+4. เครื่องที่สองเข้าที่ URL เดียวกัน จะเจอผู้เล่น/มอนสเตอร์ในแมปเดียวกัน
+5. โหมดฝึกออฟไลน์ยังใช้ได้ ไม่ต้องเปิดเซิร์ฟเวอร์
+
+ไม่ต้องกรอก URL บ่อย:
+แก้ไขค่า window.WUXIA_ONLINE_SERVER ในไฟล์ online_config.js ให้เป็น WSS URL จริงก่อนอัป WEB ZIP
+
+แนะนำการตั้งค่าระบบเมื่อเปิดทดสอบจริง
+- ที่ Render > Environment: ALLOWED_ORIGINS = https://<your-netlify-site>.netlify.app
+  (หากมีหลายโดเมนคั่นด้วย , )
+  ข้อนี้ช่วยกันไม่ให้เว็บอื่นเชื่อมจากเบราว์เซอร์โดยไม่ตั้งใจ แต่ไม่ใช่ระบบยืนยันตัวตน
+- MAX_GUESTS = 20–35 เพื่อจำกัดผู้เล่นต่อ instance ระหว่างทดลอง
+- อย่าเปิดหลาย instances/replicas ในเวอร์ชันนี้ (แต่ละ instance จะมีโลกคนละชุด)
+- Render แผนฟรีบางกรณีมีการ sleep, cold-start และข้อจำกัด ควรทดสอบกับแผนจริงก่อน
+
+หลักการป้องกันโกงที่มี
+- เบราว์เซอร์ส่งเฉพาะสถานะปุ่มและคำขอใช้สกิล (key/button intent)
+- เซิร์ฟเวอร์คำนวณพิกัด ความเร็ว กระโดด ปีน ทิศทาง HP ดาเมจ ยิงสกิล คูลดาวน์ และมอนสเตอร์
+- ตรวจรูปแบบแพ็กเก็ต ไม่ยอมรับ x/y/hp/damage หรือคำสั่งย้ายมอนสเตอร์
+- มีการตรวจเลขลำดับ/ความถี่แพ็กเก็ตและ cooldown ฝั่งเซิร์ฟเวอร์
+- Guest เข้าด้วยชื่อสุ่มชั่วคราว ไม่ต้องสมัครสมาชิก ข้อมูลหายเมื่อออก/รีสตาร์ตเซิร์ฟเวอร์
+
+สิ่งที่ยังไม่ใช่ระบบ production:
+- ไม่ป้องกันบอต/มาโครและการเปิด Guest หลายหน้าต่างทั้งหมด
+- ไม่รักษาความคืบหน้าผู้เล่น, ไม่มีฐานข้อมูล/บัญชี/ระบบแบนถาวร
+- ยังไม่มี server reconciliation/prediction ละเอียด, regional matchmaking, load balancing, DDoS/WAF ขั้น production
+- ต้องทดสอบเวลาเล่นจริงบน Safari iPad, อินเทอร์เน็ต 4G/5G, สัญญาณช้า และจำนวนคนพร้อมกัน
+- การแก้ UI/ตัวเลขในเบราว์เซอร์ทำได้บนเครื่องตนเอง แต่ไม่มีสิทธิเปลี่ยนสถานะจริงบนเซิร์ฟเวอร์โดยตรง
+
+ในเซิร์ฟเวอร์มีไฟล์ test_security.py สำหรับทดสอบขณะพัฒนา (รัน python test_security.py ก่อน deploy)

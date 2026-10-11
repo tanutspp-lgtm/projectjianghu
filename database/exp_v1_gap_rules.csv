@@ -1,0 +1,8 @@
+balance_version,min_delta,max_delta,exp_multiplier,note
+exp_v1,-1000,-21,0.100,Low-level monster 21+ below player: 10% EXP; cards separate
+exp_v1,-20,-16,0.250,Low monster 16-20 levels below
+exp_v1,-15,-11,0.500,Low monster 11-15 levels below
+exp_v1,-10,-6,0.750,Low monster 6-10 levels below
+exp_v1,-5,10,1.000,Full raw EXP for -5 through +10; overlevel gains capped at 2x same-level base
+exp_v1,11,15,0.250,High monster 11-15 above; reward capped
+exp_v1,16,1000,0.000,No EXP for monsters 16+ levels above player
