@@ -1,0 +1,1080 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>WUXIA FLUTE • v7.9N Accounts + EXP</title><style>
+*{box-sizing:border-box}html,body,button,canvas,#hud,#controls{touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}button{-webkit-appearance:none;appearance:none}*::selection{background:transparent}body{margin:0;background:#101724;color:#e9f2ff;font-family:system-ui,-apple-system,sans-serif;overflow:hidden;touch-action:none}#game{width:100vw;height:100dvh;display:block;background:#c8edfa;touch-action:none}#hud{position:fixed;top:max(9px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;z-index:2}.panel{background:#101929d9;border:1px solid #6688a755;border-radius:12px;padding:9px 12px;backdrop-filter:blur(6px);max-width:48%}.title{font-size:12px;color:#9cbed6;font-weight:800;letter-spacing:.08em}.bar{width:min(220px,40vw);height:12px;border-radius:8px;background:#3c4555;overflow:hidden;margin:5px 0}.fill{height:100%;background:linear-gradient(90deg,#dc526f,#ffac87);width:100%;transition:width .15s}.fill.exp{background:linear-gradient(90deg,#5b90d9,#79c7f4);width:0}.fill.qi{background:linear-gradient(90deg,#8c66b7,#d4a5ef);width:0}.progress-row{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}.qi-label{opacity:.72}.small{font-size:11px;color:#cad6e3}.btnrow{display:flex;gap:6px}.minib{pointer-events:auto;border:1px solid #6f90ab;background:#273f55;color:white;border-radius:8px;padding:7px 10px;font-size:12px}#status{position:fixed;top:max(124px,calc(env(safe-area-inset-top) + 112px));left:50%;transform:translateX(-50%);background:#111c2ad9;border:1px solid #7790b277;border-radius:10px;padding:7px 12px;text-align:center;color:#f1e7c5;font-size:12px;pointer-events:none;z-index:2;max-width:90vw}#controls{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:end;pointer-events:none;z-index:3}.cluster{display:flex;gap:6px;align-items:flex-end}.pad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,64px);gap:5px}.ctl{pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;border:1px solid #aac5ee80;background:#243b54dc;color:#fff;border-radius:50%;width:60px;min-width:60px;height:60px;font-size:13px;font-weight:800;box-shadow:0 3px 0 #091320a8}.ctl:active,.ctl.held{background:#438caa}.action{width:65px;min-width:65px;height:65px;border-radius:50%;font-size:12px}.action.attack{background:#a9515ccf}.action.break{background:#9c6d33dd}.action.guard{background:#3b7199e0}.actgrid{display:grid;grid-template-columns:repeat(3,69px);gap:7px}.tip{font-size:10px;opacity:.8;line-height:1.35}/* V7.9 analog thumbpad, no loose arrow buttons; jumping moved to action cluster. */
+#controls{gap:12px;align-items:flex-end}
+#joystick{width:146px;height:146px;border-radius:50%;position:relative;flex-shrink:0;pointer-events:auto;touch-action:none!important;background:radial-gradient(circle,#273d53df 0 25%,#152637e3 65%,#4e749cba 98%);border:2px solid #c0d6ee9c;box-shadow:0 5px 18px #050c16bb,inset 0 0 0 16px #7dabc611;cursor:grab}
+#joystick:active{cursor:grabbing}
+.joy-cross{position:absolute;inset:0;display:grid;place-items:center;font-size:88px;line-height:1;color:#9fbbd033;pointer-events:none}
+#joyThumb{position:absolute;left:50%;top:50%;width:65px;height:65px;margin:-32.5px;border-radius:50%;background:linear-gradient(145deg,#8cb2d4,#365d80);border:2px solid #dceeffb0;box-shadow:0 4px 15px #071521c7;pointer-events:none;transform:translate(0px,0px);transition:transform .07s linear}
+.actgrid{grid-template-columns:repeat(3,69px)}
+.action.jump{background:#4b7e58e6}
+.action.auto-toggle{background:#50556cbf;color:#d4e4f3;border-color:#91a1b5}
+.action.auto-toggle.is-on{background:#337952df;color:#ebffdf;border-color:#8de5ab;box-shadow:0 0 14px #36db6a6a}
+@media(max-width:690px){#joystick{width:116px;height:116px}#joyThumb{width:55px;height:55px;margin:-27.5px}.joy-cross{font-size:68px}#controls{left:8px;right:8px}}
+@media(max-height:460px){#joystick{width:112px;height:112px}#joyThumb{width:50px;height:50px;margin:-25px}#controls{bottom:max(4px,env(safe-area-inset-bottom))}}
+@media(min-width:900px){.pad{grid-template-columns:repeat(3,70px);grid-template-rows:repeat(2,70px)}.ctl{width:65px;min-width:65px;height:65px}.actgrid{grid-template-columns:repeat(3,74px)}.action{width:70px;min-width:70px;height:70px}}@media(max-width:690px){.pad{grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);gap:3px}.ctl{width:50px;min-width:50px;height:50px;font-size:11px}.actgrid{grid-template-columns:repeat(3,52px);gap:3px}.action{width:50px;min-width:50px;height:50px;font-size:10px}}
+
+#onlineState{color:#a8e5ba;margin-top:4px}
+#onlineLeave[hidden]{display:none}
+#onlineServer{width:100%;min-height:42px;padding:10px 12px;border:1px solid #8095a7;border-radius:9px;background:#121f2e;color:#f4edda;font-size:13px;touch-action:manipulation!important}
+.creator-hint{margin:3px 0 0;color:#b4bbc6;font-size:11px;line-height:1.4}
+.creator-online{background:linear-gradient(#9dd5c0,#48a391);color:#072923}
+.account-box{border:1px solid #7ea89555;border-radius:12px;padding:10px;background:#10241f66}.account-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px}.account-fields input{width:100%;min-height:40px;padding:9px 10px;border:1px solid #8095a7;border-radius:8px;background:#121f2e;color:#f4edda;font-size:13px;touch-action:manipulation!important;user-select:text!important}.account-actions{display:flex;gap:7px}.account-actions button{flex:1;min-height:38px;border:1px solid #76917e;border-radius:8px;background:#244c3e;color:#eefbf3;font-weight:750;touch-action:manipulation!important}.account-actions button.secondary{background:#2b3441;border-color:#758399}.account-actions button:disabled{opacity:.45}.account-status{font-size:11px;color:#b8d4c4;min-height:1.4em;margin-top:5px}
+/* Character creation overlay: independent of legacy combat UI. */
+#characterCreator { position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:clamp(10px,2vw,24px);background:rgba(5,10,18,.94);color:#f4edda;touch-action:pan-y!important;overflow:auto;overscroll-behavior:contain; }
+#characterCreator[hidden]{display:none!important}
+#characterCreator, #characterCreator *{box-sizing:border-box}
+.creator-wrap{width:min(900px,100%);max-height:min(95dvh,850px);overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y!important;border:1px solid #ae915b83;background:linear-gradient(143deg,#26333d,#111c28 66%,#223039);border-radius:20px;box-shadow:0 20px 80px #000d;padding:clamp(14px,2.7vw,28px)}
+.creator-header{text-align:center;margin-bottom:14px}.creator-kicker{color:#cfac65;font-size:11px;font-weight:850;letter-spacing:.24em}.creator-header h1{font-size:clamp(20px,3vw,30px);font-weight:850;margin:3px 0}.creator-header p{color:#adbdc5;font-size:12px;margin:0}
+.creator-content{display:grid;grid-template-columns:minmax(225px,1fr) minmax(285px,1.15fr);gap:20px;align-items:stretch}
+.creator-preview{display:flex;align-items:center;flex-direction:column;justify-content:center;background:radial-gradient(ellipse at 50% 70%,#5c6476 0%,#2b3645 38%,#14202c 75%);border:1px solid #7792a64b;border-radius:14px;min-height:310px;padding:10px}
+#creatorPreview{display:block;width:min(100%,280px);height:auto;aspect-ratio:1;image-rendering:auto}
+.creator-preview-name{font-size:14px;font-weight:800;color:#e9d6ad}.creator-preview-caption{font-size:11px;color:#acbac6;margin-top:5px}
+.creator-form{display:flex;flex-direction:column;gap:15px}.creator-group{display:flex;flex-direction:column;gap:8px}.creator-group strong{font-size:13px;color:#e9d3a4}.creator-options{display:flex;gap:8px;flex-wrap:wrap}.creator-choice{flex:1;min-width:68px;min-height:47px;border:1px solid #869aae4c;color:#e6edf3;background:#273847;border-radius:10px;font-size:14px;font-weight:650;cursor:pointer;touch-action:manipulation!important}.creator-choice.selected{border:2px solid #f0c16a;background:#595039;color:#fff1d0}.creator-choice:focus-visible,.creator-submit:focus-visible{outline:3px solid #d1f3ff;outline-offset:2px}
+.creator-swatches{display:flex;justify-content:space-between;gap:7px}.creator-color{display:flex;align-items:center;flex-direction:column;gap:6px;border:1px solid transparent;background:transparent;color:#c1d0db;font-size:12px;min-width:47px;border-radius:9px;padding:7px 4px;cursor:pointer;touch-action:manipulation!important}.creator-color.selected{color:#fff0cb;border-color:#e6bb66;background:#e6bb661c}.creator-dot{width:31px;height:31px;display:block;border:2px solid #b9c1c5a8;border-radius:50%;box-shadow:0 1px 5px #0007}
+.creator-message{font-size:12px;min-height:1.5em;color:#b8c4ce;margin:0}.creator-message.error{color:#ffb4af}.creator-submit{background:linear-gradient(#e2bc76,#b6884b);color:#211c16;border:0;border-radius:12px;padding:13px 16px;font-size:16px;font-weight:850;cursor:pointer;touch-action:manipulation!important}.creator-submit:disabled{opacity:.45;cursor:wait}.creator-back{border:1px solid #8a9aad;color:#dee7f5;background:transparent;border-radius:9px;font-size:12px;padding:10px;cursor:pointer;touch-action:manipulation!important}.creator-back[hidden]{display:none!important}
+body.creating-character #controls{display:none!important}
+#characterCreator[data-busy='1'] .creator-choice,#characterCreator[data-busy='1'] .creator-color{pointer-events:none;opacity:.55}
+@media(max-width:610px){.creator-wrap{max-height:95dvh}.creator-content{grid-template-columns:1fr;gap:10px}.creator-preview{min-height:160px;flex-direction:row;gap:12px}.creator-preview #creatorPreview{width:min(40vw,160px)}.creator-preview-caption{font-size:10px}.creator-form{gap:10px}.creator-choice{min-height:41px}.creator-dot{width:29px;height:29px}.creator-header{margin-bottom:8px}.creator-header p{font-size:11px}.account-fields{grid-template-columns:1fr}.panel{padding:7px 9px}.bar{width:min(180px,43vw);height:10px}.title{font-size:10px}.small{font-size:10px}}
+@media(max-height:600px) and (min-width:611px){.creator-wrap{padding:12px}.creator-preview{min-height:225px}.creator-preview #creatorPreview{width:min(100%,225px)}.creator-header{margin-bottom:7px}.creator-form{gap:8px}}
+
+
+/* v7.9M: real first-visit loading gate; progress counts decoded images, not guessed bytes. */
+#assetLoading{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 53% 40%,#27463f 0%,#101f2a 46%,#080d17 100%);color:#f6ebd6;touch-action:none!important}
+#assetLoading[hidden]{display:none!important}
+.loading-card{width:min(460px,92vw);padding:clamp(20px,4vw,34px);border:1px solid #9eb2a462;border-radius:19px;background:#172935f2;box-shadow:0 18px 65px #000b;text-align:center}
+.loading-eyebrow{font-size:11px;font-weight:800;letter-spacing:.22em;color:#b6d9bd;margin-bottom:14px}
+.loading-mark{width:58px;height:58px;display:grid;place-items:center;margin:0 auto 12px;border-radius:50%;border:1px solid #a3cdb388;background:#547f6270;font-size:30px}
+#loadingTitle{font-size:clamp(18px,3vw,25px);font-weight:800;margin:0 0 7px}
+#loadingDetail{font-size:13px;line-height:1.55;color:#c5d7d8;min-height:2.5em;margin:0 0 18px}
+.loading-track{height:13px;border-radius:999px;background:#081925;overflow:hidden;border:1px solid #85ae9a44}
+#loadingFill{height:100%;width:0%;background:linear-gradient(90deg,#5baf8c,#b6e8a8);transition:width .18s ease}
+#loadingCount{margin-top:10px;font-size:12px;color:#c9d3cf;font-variant-numeric:tabular-nums}
+#loadingRetry{margin-top:18px;border:0;border-radius:9px;padding:11px 22px;background:#cda96e;color:#1b211c;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation!important}
+#loadingRetry[hidden]{display:none!important}
+</style></head><body><canvas id="game"></canvas><div id="hud"><div class="panel"><div class="title">WUXIA • FLUTE ONLINE v7.9N</div><div class="progress-row small"><span>HP ผู้เล่น</span><span id="hptext">1200 / 1200</span></div><div class="bar"><div class="fill" id="hpbar"></div></div><div class="progress-row small"><span id="levelText">ตัวละคร Lv 1</span><span id="exptext">0 / 3,000 EXP</span></div><div class="bar"><div class="fill exp" id="expbar"></div></div><div class="progress-row small qi-label"><span>Qi ที่ติดตาม</span><span id="qitext">ปลดล็อก Lv20</span></div><div class="bar"><div class="fill qi" id="qibar"></div></div><div class="small" id="target">เป้าหมาย: —</div><div class="small" id="onlineState">โหมดฝึกออฟไลน์</div></div><div class="panel"><div class="btnrow"><button class="minib" id="customize">สร้างตัวละคร</button><button class="minib" id="onlineLeave" hidden>ออกออนไลน์</button><button class="minib" id="reset">เริ่มใหม่</button><button class="minib" id="help">วิธีเล่น</button></div><div class="tip" style="margin-top:6px">เวอร์ชันทดสอบ • Sprite แยก 24 เฟรม • v7.3 เอฟเฟกต์จริงจากชีท AI • ตีเดี่ยว/ทลายไม่มีวงแหวนที่ปาก • ตีหมู่วงแหวนย้ายมาใต้ตัว</div></div></div><div id="status">ยิงโน้ตขลุ่ยระยะไกล • ตีเดี่ยว/ทลายไม่มีวงแหวนที่ปาก • ตีหมูมีวงแหวนใต้ตัว</div><div id="controls"><div class="cluster joy-cluster"><div id="joystick" role="group" aria-label="จอยสติ๊กเดินและปีน" title="ลากเพื่อเดินหรือปีน"><div class="joy-cross">＋</div><div id="joyThumb"></div></div></div><div class="cluster action-cluster"><div class="actgrid"><button class="ctl action attack" data-k="attack">ตีเดี่ยว</button><button class="ctl action attack" data-k="aoe">ตีหมู่</button><button class="ctl action guard" data-k="guard">ตั้งการ์ด</button><button class="ctl action break" data-k="break">ทลาย</button><button class="ctl action" data-k="dash">แดช</button><button class="ctl action" data-k="lock">ล็อกเป้า</button><button class="ctl action jump" data-k="jump">กระโดด</button><button class="ctl action auto-toggle" data-k="auto" id="autoMode" aria-pressed="false">AUTO<br>OFF</button></div></div></div><div id="characterCreator" role="dialog" aria-modal="true" aria-labelledby="creatorTitle">
+  <div class="creator-wrap">
+    <header class="creator-header">
+      <div class="creator-kicker">WUXIA • CHARACTER CREATION</div>
+      <h1 id="creatorTitle">สร้างตัวละครจอมยุทธ์</h1>
+      <p>อาชีพขลุ่ย · เลือกเพศ ทรงผม และสีผมก่อนออกท่องยุทธภพ</p>
+    </header>
+    <div class="creator-content">
+      <div class="creator-preview" aria-label="ตัวอย่างตัวละครที่เลือก">
+        <canvas id="creatorPreview" width="280" height="280"></canvas>
+        <div><div id="creatorPreviewName" class="creator-preview-name">จอมยุทธ์ขลุ่ย</div><div class="creator-preview-caption">ตัวอย่างจาก Sprite จริง · โหลดฉบับเต็มเมื่อเข้าเล่น</div></div>
+      </div>
+      <div class="creator-form">
+        <div class="creator-group"><strong>1. เพศตัวละคร</strong><div id="creatorGender" class="creator-options"></div></div>
+        <div class="creator-group"><strong>2. ทรงผม</strong><div id="creatorHair" class="creator-options"></div></div>
+        <div class="creator-group"><strong>3. สีผม</strong><div id="creatorColors" class="creator-swatches"></div></div>
+        <p id="creatorMessage" class="creator-message" aria-live="polite">กำลังโหลดตัวละคร…</p>
+        <button id="creatorStart" class="creator-submit" type="button" disabled>เล่นฝึกคนเดียว (ออฟไลน์)</button>
+        <div class="account-box"><strong>บัญชีถาวร (Supabase Auth)</strong><div class="account-fields"><input id="accountEmail" type="email" autocomplete="email" placeholder="อีเมล" /><input id="accountPassword" type="password" autocomplete="current-password" minlength="8" placeholder="รหัสผ่านอย่างน้อย 8 ตัว" /><input id="characterName" type="text" maxlength="24" autocomplete="off" placeholder="ชื่อตัวละครใหม่ 2–24 ตัว" /></div><div class="account-actions"><button id="accountSignIn" type="button">เข้าสู่ระบบ</button><button id="accountSignUp" type="button" class="secondary">สมัครบัญชี</button><button id="accountSignOut" type="button" class="secondary" hidden>ออกจากบัญชี</button></div><div id="accountStatus" class="account-status" aria-live="polite"></div></div>
+        <div class="creator-group"><strong>เข้าโลกออนไลน์</strong><input id="onlineServer" type="url" placeholder="wss://your-server.onrender.com/ws" autocomplete="url" spellcheck="false" /><p class="creator-hint">เข้าสู่บัญชีก่อนเพื่อบันทึกถาวร หรือเล่น Guest แบบชั่วคราวได้</p></div>
+        <button id="creatorOnline" class="creator-submit creator-online" type="button" disabled>เข้าออนไลน์แบบ Guest</button>
+        <button id="creatorBack" class="creator-back" type="button" hidden>กลับเข้าเกมโดยไม่เปลี่ยนตัวละคร</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="assetLoading" role="status" aria-live="polite" aria-label="โหลดข้อมูลเกม">
+  <div class="loading-card">
+    <div class="loading-eyebrow">WUXIA • FLUTE ARENA</div>
+    <div class="loading-mark" aria-hidden="true">♫</div>
+    <h2 id="loadingTitle">กำลังเตรียมเกม</h2>
+    <p id="loadingDetail">กำลังตรวจและโหลดตัวละคร…</p>
+    <div class="loading-track"><div id="loadingFill"></div></div>
+    <div id="loadingCount">0 / 30 ไฟล์</div>
+    <button id="loadingRetry" hidden type="button">ลองโหลดใหม่</button>
+  </div>
+</div>
+<script src="online_config.js"></script>
+<script src="account_client.js"></script>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+// Stage large world assets: preview cache is downloaded BEFORE the creator is interactive.
+// World art and exactly ONE full 24-frame character atlas download BEFORE opening the game.
+const deferredWorldImages=[];
+let worldAssetsStarted=false,worldAssetsPromise=null;
+function queueWorldImage(image,url){image.decoding='async';deferredWorldImages.push([image,url]);return image;}
+async function loadImageForWorld(image,url){
+  if(image.complete&&image.naturalWidth>0){if(image.decode)await image.decode();return image;}
+  await new Promise((resolve,reject)=>{
+    const timeout=setTimeout(()=>{image.onload=null;image.onerror=null;reject(new Error('หมดเวลารอ Asset: '+url))},45000);
+    image.onload=()=>{clearTimeout(timeout);resolve();};
+    image.onerror=()=>{clearTimeout(timeout);reject(new Error('โหลด Asset ไม่สำเร็จ: '+url));};
+    image.src=url;
+  });
+  if(image.decode)await image.decode();
+  return image;
+}
+async function parallelLimited(tasks,limit,progress){
+  let next=0,done=0,firstError=null;
+  const workers=Array.from({length:Math.min(limit,tasks.length)},async()=>{
+    while(next<tasks.length){
+      const task=tasks[next++];
+      try{await task();done++;if(progress)progress(done,tasks.length);}
+      catch(error){if(!firstError)firstError=error;}
+    }
+  });
+  await Promise.all(workers);
+  if(firstError)throw firstError;
+}
+function startWorldAssets(progress){
+  if(worldAssetsStarted){if(progress)progress(deferredWorldImages.length,deferredWorldImages.length);return Promise.resolve();}
+  if(worldAssetsPromise)return worldAssetsPromise;
+  const tasks=deferredWorldImages.map(([im,url])=>()=>loadImageForWorld(im,url));
+  worldAssetsPromise=parallelLimited(tasks,8,progress).then(()=>{
+    worldAssetsStarted=true;deferredWorldImages.length=0;
+  }).catch(e=>{worldAssetsPromise=null;throw e;});
+  return worldAssetsPromise;
+}
+const sprites=Array.from({length:24},(_,i)=>{const im=new Image();return queueWorldImage(im,'frames/'+String(i).padStart(2,'0')+'.png?v=6-ranged')});
+// Frame baselines for the original v7.3 legacy sprite. Imported atlases use normalized feet baselines.
+const frameBottom=[256,256,256,256,256,256,256,256,256,256,256,256,256,243,251,251,246,249,230,232,235,232,234,232];
+const fxBank={};
+const fxGroups={
+  shot:4,aoe_travel:4,break_travel:4,cast:4,hit:4,aoe_hit:5,break_hit:4
+};
+for(const [group,count] of Object.entries(fxGroups)){
+  fxBank[group]=Array.from({length:count},(_,i)=>{
+    const img=new Image();return queueWorldImage(img,'fx/'+group+'_'+i+'.png?v=7-original-art');
+  });
+}
+function fxImage(group,idx=0){const list=fxBank[group];if(!list||!list.length)return null;const img=list[((idx%list.length)+list.length)%list.length];return img.complete&&img.naturalWidth?img:null;}
+const keys=new Set(),wheelKeys=new Set(),autoKeys=new Set();
+let autoEnabled=false,autoSupported=false;
+const autoButton=document.getElementById('autoMode');
+function held(k){return keys.has(k)||wheelKeys.has(k)||autoKeys.has(k)}
+function updateAutoButton(){autoButton.classList.toggle('is-on',autoEnabled);autoButton.setAttribute('aria-pressed',String(autoEnabled));autoButton.innerHTML=autoEnabled?'AUTO<br>ON':'AUTO<br>OFF';}
+function sendAutoState(state){
+  if(online.mode==='connected'&&autoSupported&&online.ws&&online.ws.readyState===WebSocket.OPEN){
+    if(online.ws.bufferedAmount<24000)online.ws.send(JSON.stringify({t:'auto',enabled:!!state}));
+  }
+}
+function stopAuto(silent=false){
+  if(!autoEnabled)return;
+  autoEnabled=false;autoKeys.clear();sendAutoState(false);updateAutoButton();
+  if(!silent)notice('หยุดโหมด AUTO',1.2);
+}
+function toggleAuto(){
+  if(creatorOpen||online.mode==='connecting'||online.mode==='reconnecting')return;
+  if(autoEnabled){stopAuto();return;}
+  if(online.mode==='connected'&&!autoSupported){notice('AUTO ออนไลน์ต้องอัปเดตเซิร์ฟเวอร์ v7.9 ก่อน (ยังเล่นปกติได้)',4);return;}
+  autoEnabled=true;autoKeys.clear();updateAutoButton();sendAutoState(true);
+  notice('AUTO ON • ไล่มอนในชั้นเดียวกัน ไม่โจมตีผู้เล่น • กดจอย/ปุ่มเพื่อหยุด',4);
+}
+/* Single-pointer wheel: horizontal walking, vertical ladder / rope input. */
+const joystick=document.getElementById('joystick'),joyThumb=document.getElementById('joyThumb');
+let joyPointer=null;
+function clearWheel(){joyPointer=null;wheelKeys.clear();joyThumb.style.transform='translate(0px,0px)';}
+function moveWheel(e){
+  if(e.pointerId!==joyPointer)return;
+  const rect=joystick.getBoundingClientRect();
+  const x=e.clientX-(rect.left+rect.width/2),y=e.clientY-(rect.top+rect.height/2);
+  const dist=Math.hypot(x,y),radius=rect.width*.31,mag=Math.min(radius,dist);
+  const tx=dist?x*mag/dist:0,ty=dist?y*mag/dist:0;
+  joyThumb.style.transform=`translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px)`;
+  wheelKeys.clear();
+  if(dist<rect.width*.12)return;
+  // One joystick gesture must never send WALK and CLIMB together.
+  // Previously a mild diagonal also sent UP/DOWN, causing an unintended
+  // climb at a nearby ladder/rope and forcibly snapping the player to its X.
+  // Prefer walking until the gesture is clearly vertical (>= 1.25x horizontal).
+  if(Math.abs(y)>Math.abs(x)*1.25)wheelKeys.add(y<0?'up':'down');
+  else wheelKeys.add(x<0?'left':'right');
+}
+joystick.addEventListener('pointerdown',e=>{
+  if(creatorOpen)return;e.preventDefault();
+  if(joyPointer!==null)return;
+  stopAuto(true);joyPointer=e.pointerId;
+  try{joystick.setPointerCapture(e.pointerId)}catch{}
+  moveWheel(e);
+});
+joystick.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer){e.preventDefault();moveWheel(e)}});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])joystick.addEventListener(ev,e=>{if(e.pointerId===joyPointer){e.preventDefault();clearWheel()}});
+
+let W=0,H=0,dpr=1,now=0,last=0,cam=0,shake=0,walkDistance=0,climbDistance=0,msg='',msgUntil=0;
+let onlineLowCost=false,backgroundGradient=null,framesThisSecond=0,lastFpsUpdate=0,measuredFps=0;
+
+/* V7.9-F forest visual pack. All physics and network state stay unchanged.
+   Source PNG is preserved as assets/forest/forest_master_original.png; game-specific crops are deterministic. */
+const forestSpriteManifest = {"ground_r1_c1":{"src":"assets/forest/ground_r1_c1.png","size":[96,95],"bbox":[4,14,93,92]},"ground_r1_c2":{"src":"assets/forest/ground_r1_c2.png","size":[96,95],"bbox":[1,26,92,85]},"ground_r1_c3":{"src":"assets/forest/ground_r1_c3.png","size":[96,95],"bbox":[1,20,95,95]},"ground_r1_c4":{"src":"assets/forest/ground_r1_c4.png","size":[96,95],"bbox":[0,15,96,95]},"ground_r2_c1":{"src":"assets/forest/ground_r2_c1.png","size":[96,112],"bbox":[3,1,91,112]},"ground_r2_c2":{"src":"assets/forest/ground_r2_c2.png","size":[96,112],"bbox":[3,1,92,109]},"ground_r2_c3":{"src":"assets/forest/ground_r2_c3.png","size":[96,112],"bbox":[3,0,93,109]},"ground_r2_c4":{"src":"assets/forest/ground_r2_c4.png","size":[96,112],"bbox":[2,0,91,112]},"ground_r3_c1":{"src":"assets/forest/ground_r3_c1.png","size":[96,83],"bbox":[0,0,91,83]},"ground_r3_c2":{"src":"assets/forest/ground_r3_c2.png","size":[96,83],"bbox":[1,5,92,80]},"ground_r3_c3":{"src":"assets/forest/ground_r3_c3.png","size":[96,83],"bbox":[2,6,92,83]},"ground_r3_c4":{"src":"assets/forest/ground_r3_c4.png","size":[96,83],"bbox":[1,0,93,83]},"platform_r1_c1":{"src":"assets/forest/platform_r1_c1.png","size":[110,90],"bbox":[10,10,106,82]},"platform_r1_c2":{"src":"assets/forest/platform_r1_c2.png","size":[111,90],"bbox":[4,13,106,77]},"platform_r1_c3":{"src":"assets/forest/platform_r1_c3.png","size":[111,90],"bbox":[5,12,107,79]},"platform_r1_c4":{"src":"assets/forest/platform_r1_c4.png","size":[116,90],"bbox":[6,9,101,83]},"platform_r2_c1":{"src":"assets/forest/platform_r2_c1.png","size":[110,104],"bbox":[3,7,107,104]},"platform_r2_c2":{"src":"assets/forest/platform_r2_c2.png","size":[111,104],"bbox":[5,17,108,82]},"platform_r2_c3":{"src":"assets/forest/platform_r2_c3.png","size":[111,104],"bbox":[6,13,108,84]},"platform_r2_c4":{"src":"assets/forest/platform_r2_c4.png","size":[116,104],"bbox":[5,5,107,98]},"platform_r3_c1":{"src":"assets/forest/platform_r3_c1.png","size":[110,124],"bbox":[1,0,108,103]},"platform_r3_c2":{"src":"assets/forest/platform_r3_c2.png","size":[111,124],"bbox":[2,9,107,95]},"platform_r3_c3":{"src":"assets/forest/platform_r3_c3.png","size":[111,124],"bbox":[2,2,111,97]},"platform_r3_c4":{"src":"assets/forest/platform_r3_c4.png","size":[116,124],"bbox":[0,1,101,117]},"rope_top":{"src":"assets/forest/rope_top.png","size":[100,85],"bbox":[4,10,96,85]},"rope_mid":{"src":"assets/forest/rope_mid.png","size":[48,53],"bbox":[12,0,40,53]},"rope_bottom":{"src":"assets/forest/rope_bottom.png","size":[105,122],"bbox":[0,0,102,119]},"ladder_top":{"src":"assets/forest/ladder_top.png","size":[137,66],"bbox":[12,11,128,66]},"ladder_mid":{"src":"assets/forest/ladder_mid.png","size":[126,48],"bbox":[13,0,116,48]},"ladder_bottom":{"src":"assets/forest/ladder_bottom.png","size":[133,70],"bbox":[4,0,128,59]}};
+const forestArt={};
+for(const [name,rec] of Object.entries(forestSpriteManifest)){
+  const img=new Image();queueWorldImage(img,rec.src+'?v=forest-01');forestArt[name]={...rec,img};
+}
+for(const name of ['rock_face_mirror_00','rock_face_mirror_01','rock_face_mirror_10','rock_face_mirror_11']){
+ const img=new Image();queueWorldImage(img,'assets/forest/'+name+'.png?v=forest-01');
+ forestArt[name]={img};
+}
+function drawForestTile(name,x,surfaceY,w=64,h=64,visualTop=-7){
+  const t=forestArt[name];if(!t||!t.img.complete||!t.img.naturalWidth)return false;
+  const offset=(t.bbox[1] / t.size[1])*h;
+  ctx.drawImage(t.img,x,surfaceY+visualTop-offset,w,h);
+  return true;
+}
+function drawForestGround(p){
+  const width=p.x2-p.x;
+  ctx.fillStyle='#425946';ctx.fillRect(p.x,p.y+17,width,690);
+  ctx.save();ctx.beginPath();ctx.rect(p.x,p.y-20,width,710);ctx.clip();
+  // The stone infill is derived from the user's tile image, and reflected on odd
+  // rows/columns so neighboring edge pixels actually match, unlike unrelated AI pieces.
+  for(let yy=p.y+39,row=0;yy<950;yy+=64,row++){
+    for(let xx=p.x,col=0;xx<p.x2;xx+=64,col++){
+      const tile=forestArt['rock_face_mirror_'+(col%2)+(row%2)];
+      if(tile&&tile.img.complete&&tile.img.naturalWidth)ctx.drawImage(tile.img,xx,yy,64,64);
+    }
+  }
+  drawForestTile('ground_r1_c1',p.x,p.y,72,66,-7);
+  for(let xx=p.x+63,i=0;xx<p.x2-67;xx+=63,i++)
+    drawForestTile('ground_r1_c'+(i%3===1?3:2),xx,p.y,74,66,-7);
+  drawForestTile('ground_r1_c4',p.x2-72,p.y,72,66,-7);
+  ctx.restore();
+}
+function drawForestPlatform(p,family){
+  const r=family==='rock'?'r2':'r1';
+  const left='platform_'+r+'_c1',midA='platform_'+r+'_c2',midB='platform_'+r+'_c3',right='platform_'+r+'_c4';
+  const len=p.x2-p.x,unit=76,stride=61;
+  ctx.save();ctx.beginPath();ctx.rect(p.x-3,p.y-14,len+6,98);ctx.clip();
+  let ok=drawForestTile(left,p.x,p.y,unit,68,-6);
+  for(let xx=p.x+stride,i=0;xx<p.x2-unit+4;xx+=stride,i++)
+    drawForestTile(i%3===0?midA:midB,xx,p.y,unit,68,-6);
+  drawForestTile(right,p.x2-unit,p.y,unit,68,-6);
+  if(!ok){ctx.fillStyle='#4c6951';ctx.fillRect(p.x,p.y,len,20);ctx.fillStyle='#b6df89';ctx.fillRect(p.x,p.y,len,7)}
+  ctx.restore();
+}
+function drawForestClimb(c){
+  const loaded=c.type==='rope'?forestArt.rope_mid:forestArt.ladder_mid;
+  if(!loaded||!loaded.img.complete||!loaded.img.naturalWidth){
+    ctx.strokeStyle=c.type==='rope'?'#b59b64':'#9c7651';ctx.lineWidth=c.type==='rope'?7:17;
+    ctx.beginPath();ctx.moveTo(c.x,c.top);ctx.lineTo(c.x,c.bottom);ctx.stroke();return;
+  }
+  if(c.type==='rope'){
+    const top=forestArt.rope_top,mid=forestArt.rope_mid,end=forestArt.rope_bottom;
+    ctx.save();ctx.beginPath();ctx.rect(c.x-44,c.top-12,88,c.bottom-c.top+21);ctx.clip();
+    // A fixed top ornament, then repeatable rope mid sections, then a tassel tail.
+    ctx.drawImage(top.img,c.x-29,c.top-10,58,65);
+    for(let y=c.top+50;y<c.bottom-34;y+=34)ctx.drawImage(mid.img,c.x-18,y,36,36);
+    if(end.img.complete&&end.img.naturalWidth)ctx.drawImage(end.img,c.x-24,c.bottom-43,48,52);
+    ctx.restore();
+  }else{
+    const top=forestArt.ladder_top,mid=forestArt.ladder_mid,end=forestArt.ladder_bottom;
+    ctx.save();ctx.beginPath();ctx.rect(c.x-30,c.top-8,60,c.bottom-c.top+16);ctx.clip();
+    ctx.drawImage(top.img,c.x-28,c.top-8,56,48);
+    for(let y=c.top+37;y<c.bottom-32;y+=32)ctx.drawImage(mid.img,c.x-27,y,54,35);
+    if(end.img.complete&&end.img.naturalWidth)ctx.drawImage(end.img,c.x-27,c.bottom-35,54,40);
+    ctx.restore();
+  }
+}
+// V7.9G: five actual PNG background planes; foreground is overlaid separately.
+// No ground, ropes, platforms or water animation is baked into these backgrounds.
+const bgImageManifest = {
+  sky:'assets/backgrounds/bg_00_sky.png',
+  clouds:'assets/backgrounds/bg_01_clouds_loop.png',
+  mountains:'assets/backgrounds/bg_02_far_mountains.png',
+  forest:'assets/backgrounds/bg_03_mid_forest.png',
+  foliage:'assets/backgrounds/bg_04_foreground_leaves.png'
+};
+const bgImages = {};
+for(const [key,src] of Object.entries(bgImageManifest)){
+  const img=new Image();queueWorldImage(img,src+'?v=bg-02');bgImages[key]=img;
+}
+// Mountain/forest strips are not horizontally seamless: pan only inside the actual art.
+// Cloud strip has transparent feathered ends; drawing it cyclically produces an unbroken drift.
+function loadedBg(k){const im=bgImages[k];return im&&im.complete&&im.naturalWidth>0?im:null}
+function drawBackgroundPanorama(key,parallax,baseHeight,baseline){
+  const im=loadedBg(key);if(!im)return;
+  const scale=Math.max(.82,Math.min(1.25,H/690));
+  const maxCam=Math.max(0,worldW-W/scale);
+  let outH=Math.max(baseHeight,H*(key==='mountains'?.85:.64)),outW=im.naturalWidth*(outH/im.naturalHeight);
+  const requiredWidth=W+maxCam*parallax+24;
+  if(outW<requiredWidth){outW=requiredWidth;outH=outW*im.naturalHeight/im.naturalWidth;}
+  const x=-cam*parallax;
+  ctx.drawImage(im,Math.round(x),Math.round(baseline-outH),Math.ceil(outW),Math.ceil(outH));
+}
+function drawCloudDrift(){
+  const im=loadedBg('clouds');if(!im)return;
+  // Image is a transparent cloud overlay, not a second sky rectangle.
+  const outH=Math.max(270,H*.49),outW=outH*im.naturalWidth/im.naturalHeight;
+  const period=outW;
+  const drift=now*11+cam*.075;
+  let x=-(drift%period);
+  if(x>0)x-=period;
+  // 3 copies are sufficient for all viewport sizes, with safety on ultra-wide displays.
+  for(;x<W;x+=period)ctx.drawImage(im,x,Math.round(H*.065),outW,outH);
+}
+function forestBg(){
+  const sky=loadedBg('sky');
+  if(sky)ctx.drawImage(sky,0,0,W,H);
+  else {ctx.fillStyle=backgroundGradient;ctx.fillRect(0,0,W,H)}
+  drawCloudDrift();
+  const scale=Math.max(.82,Math.min(1.25,H/690));
+  const footholdScreenY=H-110*scale;
+  drawBackgroundPanorama('mountains',.14,360,footholdScreenY+75);
+  drawBackgroundPanorama('forest',.29,300,footholdScreenY+75);
+  // Gentle atmospheric veil keeps foreground ground tiles readable.
+  const fog=ctx.createLinearGradient(0,H*.35,0,H);
+  fog.addColorStop(0,'rgba(221,249,242,0)');fog.addColorStop(1,'rgba(211,240,225,.12)');
+  ctx.fillStyle=fog;ctx.fillRect(0,H*.35,W,H*.65);
+}
+// v7.9J: draw the ORIGINAL entire transparent foliage art with no hard clipping.
+// Put this decor behind terrain, characters, and HUD so its natural bottom edge
+// remains visible without obscuring play. Do not fade or modify the source PNG.
+function drawForestNearOverlay(){
+  const im=loadedBg('foliage');if(!im)return;
+  const scale=Math.max(.82,Math.min(1.25,H/690));
+  const maxCam=Math.max(0,worldW-W/scale);
+  let outH=Math.max(375,H*1.04),outW=im.naturalWidth*(outH/im.naturalHeight);
+  const requiredWidth=W+maxCam*.37+30;
+  if(outW<requiredWidth){outW=requiredWidth;outH=outW*im.naturalHeight/im.naturalWidth;}
+  ctx.drawImage(im,Math.round(-cam*.37),Math.round(-H*.055),Math.ceil(outW),Math.ceil(outH));
+}
+Object.defineProperty(window,'__wuxiaBgVisualStatus',{get(){
+  const status=Object.fromEntries(Object.entries(bgImages).map(([k,img])=>[k,{loaded:img.complete&&img.naturalWidth>0,width:img.naturalWidth||0,height:img.naturalHeight||0}]));
+  return {layers:status,count:Object.values(status).filter(x=>x.loaded).length,total:5,cloudDriftPixelsPerSecond:11,cameraX:cam,playerX:player.x,clockSeconds:now,backgroundVersion:'v7.9K'};
+}});
+Object.defineProperty(window,'__wuxiaForestVisualStatus',{get(){const entries=Object.values(forestArt);return {loaded:entries.filter(t=>t.img.complete&&t.img.naturalWidth>0).length,total:entries.length,notLoaded:entries.filter(t=>t.img.complete&&!t.img.naturalWidth).length,master:'assets/forest/forest_master_original.png',visualOnly:true}}});
+function drawForestDebug(){
+ if(!location.search.includes('debugtiles=1'))return;
+ ctx.save();ctx.lineWidth=1.5;ctx.strokeStyle='#ff5774';
+ for(const p of plats){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x2,p.y);ctx.stroke()}
+ ctx.strokeStyle='#44b9ff';for(const c of climbs){ctx.beginPath();ctx.moveTo(c.x,c.top);ctx.lineTo(c.x,c.bottom);ctx.stroke()}
+ ctx.restore();
+}
+const worldW=2060;
+const plats=[{x:0,x2:2060,y:550},{x:170,x2:850,y:390},{x:1020,x2:1770,y:390},{x:410,x2:1070,y:235},{x:1210,x2:1970,y:235}];
+const climbs=[{x:510,top:235,bottom:550,type:'rope'},{x:1170,top:390,bottom:550,type:'ladder'},{x:1590,top:235,bottom:550,type:'rope'}];
+const player={x:175,y:550,vx:0,vy:0,face:-1,ground:true,climb:null,hp:1200,max:1200,stun:0,down:0,dead:0,inv:0,action:'idle',at:0,duration:0,guard:false,guardBroken:0,cool:0,combo:0,hitId:0,climbCooldown:0};
+let enemies=[],particles=[],projectiles=[],effects=[],target=null,kill=0;
+function resize(){dpr=Math.min(devicePixelRatio||1,onlineLowCost?1.5:2);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;backgroundGradient=ctx.createLinearGradient(0,0,0,H);backgroundGradient.addColorStop(0,'#c8edfa');backgroundGradient.addColorStop(.60,'#def6eb');backgroundGradient.addColorStop(1,'#88bca5');/* PNG background image planes do not need canvas regeneration on resize. */}
+addEventListener('resize',resize);resize();
+['gesturestart','gesturechange','gestureend','dblclick','contextmenu','selectstart','dragstart'].forEach(name=>document.addEventListener(name,e=>{if(e.cancelable)e.preventDefault()},{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.target.closest('#controls')&&e.cancelable)e.preventDefault()},{passive:false});
+function reset(){stopAuto(true);Object.assign(player,{x:175,y:550,vx:0,vy:0,face:-1,ground:true,climb:null,hp:1200,stun:0,down:0,dead:0,inv:0,action:'idle',at:0,duration:0,guard:false,guardBroken:0,cool:0,combo:0,hitId:0,climbCooldown:0});walkDistance=0;climbDistance=0;enemies=[mk('ฝึกยุทธ์',740,390,1100,true),mk('หมาป่า',380,550,450,false),mk('หมาป่า',1340,390,450,false),mk('หมาป่า',1630,235,450,false),mk('จอมยุทธ์คู่ซ้อม',1520,550,1100,true)];particles=[];projectiles=[];effects=[];target=null;kill=0;notice('เข้าสู่สนามฝึก • ขลุ่ยทุกปุ่มเป็นสกิลระยะไกล',3)}
+function mk(name,x,y,hp,hum){return{name,x,y,home:x,vy:0,vx:0,face:-1,ground:true,hp,max:hp,stun:0,down:0,dead:0,guard:false,guardBroken:0,attackTime:0,cool:Math.random()+.3,decision:0,state:'idle',hum,hitBy:-1}}
+reset();
+function notice(s,d=1.35){msg=s;msgUntil=now+d}
+const mapKeys={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',Space:'jump',KeyJ:'attack',KeyK:'aoe',KeyL:'guard',KeyU:'break',ShiftLeft:'dash',ShiftRight:'dash',KeyI:'lock',KeyP:'auto'};
+addEventListener('keydown',e=>{let k=mapKeys[e.code];if(k){e.preventDefault();if(!keys.has(k)){if(k!=='auto')stopAuto(true);onPress(k)}keys.add(k)}});
+addEventListener('keyup',e=>{const k=mapKeys[e.code];if(k)keys.delete(k)});
+document.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k;let down=e=>{e.preventDefault();if(!keys.has(k)){if(k!=='auto')stopAuto(true);onPress(k)}keys.add(k);b.classList.add('held');if(b.setPointerCapture)try{b.setPointerCapture(e.pointerId)}catch{}};let up=e=>{e.preventDefault();keys.delete(k);b.classList.remove('held')};b.addEventListener('pointerdown',down);b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('contextmenu',e=>e.preventDefault());b.addEventListener('lostpointercapture',up)});
+document.getElementById('reset').onclick=reset;
+document.getElementById('help').onclick=()=>notice('ลากจอยซ้ายเพื่อเดิน/ปีน • กระโดดและสกิลฝั่งขวา • AUTO ไล่มอนชั้นเดียว (P เปิด/ปิด) • PC: WASD, Space, J/K/L/U, Shift',8);
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){keys.clear();clearWheel();autoKeys.clear();online.queue.length=0;onlineSendInput(true);}
+  else {if(online.mode==='reconnecting')retryGuestNow();else onlineSendInput(true);}
+});
+window.addEventListener('blur',()=>{keys.clear();clearWheel();autoKeys.clear();online.queue.length=0;onlineSendInput(true)});
+window.addEventListener('online',()=>{if(online.mode==='reconnecting')retryGuestNow()});
+function nearestAimTarget(){
+  const pool=enemies.filter(e=>e.dead<=0&&e.down<=0&&Math.abs(e.x-player.x)<900&&Math.abs(e.y-player.y)<120);
+  if(!pool.length)return null;
+  if(target && target.dead<=0 && pool.includes(target))return target;
+  pool.sort((a,b)=>Math.abs(a.x-player.x)-Math.abs(b.x-player.x));
+  return pool[0];
+}
+function fireSkill(type){
+  const aim=nearestAimTarget();
+  let dir=player.face;
+  if(aim){dir=Math.sign(aim.x-player.x)||player.face; player.face=dir;}
+  const sx=player.x+dir*52, sy=player.y-84;
+  if(type==='attack'){
+    setAction('attack',.32); player.cool=.34;
+    projectiles.push({kind:'attack',x:sx,y:sy,vx:dir*520,vy:0,life:1.45,damage:165,rad:15,pierce:1,hit:new Set()});
+  }else if(type==='aoe'){
+    setAction('aoe',.48); player.cool=.62;
+    projectiles.push({kind:'aoe',x:sx,y:sy-3,vx:dir*365,vy:0,life:1.15,damage:135,rad:28,pierce:99,hit:new Set(),pulse:0});
+    effects.push({kind:'muzzle',x:player.x,y:player.y-34,life:.22,scale:1.2});
+  }else if(type==='break'){
+    setAction('break',.37); player.cool=.52;
+    projectiles.push({kind:'break',x:sx,y:sy-4,vx:dir*560,vy:0,life:1.1,damage:45,rad:18,pierce:2,hit:new Set()});
+    /* break cast ring removed */
+  }
+}
+function onPress(k){
+  if(k==='auto'){toggleAuto();return;}
+  if(online.mode==='connected'||online.mode==='connecting'){ if(online.mode==='connected' && ['attack','aoe','break','dash','jump','lock'].includes(k))online.queue.push(k);return; }
+  if(k==='lock'){
+    const cand=enemies.filter(e=>e.dead<=0&&Math.abs(e.x-player.x)<900).sort((a,b)=>Math.abs(a.x-player.x)-Math.abs(b.x-player.x));
+    target=cand.length?(cand.indexOf(target)>=0?cand[(cand.indexOf(target)+1)%cand.length]:cand[0]):null;
+    notice(target?'ล็อกเป้า: '+target.name:'ไม่มีเป้าหมายใกล้');
+    return;
+  }
+  if(k==='jump'&&player.ground&&!player.dead&&!player.down){player.vy=-540;player.ground=false;player.climb=null;setAction('jump',.25)}
+  if(k==='dash'&&player.cool<=0&&!player.dead&&!player.down){player.vx=player.face*650;player.inv=.17;player.cool=.5;setAction('dash',.26)}
+  if((k==='attack'||k==='aoe'||k==='break')&&!player.dead&&!player.down&&!player.climb&&player.stun<=0&&player.guardBroken<=0&&player.cool<=0){
+    fireSkill(k);
+  }
+}
+function damageFx(e,d){shake=4;particles.push({x:e.x,y:e.y-69,text:'-'+d,life:.8,col:'#ffab79'})}
+function setAction(a,d){player.action=a;player.at=0;player.duration=d}
+function canStand(x,y,prev){for(const p of plats){if(x>p.x+8&&x<p.x2-8&&prev<=p.y+7&&y>=p.y)return p.y}return null}
+function physics(u,dt,isPlayer){let oldY=u.y;if(!u.climb){u.vy+=1400*dt;u.y+=u.vy*dt;u.ground=false;if(u.vy>=0){let on=canStand(u.x,u.y,oldY);if(on!==null){u.y=on;u.vy=0;u.ground=true}}}u.x=Math.max(27,Math.min(worldW-27,u.x));if(u.y>800){u.y=550;u.vy=0;if(isPlayer){u.hp-=100;notice('ตกจากแผนที่ -100 HP')}}}
+function killEnemy(e){e.dead=3.2; e.guard=false; e.attackTime=0; kill++; particles.push({x:e.x,y:e.y-110,text:'ปราบ!',life:1,col:'#ffe8a7'})}
+function hitEnemyWithProjectile(e,p){
+  if(p.hit.has(e))return false;
+  p.hit.add(e);
+  let consumed=false;
+  if(p.kind==='break'){
+    if(e.guard&&e.guardBroken<=0){e.guard=false;e.guardBroken=1.15;e.stun=.85;particles.push({x:e.x,y:e.y-63,text:'การ์ดแตก!',life:.9,col:'#ffd66e'});effects.push({kind:'breakBurst',x:e.x,y:e.y-78,life:.32,scale:1.05});consumed=true;}
+    else{e.hp=Math.max(0,e.hp-p.damage);e.stun=.35;damageFx(e,p.damage);effects.push({kind:'hit',x:e.x,y:e.y-78,life:.24,scale:.85});consumed=--p.pierce<=0;}
+  }else if(e.guard&&e.guardBroken<=0){
+    particles.push({x:e.x,y:e.y-50,text:'BLOCK',life:.8,col:'#92caff'});
+    effects.push({kind:'guardBlock',x:e.x,y:e.y-82,life:.28,scale:1});
+    consumed=true;
+  }else if(p.kind==='attack'){
+    e.hp=Math.max(0,e.hp-p.damage);e.stun=.25;damageFx(e,p.damage);effects.push({kind:'hit',x:e.x,y:e.y-78,life:.22,scale:.8});consumed=true;
+  }else if(p.kind==='aoe'){
+    e.hp=Math.max(0,e.hp-p.damage);e.stun=.25;e.down=Math.max(e.down,1.0);damageFx(e,p.damage);effects.push({kind:'aoeBurst',x:e.x,y:e.y-78,life:.3,scale:1.08});
+  }
+  if(e.hp<=0&&!e.dead)killEnemy(e);
+  return consumed;
+}
+function updateProjectiles(dt){
+  projectiles=projectiles.filter(p=>{
+    p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; if(p.kind==='aoe')p.pulse+=dt;
+    if(p.life<=0 || p.x<-80 || p.x>worldW+80)return false;
+    const sameLane=enemies.filter(e=>e.dead<=0&&Math.abs(e.y-p.y-78)<95&&Math.abs(e.x-p.x)<(p.kind==='aoe'?60:36));
+    sameLane.sort((a,b)=>Math.abs(a.x-p.x)-Math.abs(b.x-p.x));
+    for(const e of sameLane){ if(hitEnemyWithProjectile(e,p)) return false; }
+    return true;
+  });
+  effects=effects.filter(f=>{if(f.duration===undefined)f.duration=f.life;f.age=(f.age||0)+dt;f.life-=dt;return f.life>0;});
+}
+// Offline-only simple farm loop. Online AUTO is server owned (not input spoofing).
+function updateOfflineAuto(dt){
+  autoKeys.clear();
+  if(!autoEnabled||online.mode!=='offline'||creatorOpen||player.dead||player.down||player.stun>0||player.climb)return;
+  const candidates=enemies.filter(m=>m.dead<=0&&m.hp>0&&Math.abs(m.y-player.y)<48&&Math.abs(m.x-player.x)<720);
+  candidates.sort((a,b)=>Math.abs(a.x-player.x)-Math.abs(b.x-player.x));
+  const m=candidates[0];if(!m)return;
+  const gap=m.x-player.x,abs=Math.abs(gap),dir=gap<0?-1:1;
+  const sameFloor=plats.some(p=>Math.abs(p.y-player.y)<8&&player.x>p.x+12&&player.x<p.x2-12&&m.x>p.x+12&&m.x<p.x2-12);
+  if(!sameFloor)return;
+  if(abs>320){autoKeys.add(dir<0?'left':'right');return;}
+  if(abs<145){autoKeys.add(dir<0?'right':'left');return;}
+  player.face=dir;
+  if(player.cool>0)return;
+  // Only legitimate attacks: normal projectile range, cooldown, and hit tests.
+  if(m.guard&&m.guardBroken<=0)onPress('break');
+  else if(candidates.filter(t=>Math.abs(t.x-m.x)<130).length>1)onPress('aoe');
+  else onPress('attack');
+}
+function update(dt){
+  now+=dt;
+  player.cool=Math.max(0,player.cool-dt);player.inv=Math.max(0,player.inv-dt);player.stun=Math.max(0,player.stun-dt);player.down=Math.max(0,player.down-dt);player.guardBroken=Math.max(0,player.guardBroken-dt);player.at+=dt;player.climbCooldown=Math.max(0,player.climbCooldown-dt);
+  updateOfflineAuto(dt);
+  const moving=+held('right')-+held('left');
+  if(player.hp<=0&&!player.dead){if(player.climb){player.climb=null;player.climbCooldown=.6;player.ground=false;player.vy=90;player.vx=player.face*65;}player.dead=2.5;notice('หมดสติ! กดเริ่มใหม่เพื่อเล่นต่อ',5)}
+  if(player.dead){player.guard=false;player.vx*=.89;physics(player,dt,true)}
+  else if(player.down){player.vx*=.75;player.guard=false;physics(player,dt,true);if(!player.ground)player.down=Math.max(player.down,.4)}
+  else{
+    player.guard=held('guard')&&player.guardBroken<=0&&player.stun<=0&&!player.climb;
+    let cl=climbs.find(c=>Math.abs(c.x-player.x)<36&&player.y<=c.bottom+12&&player.y>=c.top-8);
+    // Climbing needs a deliberate vertical-only input and close alignment.
+    // Passing a ladder while walking must not teleport the character sideways.
+    const climbIntent=(held('up')||held('down'))&&!moving;
+    if(climbIntent&&cl&&Math.abs(cl.x-player.x)<26&&!player.guard&&player.climbCooldown<=0){
+      player.climb=cl;player.x=cl.x;player.vy=0;player.vx=0;player.ground=false;
+    }
+    // A sideways command releases the climb instead of trapping the player on it.
+    if(player.climb&&moving&&!held('up')&&!held('down')){
+      player.climb=null;player.climbCooldown=.28;player.vy=0;
+    }
+    if(player.climb){
+      const c=player.climb; let cy=(+held('down')-+held('up')); const oldClimbY=player.y;
+      player.y=Math.max(c.top,Math.min(c.bottom,player.y+cy*175*dt));
+      if(cy!==0)climbDistance+=Math.abs(player.y-oldClimbY);
+      player.vx=0; player.vy=0; player.x=c.x;
+      if(cy<0&&player.y<=c.top+1){player.climb=null;player.climbCooldown=.28;player.y=c.top;player.vy=0;player.ground=true;player.x=c.x+47;player.vx=0;setAction('idle',0);notice('ขึ้นถึงชั้นบนแล้ว',.65)}
+      else if(cy>0&&player.y>=c.bottom-1){player.climb=null;player.climbCooldown=.28;player.y=c.bottom;player.vy=0;player.ground=true;player.x=c.x+45;player.vx=0;setAction('idle',0)}
+      else if(held('jump')){player.climb=null;player.climbCooldown=.35;player.vy=-475;player.vx=player.face*160}
+    }else{
+      if(moving&&player.stun<=0&&!player.guard){player.face=moving>0?1:-1;player.vx=moving*205}
+      else if(player.action!=='dash'||player.at>.25){player.vx*=Math.max(0,1-12*dt)}
+      if(player.guard)player.vx=0; player.x+=player.vx*dt; if(player.ground&&moving)walkDistance+=Math.abs(player.vx*dt); physics(player,dt,true)
+    }
+  }
+  for(const e of enemies){
+    if(e.dead>0){e.dead-=dt; if(e.dead<0){e.hp=e.max;e.dead=0;e.x=e.home;e.y=e.home===1630?235:e.home===740||e.home===1340?390:550;e.vy=0;e.stun=0;e.down=0;e.guard=false} continue}
+    e.stun=Math.max(0,e.stun-dt); e.down=Math.max(0,e.down-dt); e.guardBroken=Math.max(0,e.guardBroken-dt); e.cool-=dt; e.decision-=dt;
+    let near=Math.abs(e.x-player.x)<230&&Math.abs(e.y-player.y)<50&&!player.dead;
+    if(e.decision<=0){e.decision=.65+Math.random()*.6; e.guard=e.hum&&near&&e.guardBroken<=0&&e.down<=0&&Math.random()<.35; e.vx=near?Math.sign(player.x-e.x)*(e.guard?0:55):(Math.random()-.5)*45}
+    if(e.down>0||e.stun>0||e.guardBroken>0)e.vx=0;
+    else if(near&&e.cool<=0&&!e.guard&&Math.abs(e.x-player.x)<97){e.cool=1.15+Math.random()*.65; e.attackTime=.38; e.vx=0}
+    e.attackTime=Math.max(0,e.attackTime-dt);
+    if(e.attackTime>.10&&e.attackTime-dt<=.10&&near&&Math.abs(e.x-player.x)<105&&player.inv<=0&&player.down<=0){
+      if(player.guard&&player.guardBroken<=0){particles.push({x:player.x,y:player.y-90,text:'BLOCK',life:.8,col:'#7bd7ff'});notice('กันการโจมตีได้!')}
+      else{const dmg=e.hum?100:70; player.hp=Math.max(0,player.hp-dmg); player.stun=.22; player.inv=.42; shake=5; particles.push({x:player.x,y:player.y-98,text:'-'+dmg,life:.75,col:'#ff837e'}); if(Math.random()<.18){player.down=1.35; if(player.climb){player.climb=null;player.climbCooldown=.6;player.ground=false;player.vy=80;player.vx=(player.x<e.x?-1:1)*110;notice('โดนตีหลุดเชือก! กำลังร่วงลงพื้น')} else notice('ถูกตีล้ม! รอลุก แล้วสวนกลับ')}}
+    }
+    if(e.guard)e.vx=0; e.x+=e.vx*dt; physics(e,dt,false); if(e.x>e.home+260||e.x<e.home-260)e.vx=-e.vx; e.face=(player.x<e.x?-1:1)
+  }
+  updateProjectiles(dt);
+  particles=particles.filter(p=>(p.y-=24*dt,p.life-=dt,p.life>0)); shake*=.86; if(target&&target.dead>0)target=null;
+  document.getElementById('hptext').textContent=Math.max(0,player.hp)+' / 1200';
+  document.getElementById('hpbar').style.width=Math.max(0,100*player.hp/1200)+'%';
+  let close=target||enemies.filter(e=>e.dead<=0&&Math.abs(e.x-player.x)<750&&Math.abs(e.y-player.y)<120).sort((a,b)=>Math.abs(a.x-player.x)-Math.abs(b.x-player.x))[0];
+  document.getElementById('target').textContent=close?`${close.name} HP ${Math.ceil(close.hp)}/${close.max}${close.guard?' • ตั้งการ์ด':''}${close.down?' • ล้ม':''}`:'ศัตรูอยู่ตามชั้นต่าง ๆ';
+  document.getElementById('status').textContent=now<msgUntil?msg:'ลูกศร/WASD เดินหรือปีน • J ยิงเดี่ยว • K ยิงหมู่ • U ทลายการ์ด • L ตั้งการ์ด • Shift แดช';
+}
+function frameForPlayer(){if(online.mode==='connected' && Number.isInteger(online.frame))return online.frame;if(player.dead)return player.ground?18:16;if(player.down)return player.ground?17:16;if(player.climb)return (held('up')!==held('down'))?14+(Math.floor(climbDistance/64)%2):14;if(player.stun>.02)return 9;if(player.guard)return 8;if(player.action==='attack'&&player.at<player.duration)return player.at<.09?19:player.at<.21?20:21;if(player.action==='aoe'&&player.at<player.duration)return player.at<.14?22:23;if(player.action==='break'&&player.at<player.duration)return player.at<.14?7:8;if(player.action==='dash'&&player.at<player.duration)return 10+(player.at>.12?1:0);if(!player.ground)return player.vy<0?12:13;if(Math.abs(player.vx)>25)return 3+(Math.floor(walkDistance/20)%4);return Math.floor(now*1.8)%3}
+function drawPlayer(x,y,size=106){let f=frameForPlayer(),img=activeAtlas||sprites[f];if(!img||!img.complete||!img.naturalWidth)return;const ww=size,hh=size*1.22;ctx.save();ctx.translate(x,y+(player.ground&&!player.climb?7:0));if(player.inv>0&&Math.floor(now*16)%2)ctx.globalAlpha=.55;if(!player.climb&&player.face===1)ctx.scale(-1,1);const bottomPx=activeAtlas?251:(frameBottom[f]??256);const groundCorrection=(256-bottomPx)*hh/256;ctx.drawImage(img,activeAtlas?(f%6)*256:0,activeAtlas?Math.floor(f/6)*256:0,256,256,-ww/2,-hh+groundCorrection,ww,hh);ctx.restore()}
+function drawMonster(e){if(e.dead>0)return;const x=(online.mode==='connected'&&Number.isFinite(e.rx))?e.rx:e.x,y=(online.mode==='connected'&&Number.isFinite(e.ry))?e.ry:e.y;if(x<cam-180||x>cam+W/Math.max(.82,Math.min(1.25,H/690))+180)return;const s=e.hum?58:38;ctx.save();ctx.translate(x,y);if(e.down>0){ctx.translate(0,8);ctx.scale(1,.52)}ctx.fillStyle='rgba(0,0,0,.24)';ctx.beginPath();ctx.ellipse(0,0,s*.8,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=e.hum?'#a19ece':'#9e6676';ctx.strokeStyle='#302a45';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,-s*.76,s*.66,s*.65,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle=e.hum?'#ece8f1':'#edaeb4';ctx.beginPath();ctx.moveTo(-s*.45,-s*1.18);ctx.lineTo(-s*.66,-s*1.65);ctx.lineTo(-s*.05,-s*1.43);ctx.moveTo(s*.45,-s*1.18);ctx.lineTo(s*.66,-s*1.65);ctx.lineTo(s*.05,-s*1.43);ctx.fill();ctx.fillStyle='#272439';for(let i of [-1,1]){ctx.beginPath();ctx.ellipse(i*s*.23,-s*.86,3,5,0,0,Math.PI*2);ctx.fill()}if(e.hum){ctx.strokeStyle='#ebdfb5';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-s*.75,-s*.45);ctx.lineTo(-s*.8,-s*1.75);ctx.stroke()}if(e.guard){ctx.strokeStyle='#8de2ff';ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,-s*.8,s*.96,-1.4,1.4);ctx.stroke()}ctx.restore();ctx.fillStyle='#111b28';ctx.fillRect(x-40,y-s*1.8,80,7);ctx.fillStyle=e.guardBroken>0?'#dba454':e.guard?'#65c2e9':'#e76b82';ctx.fillRect(x-39,y-s*1.8+1,78*Math.max(0,e.hp/e.max),5);if(target===e){ctx.strokeStyle='#ffdf73';ctx.lineWidth=2;ctx.strokeRect(x-43,y-s*1.8-3,86,13)}}
+// All visual skill effects below are extracted PNG frames from the supplied AI-generated effect atlas.
+// No Canvas-drawn musical notes, waves, rings, sparkles or impacts are used.
+function drawFxSprite(img,x,y,w,h,flip=1,opacity=1){
+  if(!img||x<cam-240||x>cam+W/Math.max(.82,Math.min(1.25,H/690))+240)return;
+  ctx.save();ctx.translate(x,y);
+  if(flip<0)ctx.scale(-1,1);
+  ctx.globalAlpha*=opacity;
+  ctx.drawImage(img,-w/2,-h/2,w,h);
+  ctx.restore();
+}
+function drawProjectiles(){
+  for(const p of projectiles){
+    const dir=Math.sign(p.vx)||1;
+    const group=p.kind==='attack'?'shot':p.kind==='aoe'?'aoe_travel':'break_travel';
+    const frame=Math.floor(now*12)%fxGroups[group];
+    const image=fxImage(group,frame);
+    const w=p.kind==='aoe'?170:(p.kind==='break'?100:108);
+    const h=p.kind==='aoe'?115:(p.kind==='break'?86:88);
+    drawFxSprite(image,online.mode==='connected'?p.x+p.vx*(p.sinceSnap||0):p.x,p.y,w,h,dir,0.98);
+  }
+}
+function drawEffects(){
+  for(const f of effects){
+    const dur=f.duration||.3;
+    const progress=Math.min(0.999,Math.max(0, (f.age||0)/dur));
+    let group, size;
+    if(f.kind==='muzzle'){group='cast';size=[100,85];}
+    else if(f.kind==='hit'){group='hit';size=[110,108];}
+    else if(f.kind==='aoeBurst'){group='aoe_hit';size=[195,165];}
+    else if(f.kind==='breakBurst'){group='break_hit';size=[145,130];}
+    else if(f.kind==='guardBlock'){group='break_hit';size=[105,104];}
+    else continue;
+    const frame=Math.min(fxGroups[group]-1,Math.floor(progress*fxGroups[group]));
+    const img=fxImage(group,frame);
+    let fade=Math.min(1,f.life/.10);
+    drawFxSprite(img,f.x,f.y,size[0]*(f.scale||1),size[1]*(f.scale||1),1,fade);
+  }
+}
+function bg(){forestBg();drawForestNearOverlay()}
+function render(){
+ const scale=Math.max(.82,Math.min(1.25,H/690));
+ const viewportW=W/scale;
+ cam=Math.max(0,Math.min(worldW-viewportW,player.x-viewportW*.42));
+ bg();
+ ctx.save();
+ ctx.translate(0,H-110*scale-550*scale);
+ ctx.scale(scale,scale);
+ ctx.translate(-cam+(Math.random()-.5)*shake,0);
+ ctx.imageSmoothingEnabled=true;
+ for(let i=0;i<plats.length;i++){
+   const p=plats[i];if(p.x2<cam-110||p.x>cam+viewportW+110)continue;
+   if(i===0)drawForestGround(p);
+   else drawForestPlatform(p,i<3?'rock':'wood');
+ }
+ for(const c of climbs)drawForestClimb(c);
+ drawForestDebug();
+ ctx.imageSmoothingEnabled=false;
+ for(const e of enemies)drawMonster(e);
+ drawRemotePlayers();drawPlayer(player.x,player.y);
+ drawEffects();drawProjectiles();
+ for(const p of particles){ctx.globalAlpha=Math.min(1,p.life*2);ctx.fillStyle=p.col;ctx.font='bold 18px system-ui';ctx.textAlign='center';ctx.fillText(p.text,p.x,p.y);ctx.globalAlpha=1}
+ ctx.restore();
+ ctx.fillStyle='#173d376f';ctx.fillRect(Math.max(0,W-290),H-23,290,23);
+ ctx.fillStyle='#f2fff1';ctx.font='11px system-ui';ctx.textAlign='right';
+ ctx.fillText(`ปราบ ${kill} ตัว | ป่าเขียวชอุ่ม | Parallax 5 Layers`,W-12,H-8);
+}
+function loop(t){
+  const dt=Math.min(.033,Math.max(.001,(t-last)/1000||.016));last=t;
+  framesThisSecond++;
+  if(!lastFpsUpdate)lastFpsUpdate=t;
+  if(t-lastFpsUpdate>=1000){measuredFps=Math.round(framesThisSecond*1000/(t-lastFpsUpdate));framesThisSecond=0;lastFpsUpdate=t;if(online.mode==='connected')onlineHUD();}
+  // The creator covers the entire screen; don't redraw a hidden game underneath it.
+  if(!creatorOpen){if(online.mode==='connected')updateOnlineVisual(dt);else if(online.mode!=='connecting')update(dt);render();}
+  else renderCreatorPreview(t);
+  requestAnimationFrame(loop);
+}
+// Only the selected 24-frame character sheet is decoded and drawn.
+const CHARACTER_ASSETS={"male_hair_01_black":"characters/male_hair_01_black.png","male_hair_01_white":"characters/male_hair_01_white.png","male_hair_01_brown":"characters/male_hair_01_brown.png","male_hair_01_red":"characters/male_hair_01_red.png","male_hair_01_gold":"characters/male_hair_01_gold.png","male_hair_02_black":"characters/male_hair_02_black.png","male_hair_02_white":"characters/male_hair_02_white.png","male_hair_02_brown":"characters/male_hair_02_brown.png","male_hair_02_red":"characters/male_hair_02_red.png","male_hair_02_gold":"characters/male_hair_02_gold.png","male_hair_03_black":"characters/male_hair_03_black.png","male_hair_03_white":"characters/male_hair_03_white.png","male_hair_03_brown":"characters/male_hair_03_brown.png","male_hair_03_red":"characters/male_hair_03_red.png","male_hair_03_gold":"characters/male_hair_03_gold.png","female_hair_01_black":"characters/female_hair_01_black.png","female_hair_01_white":"characters/female_hair_01_white.png","female_hair_01_brown":"characters/female_hair_01_brown.png","female_hair_01_red":"characters/female_hair_01_red.png","female_hair_01_gold":"characters/female_hair_01_gold.png","female_hair_02_black":"characters/female_hair_02_black.png","female_hair_02_white":"characters/female_hair_02_white.png","female_hair_02_brown":"characters/female_hair_02_brown.png","female_hair_02_red":"characters/female_hair_02_red.png","female_hair_02_gold":"characters/female_hair_02_gold.png","female_hair_03_black":"characters/female_hair_03_black.png","female_hair_03_white":"characters/female_hair_03_white.png","female_hair_03_brown":"characters/female_hair_03_brown.png","female_hair_03_red":"characters/female_hair_03_red.png","female_hair_03_gold":"characters/female_hair_03_gold.png"};
+const characterColors={black:{label:'ดำ',swatch:'#26212b'},white:{label:'ขาว',swatch:'#eaedf6'},brown:{label:'น้ำตาล',swatch:'#875036'},red:{label:'แดง',swatch:'#aa1231'},gold:{label:'ทอง',swatch:'#e8bc6b'}};
+const creatorEl=document.getElementById('characterCreator');
+const previewCanvas=document.getElementById('creatorPreview'),previewCtx=previewCanvas.getContext('2d');
+const creatorStart=document.getElementById('creatorStart'),creatorBack=document.getElementById('creatorBack'),creatorMessage=document.getElementById('creatorMessage');
+const creatorPreviewName=document.getElementById('creatorPreviewName');
+const creatorOnline=document.getElementById('creatorOnline'),onlineServerInput=document.getElementById('onlineServer'),onlineStateEl=document.getElementById('onlineState'),onlineLeave=document.getElementById('onlineLeave');
+const accountEmail=document.getElementById('accountEmail'),accountPassword=document.getElementById('accountPassword'),characterName=document.getElementById('characterName');
+const accountSignIn=document.getElementById('accountSignIn'),accountSignUp=document.getElementById('accountSignUp'),accountSignOut=document.getElementById('accountSignOut'),accountStatus=document.getElementById('accountStatus');
+const account=window.WuxiaAccount.create(window.WUXIA_SUPABASE_URL,window.WUXIA_SUPABASE_PUBLISHABLE_KEY);
+let accountBusy=false;
+let creatorOpen=true,activeAtlas=null,selectedAvatar=null,previewAtlas=null,creatorRequest=0,onlineJoinAtlas=null;
+let draftAvatar={gender:'male',hair:1,color:'black'};
+try{const saved=JSON.parse(localStorage.getItem('wuxia-flute-avatar-v1')||'null');if(saved&&CHARACTER_ASSETS[avatarKey(saved)])draftAvatar={...saved};}catch{}
+try{onlineServerInput.value=localStorage.getItem('wuxia-online-server')||window.WUXIA_ONLINE_SERVER||'';}catch{onlineServerInput.value=window.WUXIA_ONLINE_SERVER||'';}
+try{characterName.value=localStorage.getItem('wuxia-character-name-v1')||'';}catch{}
+function avatarKey(a){return a.gender+'_hair_'+String(a.hair).padStart(2,'0')+'_'+a.color}
+function avatarFromKey(key){const match=/^(male|female)_hair_(01|02|03)_(black|white|brown|red|gold)$/.exec(key||'');return match?{gender:match[1],hair:Number(match[2]),color:match[3]}:null}
+function setCreatorMessage(msg,error=false){creatorMessage.textContent=msg;creatorMessage.classList.toggle('error',error)}
+function updateAccountUI(message='',error=false){
+  const session=account.getSession(),email=session?.user?.email||'';
+  accountEmail.hidden=!!session;accountPassword.hidden=!!session;accountSignIn.hidden=!!session;accountSignUp.hidden=!!session;accountSignOut.hidden=!session;
+  creatorOnline.textContent=session?'เข้าออนไลน์ด้วยบัญชี (บันทึกถาวร)':'เข้าออนไลน์แบบ Guest';
+  if(!account.configured){accountEmail.disabled=true;accountPassword.disabled=true;accountSignIn.disabled=true;accountSignUp.disabled=true;accountStatus.textContent='ยังไม่ได้ตั้งค่า Supabase publishable key · Guest ยังเล่นได้';accountStatus.classList.remove('error');return;}
+  accountEmail.disabled=accountBusy;accountPassword.disabled=accountBusy;accountSignIn.disabled=accountBusy;accountSignUp.disabled=accountBusy;
+  accountStatus.textContent=message||(session?'เข้าสู่ระบบแล้ว: '+email:'ยังไม่ได้เข้าสู่ระบบ · Guest จะไม่บันทึกความคืบหน้า');accountStatus.classList.toggle('error',error);
+}
+async function runAccountAction(action){
+  const email=accountEmail.value.trim(),password=accountPassword.value;
+  if(!email||password.length<8){updateAccountUI('กรอกอีเมลและรหัสผ่านอย่างน้อย 8 ตัว',true);return;}
+  let outcome='',failed=false;accountBusy=true;updateAccountUI('กำลังยืนยันบัญชี…');
+  try{
+    if(action==='signup'){
+      const result=await account.signUp(email,password);
+      if(result.needsConfirmation){outcome='สมัครแล้ว · กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ';return;}
+    }else await account.signIn(email,password);
+    accountPassword.value='';outcome='เข้าสู่ระบบสำเร็จ · EXP และตัวละครจะบันทึกถาวร';
+  }catch(error){outcome=error.message||'เข้าสู่ระบบไม่สำเร็จ';failed=true;}
+  finally{accountBusy=false;updateAccountUI(outcome,failed);}
+}
+accountSignIn.addEventListener('click',()=>runAccountAction('signin'));
+accountSignUp.addEventListener('click',()=>runAccountAction('signup'));
+accountSignOut.addEventListener('click',async()=>{await account.signOut();updateAccountUI('ออกจากบัญชีแล้ว · เล่น Guest ได้ตามเดิม')});
+updateAccountUI();
+function renderCreatorChoices(){
+  const groups=[['creatorGender',[['male','ชาย'],['female','หญิง']],'gender'],['creatorHair',[[1,'ทรง 1'],[2,'ทรง 2'],[3,'ทรง 3']],'hair']];
+  for(const [id,opts,prop] of groups){
+    const box=document.getElementById(id);box.replaceChildren();
+    for(const [value,label] of opts){const btn=document.createElement('button');btn.type='button';btn.className='creator-choice'+(draftAvatar[prop]===value?' selected':'');btn.textContent=label;btn.setAttribute('aria-pressed',String(draftAvatar[prop]===value));btn.addEventListener('click',()=>{draftAvatar[prop]=value;renderCreatorChoices();loadDraftAvatar();});box.appendChild(btn);}
+  }
+  const colors=document.getElementById('creatorColors');colors.replaceChildren();
+  for(const [id,obj] of Object.entries(characterColors)){
+    const btn=document.createElement('button');btn.type='button';btn.className='creator-color'+(draftAvatar.color===id?' selected':'');btn.setAttribute('aria-label','สีผม'+obj.label);btn.setAttribute('aria-pressed',String(draftAvatar.color===id));
+    const dot=document.createElement('span');dot.className='creator-dot';dot.style.backgroundColor=obj.swatch;
+    const caption=document.createElement('span');caption.textContent=obj.label;
+    btn.append(dot,caption);btn.addEventListener('click',()=>{draftAvatar.color=id;renderCreatorChoices();loadDraftAvatar();});colors.appendChild(btn);
+  }
+  creatorPreviewName.textContent=(draftAvatar.gender==='male'?'จอมยุทธ์ชาย':'จอมยุทธ์หญิง')+' · ผมทรง '+draftAvatar.hair+' · สี'+characterColors[draftAvatar.color].label;
+}
+const loadingEl=document.getElementById('assetLoading'),loadingTitle=document.getElementById('loadingTitle');
+const loadingDetail=document.getElementById('loadingDetail'),loadingFill=document.getElementById('loadingFill');
+const loadingCount=document.getElementById('loadingCount'),loadingRetry=document.getElementById('loadingRetry');
+function showLoading(title,detail){
+  loadingEl.hidden=false;loadingEl.setAttribute('aria-busy','true');loadingTitle.textContent=title;
+  loadingDetail.textContent=detail;loadingFill.style.width='0%';loadingCount.textContent='กำลังเริ่มโหลด…';
+  loadingRetry.hidden=true;loadingRetry.onclick=null;
+}
+function loadingProgress(done,total,phase){
+  loadingFill.style.width=(total?Math.round(done/total*100):100)+'%';
+  loadingCount.textContent=done+' / '+total+' ไฟล์ · '+(total?Math.round(done/total*100):100)+'%';
+  if(phase)loadingDetail.textContent=phase;
+}
+function hideLoading(){loadingEl.hidden=true;loadingEl.setAttribute('aria-busy','false');}
+function loadingFailure(error,retry){
+  loadingTitle.textContent='โหลดไฟล์ไม่สำเร็จ';loadingDetail.textContent=String(error?.message||error);
+  loadingRetry.hidden=false;loadingRetry.onclick=retry;
+}
+// First-visit gate: preload and decode all 30 lightweight idle previews ONCE.
+// Never download all 30 full 24-frame sprite sheets (60+ MB) at login.
+async function preloadCharacterPreviews(){
+  showLoading('กำลังโหลดตัวละคร','เตรียมตัวอย่างทั้ง 30 แบบ ก่อนเข้าสู่หน้าสร้างตัวละคร');
+  try{
+    const keys=Object.keys(CHARACTER_ASSETS);
+    const tasks=keys.map(key=>()=>requestCreatorPreview(key));
+    await parallelLimited(tasks,6,(done,total)=>loadingProgress(done,total,'เตรียมตัวอย่างตัวละครทั้ง 30 แบบ'));
+    openCreator();
+    hideLoading();
+  }catch(e){loadingFailure(e,preloadCharacterPreviews);}
+}
+async function loadReadyToPlay(key){
+  showLoading('กำลังเข้าสู่ยุทธภพ','โหลดตัวละครเต็ม 24 เฟรม และภาพโลกเกมให้ครบก่อนเริ่มเล่น');
+  let worldDone=0,avatarDone=0;
+  const initialTotal=deferredWorldImages.length+(worldAssetsStarted?0:1);
+  const total=worldAssetsStarted?1:initialTotal;  // world assets already resident after a prior session
+  const update=()=>loadingProgress(worldDone+avatarDone,total,'โหลดตัวละคร ฉากหลัง พื้น สกิล และเอฟเฟกต์…');
+  try{
+    const [atlas]=await Promise.all([
+      requestAvatar(key).then(img=>{avatarDone=1;update();return img;}),
+      startWorldAssets((done)=>{worldDone=done;update();})
+    ]);
+    // Stage all requested art before showing the first frame; no partial map popping in.
+    loadingProgress(total,total,'โหลดไฟล์เกมครบแล้ว');
+    return atlas;
+  }catch(e){throw e;}
+}
+// Two idle poses only (2x 256px), instead of downloading a 24-frame full sheet.
+const previewCache=new Map();
+function requestCreatorPreview(key){
+  if(previewCache.has(key))return previewCache.get(key);
+  if(!CHARACTER_ASSETS[key])return Promise.reject(new Error('ไม่พบตัวละครนี้'));
+  const promise=new Promise((resolve,reject)=>{
+    const im=new Image();im.decoding='async';
+    im.onload=async()=>{
+      if(im.naturalWidth!==512||im.naturalHeight!==256){reject(new Error('ขนาด Preview ผิดพลาด: '+key));return;}
+      try{if(im.decode)await im.decode();resolve(im);}catch(err){reject(err);}
+    };
+    im.onerror=()=>reject(new Error('โหลดภาพตัวอย่างไม่สำเร็จ: '+key));
+    im.src='character_previews/'+key+'.webp?v=7.9L';
+  });
+  previewCache.set(key,promise);
+  return promise.catch(err=>{previewCache.delete(key);throw err;});
+}
+const characterCache=new Map();
+function requestAvatar(key){
+  if(characterCache.has(key))return characterCache.get(key);
+  const url=CHARACTER_ASSETS[key];
+  if(!url)return Promise.reject(new Error('ไม่พบ Sprite ของตัวละครนี้'));
+  const promise=new Promise((resolve,reject)=>{
+    const image=new Image();image.onload=()=>{
+      if(image.naturalWidth!==1536||image.naturalHeight!==1024)reject(new Error('ขนาด Sprite ไม่ถูกต้อง: '+key));
+      else if(image.decode)image.decode().then(()=>resolve(image),reject);
+      else resolve(image);
+    };
+    image.onerror=()=>reject(new Error('โหลดไฟล์ตัวละครไม่ได้ กรุณาตรวจไฟล์ '+url));
+    image.src=url+'?v=7.9i-female-attack-clean';
+  });
+  characterCache.set(key,promise);
+  // Bound memory: switching all 30 variations must not keep 30 decoded atlases alive.
+  while(characterCache.size>4){const oldest=characterCache.keys().next().value;if(oldest!==avatarKey(selectedAvatar||{})&&oldest!==key)characterCache.delete(oldest);else break;}
+  return promise.catch(err=>{characterCache.delete(key);throw err;});
+}
+async function loadDraftAvatar(){
+  const key=avatarKey(draftAvatar),token=++creatorRequest;creatorStart.disabled=true;creatorOnline.disabled=true;previewAtlas=null;
+  setCreatorMessage('กำลังโหลดตัวละคร…');
+  try{const image=await requestCreatorPreview(key);if(token!==creatorRequest||!creatorOpen)return;
+    previewAtlas=image;creatorStart.disabled=false;creatorOnline.disabled=false;setCreatorMessage('พร้อมเล่น · เลือกตัวละครแล้วกดเริ่มผจญภัย');
+  }catch(err){if(token===creatorRequest)setCreatorMessage(err.message,true)}
+}
+function openCreator(){
+  stopAuto(true);clearWheel();
+  if(online.mode==='connected'||online.mode==='connecting')disconnectOnline('กลับสู่หน้าสร้างตัวละคร');
+  creatorOpen=true;keys.clear();creatorEl.hidden=false;document.body.classList.add('creating-character');
+  draftAvatar=selectedAvatar?{...selectedAvatar}:{...draftAvatar};
+  creatorBack.hidden=!selectedAvatar;renderCreatorChoices();loadDraftAvatar();
+}
+function closeCreator(){creatorOpen=false;creatorEl.hidden=true;creatorEl.dataset.busy='0';document.body.classList.remove('creating-character');keys.clear();}
+function setCreatorBusy(busy){
+  creatorEl.dataset.busy=busy?'1':'0';
+  creatorStart.disabled=busy||!previewAtlas;
+  creatorOnline.disabled=busy||!previewAtlas;
+}
+creatorStart.addEventListener('click',async()=>{
+  if(creatorStart.disabled||!previewAtlas)return;
+  if(online.mode!=='offline')disconnectOnline('เปลี่ยนเป็นออฟไลน์');
+  const key=avatarKey(draftAvatar),choice={...draftAvatar},token=creatorRequest;
+  setCreatorBusy(true);setCreatorMessage('กำลังเตรียม Sprite ตัวละครสำหรับเข้าเกม…');
+  try{
+    const fullAtlas=await loadReadyToPlay(key);
+    if(token!==creatorRequest||!creatorOpen){hideLoading();return;}
+    activeAtlas=fullAtlas;selectedAvatar=choice;
+    try{localStorage.setItem('wuxia-flute-avatar-v1',JSON.stringify(selectedAvatar))}catch{}
+    closeCreator();reset();hideLoading();
+  }catch(err){setCreatorBusy(false);setCreatorMessage(err.message,true);loadingFailure(err,()=>creatorStart.click())}
+});
+creatorBack.addEventListener('click',()=>{if(selectedAvatar)closeCreator()});
+document.getElementById('customize').addEventListener('click',openCreator);
+creatorOnline.addEventListener('click',startOnline);
+onlineLeave.addEventListener('click',()=>{disconnectOnline('ออกจากโลกออนไลน์แล้ว');reset();});
+document.getElementById('reset').onclick=()=>{if(online.mode==='connected')notice('ออนไลน์: เซิร์ฟเวอร์เป็นคนควบคุม HP และการเกิดใหม่',2.5);else reset()};
+function renderCreatorPreview(t){
+  if(!creatorOpen)return;
+  const w=previewCanvas.width,h=previewCanvas.height;
+  previewCtx.clearRect(0,0,w,h);
+  if(!previewAtlas){previewCtx.fillStyle='#b7c6d2';previewCtx.font='14px system-ui';previewCtx.textAlign='center';previewCtx.fillText('กำลังโหลด…',w/2,h/2);return;}
+  // Blink occasionally, otherwise show actual idle frame 01.
+  const f=(Math.floor(t/2500)%4===3&&t%2500<250)?1:0;
+  previewCtx.imageSmoothingEnabled=true;
+  previewCtx.drawImage(previewAtlas,f*256,0,256,256,5,5,w-10,h-10);
+}
+// WUXIA GUEST ONLINE - authoritative server receives INPUT ONLY.
+// Values in this browser are cosmetic mirrors; never sent as HP, x, damage or monster coordinates.
+const online={mode:'offline',ws:null,id:null,name:'',frame:0,seq:0,queue:[],clock:0,peers:new Map(),images:new Map(),shots:[],selfGoal:null,lastSnapshotAt:0,connectedAt:0,
+  wantOnline:false,serverUrl:'',avatarId:'',resumeToken:'',resumeStoreKey:'',retryTimer:null,retryCount:0,lastIdleSend:0,accountToken:'',accountMode:false,character:null};
+function updateProgressHUD(character){
+  const data=character||{level:1,currentExp:0,expToNext:3000,atCap:false};
+  document.getElementById('levelText').textContent='ตัวละคร Lv '+Number(data.level||1);
+  document.getElementById('exptext').textContent=data.atCap?'MAX':Number(data.currentExp||0).toLocaleString()+' / '+Number(data.expToNext||0).toLocaleString()+' EXP';
+  document.getElementById('expbar').style.width=(data.atCap?100:Math.max(0,Math.min(100,100*Number(data.currentExp||0)/Math.max(1,Number(data.expToNext||1)))))+'%';
+  document.getElementById('qitext').textContent=Number(data.level||1)>=20?'ยังไม่ได้เลือก Qi':'ปลดล็อก Lv20';
+  document.getElementById('qibar').style.width='0%';
+}
+function onlineHUD(){
+  const connected=online.mode==='connected';
+  const status=connected?'🟢 '+(online.accountMode?'บัญชี ':'Guest ')+online.name+' • '+(online.peers.size+1)+' คน • FPS '+(measuredFps||'…'):
+    online.mode==='reconnecting'?'🟠 ขาดการเชื่อมต่อ • กำลังต่อกลับ…':
+    online.mode==='connecting'?'🟡 กำลังเชื่อมต่อเซิร์ฟเวอร์…':'โหมดฝึกออฟไลน์';
+  if(onlineStateEl.textContent!==status)onlineStateEl.textContent=status;
+  onlineLeave.hidden=!(connected||online.mode==='reconnecting');
+}
+function disconnectOnline(message){
+  stopAuto(true);autoSupported=false;
+  online.wantOnline=false;
+  if(online.retryTimer!==null){clearTimeout(online.retryTimer);online.retryTimer=null;}
+  if(online.resumeStoreKey)try{sessionStorage.removeItem(online.resumeStoreKey)}catch{}
+  const old=online.ws;online.ws=null;
+  if(old){old.onclose=null;old.onmessage=null;try{old.close(1000,'Guest left')}catch{}}
+  online.mode='offline';online.id=null;online.queue.length=0;online.peers.clear();online.images.clear();online.shots=[];
+  online.selfGoal=null;online.frame=0;online.resumeToken='';online.resumeStoreKey='';online.accountToken='';online.accountMode=false;online.character=null;onlineLowCost=false;updateProgressHUD(null);resize();onlineHUD();
+  if(message)notice(message,3);
+}
+function retryGuestNow(){
+  if(!online.wantOnline||online.mode!=='reconnecting'||online.ws)return;
+  if(online.retryTimer!==null){clearTimeout(online.retryTimer);online.retryTimer=null;}
+  connectGuestSocket(true);
+}
+function scheduleGuestRetry(){
+  if(!online.wantOnline)return;
+  online.mode='reconnecting';onlineHUD();
+  if(creatorOpen)setCreatorMessage('เซิร์ฟเวอร์ไม่ตอบสนอง กำลังลองเชื่อมต่อใหม่…');
+  if(online.retryTimer!==null)clearTimeout(online.retryTimer);
+  // Backoff avoids hammering Render during restarts or network outages.
+  const wait=Math.min(20000,1000*Math.pow(2,Math.min(online.retryCount++,5)));
+  online.retryTimer=setTimeout(()=>{online.retryTimer=null;if(online.wantOnline&&!online.ws)connectGuestSocket(true)},wait);
+}
+
+function inputBits(){
+  const manual=k=>keys.has(k)||wheelKeys.has(k);
+  return (manual('left')?1:0)|(manual('right')?2:0)|(manual('up')?4:0)|(manual('down')?8:0)|(manual('guard')?16:0);
+}
+function onlineSendInput(force=false){
+  if(online.mode!=='connected'||!online.ws||online.ws.readyState!==WebSocket.OPEN)return;
+  // Only held control bits and single-press intent. No x/y/HP/damage or entity moves.
+  // A background tab must release all controls; never hold guard or movement while inactive.
+  if(document.hidden){
+    online.queue.length=0;
+    if(!force && performance.now()-online.lastIdleSend<4000)return;
+    online.lastIdleSend=performance.now();
+  }
+  const pressed=document.hidden?[]:online.queue.splice(0,4);
+  if(online.ws.bufferedAmount>24000){online.queue.length=0;return;}
+  online.ws.send(JSON.stringify({t:'input',seq:++online.seq,buttons:document.hidden?0:inputBits(),pressed}));
+}
+function updateOnlineVisual(dt){
+  now+=dt;online.clock+=dt;
+  // Network input uses its own timer; requestAnimationFrame may stop in background tabs.
+  const step=Math.min(1,dt*17);
+  if(online.selfGoal){
+    // Small visual-only extrapolation (bounded to 100 ms), never sent to the server.
+    const ahead=Math.min(.10,Math.max(0,performance.now()-online.lastSnapshotAt)/1000);
+    const x=online.selfGoal.x+(player.climb?0:player.vx*ahead);
+    const y=online.selfGoal.y+(player.climb?0:player.vy*ahead);
+    player.x+=(x-player.x)*step;player.y+=(y-player.y)*step;
+  }
+  for(const p of online.peers.values()){p.rx+=(p.x-p.rx)*step;p.ry+=(p.y-p.ry)*step;}
+  for(const e of enemies){
+    if(e.dead>0)continue;
+    e.rx+=(e.x-e.rx)*step;
+    e.ry+=(e.y-e.ry)*step;
+  }
+  for(const p of projectiles){p.sinceSnap=Math.min(.12,(p.sinceSnap||0)+dt);}
+
+  effects=effects.filter(f=>{if(f.duration===undefined)f.duration=f.life;f.age=(f.age||0)+dt;f.life-=dt;return f.life>0;});
+  particles=particles.filter(p=>(p.y-=24*dt,p.life-=dt,p.life>0));shake*=.86;
+}
+function peerAtlas(key){
+  if(!CHARACTER_ASSETS[key])key='male_hair_01_black';
+  if(key===avatarKey(selectedAvatar||{}))return activeAtlas;
+  if(online.images.has(key)){const img=online.images.get(key);online.images.delete(key);online.images.set(key,img);return img;}
+  const img=new Image();img.src=CHARACTER_ASSETS[key];online.images.set(key,img);
+  while(online.images.size>9)online.images.delete(online.images.keys().next().value);
+  return img;
+}
+function drawRemotePlayers(){
+  if(online.mode!=='connected')return;
+  for(const p of online.peers.values()){
+    if(p.rx<cam-130||p.rx>cam+W/Math.max(.82,Math.min(1.25,H/690))+130)continue;
+    const img=peerAtlas(p.avatar);
+    if(!img||!img.complete||!img.naturalWidth)continue;
+    const f=Math.max(0,Math.min(23,p.frame|0));const ww=106,hh=106*1.22;
+    ctx.save();ctx.translate(p.rx,p.ry+((p.ground&&!p.climb)?7:0));if(p.face===1&&!p.climb)ctx.scale(-1,1);
+    ctx.drawImage(img,(f%6)*256,Math.floor(f/6)*256,256,256,-ww/2,-hh+(256-251)*hh/256,ww,hh);ctx.restore();
+    ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillStyle='#b8ffcb';
+    ctx.fillText(String(p.name||('Guest-'+p.id.slice(-4).toUpperCase())).slice(0,24),p.rx,p.ry-132);
+    ctx.fillStyle='#161c27';ctx.fillRect(p.rx-34,p.ry-141,68,6);
+    ctx.fillStyle='#7fddb6';ctx.fillRect(p.rx-33,p.ry-140,66*Math.max(0,p.hp/p.max),4);
+  }
+}
+function applyOnlineEvents(ev){
+  if(!Array.isArray(ev))return;
+  for(const e of ev){
+    if(!Number.isFinite(e.x)||!Number.isFinite(e.y))continue;
+    if(e.t==='hit'){
+      particles.push({x:e.x,y:e.y-15,text:'-'+Number(e.damage||0),life:.8,col:'#ffab79'});
+      effects.push({kind:e.kind==='aoe'?'aoeBurst':e.kind==='break'?'breakBurst':'hit',x:e.x,y:e.y,life:.27,scale:1});
+      if(e.victim===online.id)shake=4;
+    }else if(e.t==='block')effects.push({kind:'guardBlock',x:e.x,y:e.y,life:.28,scale:1});
+    else if(e.t==='guardbreak')effects.push({kind:'breakBurst',x:e.x,y:e.y,life:.32,scale:1});
+    else if(e.t==='cast')effects.push({kind:'muzzle',x:e.x,y:e.y,life:.22,scale:1.2});
+    else if(e.t==='exp'&&e.victim===online.id)particles.push({x:e.x,y:e.y,text:'+'+Number(e.amount||0)+' EXP',life:1.25,col:'#8fd6ff'});
+    else if(e.t==='levelup'&&e.victim===online.id)notice('เลเวลอัป! Lv '+Number(e.level||1),3);
+  }
+}
+function applyOnlineSnapshot(m){
+  if(!Array.isArray(m.players)||!Array.isArray(m.mobs)||!Array.isArray(m.shots))return;
+  const self=m.players.find(p=>p.id===online.id);if(!self)return;
+  online.lastSnapshotAt=performance.now();
+  if(!online.selfGoal){player.x=self.x;player.y=self.y;}
+  online.selfGoal={x:self.x,y:self.y};
+  if(autoSupported&&typeof self.auto==='boolean'&&autoEnabled!==self.auto){autoEnabled=self.auto;updateAutoButton();}
+  player.face=self.face;player.vx=self.vx;player.vy=self.vy;player.hp=self.hp;player.max=self.max;
+  player.dead=self.dead;player.down=self.down;player.stun=self.stun;player.inv=self.inv;player.guard=self.guard;player.climb=self.climb;
+  if(self.character&&Number.isInteger(self.character.level)){online.character=self.character;updateProgressHUD(self.character);}
+  online.frame=self.frame;
+  const oldPeers=online.peers,nextPeers=new Map();
+  for(const p of m.players){if(p.id===online.id)continue;
+    const prev=oldPeers.get(p.id)||{rx:p.x,ry:p.y};
+    Object.assign(prev,p);nextPeers.set(p.id,prev);
+  }
+  online.peers=nextPeers;
+  const oldMobs=new Map(enemies.map(e=>[e.id,e]));
+  enemies=m.mobs.map(mob=>{
+    const prev=oldMobs.get(mob.id);
+    const e=prev||{rx:mob.x,ry:mob.y};
+    const justRespawned=prev&&prev.dead>0&&mob.dead<=0;
+    Object.assign(e,mob);
+    // Compatibility guard for v7.6 servers that publish negative respawn timers.
+    e.dead=Math.max(0,e.dead||0);
+    if(justRespawned||!Number.isFinite(e.rx)||Math.abs(e.x-e.rx)>300||Math.abs(e.y-e.ry)>200){e.rx=e.x;e.ry=e.y;}
+    return e;
+  });
+  if(target&&!enemies.includes(target))target=null;
+  // Shot id continuity + locally animated visual position between 10 Hz snapshots.
+  const oldShots=new Map(projectiles.map(s=>[s.id,s]));
+  const visualShotSpeeds={attack:520,aoe:365,break:560};
+  projectiles=m.shots.map(s=>{
+    const p=oldShots.get(s.id)||{};
+    Object.assign(p,s);
+    p.vx=(s.dir===-1?-1:1)*(visualShotSpeeds[s.kind]||0);
+    p.life=1;p.sinceSnap=0;
+    return p;
+  });
+  applyOnlineEvents(m.events);
+  document.getElementById('hptext').textContent=player.hp+' / '+player.max;
+  document.getElementById('hpbar').style.width=(100*Math.max(0,player.hp)/player.max)+'%';
+  const nearest=enemies.filter(e=>e.dead<=0&&Math.abs(e.x-self.x)<750).sort((a,b)=>Math.abs(a.x-self.x)-Math.abs(b.x-self.x))[0];
+  document.getElementById('target').textContent=nearest?`${nearest.name} HP ${nearest.hp}/${nearest.max}`:'ไม่มีมอนสเตอร์ใกล้ตัว';
+  document.getElementById('status').textContent='ONLINE • เซิร์ฟเวอร์คำนวณตำแหน่ง ดาเมจ และ HP • ผู้เล่นอื่น '+online.peers.size+' คน';
+  onlineHUD();
+}
+async function acceptWelcome(m,ws){
+  if(online.ws!==ws)return;
+  const priorId=online.id;
+  online.id=m.id;online.name=String(m.name||'');online.accountMode=m.guest===false;online.character=m.character||null;
+  autoSupported=Array.isArray(m.features)&&m.features.includes('auto');
+  online.resumeToken=typeof m.resume==='string'?m.resume:'';
+  try{if(online.resumeStoreKey&&online.resumeToken)sessionStorage.setItem(online.resumeStoreKey,online.resumeToken)}catch{}
+  online.retryCount=0;
+  if(online.retryTimer!==null){clearTimeout(online.retryTimer);online.retryTimer=null;}
+  if(creatorOpen){
+    const savedAvatar=avatarFromKey(m.character?.avatar)||{...draftAvatar};
+    const savedKey=avatarKey(savedAvatar);
+    if(savedKey!==online.avatarId){showLoading('กำลังโหลดตัวละครถาวร','พบบัญชีเดิม · กำลังโหลด Sprite ที่บันทึกไว้');onlineJoinAtlas=await requestAvatar(savedKey);hideLoading();}
+    activeAtlas=onlineJoinAtlas;selectedAvatar=savedAvatar;draftAvatar={...savedAvatar};online.avatarId=savedKey;
+    try{localStorage.setItem('wuxia-flute-avatar-v1',JSON.stringify(selectedAvatar))}catch{}
+    closeCreator();
+  }
+  if(!priorId || priorId!==m.id)reset();
+  keys.clear();clearWheel();online.queue.length=0;online.seq=0;online.frame=0;online.selfGoal=null;online.peers.clear();online.shots=[];
+  online.mode='connected';onlineLowCost=true;resize();
+  online.connectedAt=performance.now();online.lastSnapshotAt=online.connectedAt;
+  updateProgressHUD(online.character);onlineHUD();
+  notice(priorId===m.id?'กลับเข้าออนไลน์สำเร็จ • ใช้ตัวละครเดิม':online.accountMode?'โหลดตัวละครถาวรสำเร็จ':'เข้าห้อง Guest สำเร็จ • ความคืบหน้าไม่ถาวร',3);
+  if(autoEnabled&&autoSupported)sendAutoState(true);
+  onlineSendInput(true);
+}
+function connectGuestSocket(reconnecting){
+  if(!online.wantOnline || online.ws)return;
+  online.mode=reconnecting?'reconnecting':'connecting';onlineHUD();
+  let ws;
+  try{ws=new WebSocket(online.serverUrl);}
+  catch(e){if(creatorOpen)setCreatorMessage('เปิดการเชื่อมต่อไม่ได้: '+e.message,true);scheduleGuestRetry();return;}
+  online.ws=ws;
+  ws.onopen=async()=>{
+    if(online.ws!==ws)return;
+    const hello={t:'join',avatar:online.avatarId};
+    if(online.resumeToken)hello.resume=online.resumeToken;
+    if(online.accountMode){
+      try{online.accountToken=await account.getAccessToken();hello.auth={access_token:online.accountToken};hello.character_name=(characterName.value.trim()||'จอมยุทธ์').slice(0,24);}
+      catch(error){setCreatorMessage(error.message||'บัญชีหมดอายุ กรุณาเข้าสู่ระบบใหม่',true);try{ws.close(1000,'Account session unavailable')}catch{}return;}
+    }
+    ws.send(JSON.stringify(hello));
+  };
+  ws.onmessage=async event=>{
+    if(online.ws!==ws)return;
+    let m;try{m=JSON.parse(event.data)}catch{return}
+    if(m.t==='welcome'){
+      try{await acceptWelcome(m,ws)}catch(error){hideLoading();setCreatorMessage(error.message||'โหลดตัวละครถาวรไม่สำเร็จ',true);try{ws.close(1011,'Character asset failed')}catch{}}
+    }else if(m.t==='snapshot'&&online.mode==='connected')applyOnlineSnapshot(m);
+    else if(m.t==='error'){if(creatorOpen)setCreatorMessage(m.message||'เชื่อมต่อผิดพลาด',true)}
+  };
+  ws.onerror=()=>{if(creatorOpen)setCreatorMessage('เซิร์ฟเวอร์ยังไม่พร้อม กำลังเชื่อมใหม่…')};
+  ws.onclose=(ev)=>{
+    if(online.ws!==ws)return;
+    online.ws=null;online.queue.length=0;keys.clear();clearWheel();autoKeys.clear();
+    // Protocol violations must not trigger automated reconnect loops.
+    if(ev.code===1008 || !online.wantOnline){
+      disconnectOnline(ev.code===1008?'เซิร์ฟเวอร์ปฏิเสธคำสั่ง (code 1008)':'ออกจากออนไลน์');
+      if(creatorOpen)setCreatorBusy(false);
+      return;
+    }
+    // Duplicating a Safari tab can copy sessionStorage while the original tab
+    // still owns the token. Do not steal its player; retry as a fresh guest.
+    if(ev.code===1013 && (ev.reason||'').includes('Previous guest connection still active')){
+      online.resumeToken='';
+      try{sessionStorage.removeItem(online.resumeStoreKey)}catch{}
+    }
+    scheduleGuestRetry();
+  };
+}
+async function startOnline(){
+  stopAuto(true);
+  if(!previewAtlas||creatorOnline.disabled||online.mode==='connecting')return;
+  let url=onlineServerInput.value.trim();
+  if(!/^wss?:\/\//i.test(url)){setCreatorMessage('กรอกลิงก์ WebSocket เช่น wss://your-server.onrender.com/ws',true);return;}
+  try{const parsed=new URL(url);if(parsed.protocol!=='wss:'&&!(parsed.protocol==='ws:'&&['localhost','127.0.0.1'].includes(parsed.hostname)))throw Error('ต้องใช้ WSS ที่เข้ารหัส (ยกเว้น localhost)');url=parsed.href;}
+  catch(e){setCreatorMessage('ลิงก์เซิร์ฟเวอร์ไม่ถูกต้อง: '+e.message,true);return;}
+  try{localStorage.setItem('wuxia-online-server',url)}catch{}
+  const signedIn=!!account.getSession();
+  const requestedName=characterName.value.trim();
+  if(signedIn&&(requestedName.length<2||requestedName.length>24)){setCreatorMessage('กรอกชื่อตัวละคร 2–24 ตัวสำหรับบัญชีใหม่',true);return;}
+  if(signedIn)try{localStorage.setItem('wuxia-character-name-v1',requestedName)}catch{}
+  // Load only the chosen full atlas before opening the game connection.
+  const key=avatarKey(draftAvatar),token=creatorRequest;
+  setCreatorBusy(true);setCreatorMessage('กำลังเตรียม Sprite ตัวละครก่อนเข้าออนไลน์…');
+  try{onlineJoinAtlas=await loadReadyToPlay(key)}
+  catch(err){setCreatorBusy(false);setCreatorMessage(err.message,true);loadingFailure(err,()=>creatorOnline.click());return}
+  if(!creatorOpen||token!==creatorRequest){hideLoading();return;}
+  hideLoading();
+  disconnectOnline();
+  online.wantOnline=true;online.serverUrl=url;online.avatarId=key;online.accountMode=signedIn;
+  const accountId=account.getSession()?.user?.id||'guest';
+  online.resumeStoreKey='wuxia-resume-v2:'+url+':'+accountId+':'+online.avatarId;
+  try{online.resumeToken=sessionStorage.getItem(online.resumeStoreKey)||''}catch{online.resumeToken=''}
+  online.seq=0;online.queue=[];online.retryCount=0;
+  creatorOnline.disabled=true;
+  setCreatorMessage('กำลังเชื่อมต่อเซิร์ฟเวอร์ออนไลน์…');
+  connectGuestSocket(false);
+}
+// Input cadence does NOT depend on FPS or requestAnimationFrame.
+// Background timers may still be suspended by the OS: in that case the client reconnects on resume.
+setInterval(()=>onlineSendInput(),60);
+setInterval(async()=>{
+  if(online.mode!=='connected'||!online.accountMode||!online.ws||online.ws.readyState!==WebSocket.OPEN)return;
+  try{const token=await account.getAccessToken();if(token!==online.accountToken){online.accountToken=token;online.ws.send(JSON.stringify({t:'auth_refresh',access_token:token}));}}
+  catch(error){try{online.ws.close(4001,'Account session expired')}catch{}}
+},30000);
+setInterval(()=>{
+  if(online.mode==='connected'&&!document.hidden&&online.lastSnapshotAt &&
+     performance.now()-online.lastSnapshotAt>12000 && online.ws){
+    try{online.ws.close(4000,'No world updates received')}catch{}
+  }
+},3000);
+
+preloadCharacterPreviews();
+
+updateAutoButton();requestAnimationFrame(loop);
+})();
+</script></body></html>

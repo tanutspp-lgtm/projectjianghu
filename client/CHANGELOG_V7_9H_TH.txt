@@ -1,0 +1,5 @@
+WUXIA Flute v7.9H – cosmetic fixes based on iPad Safari feedback
+1. Second, center ladder at x=1170 now connects the ground y=550 to the existing middle platform y=390 (previously extended to y=235 with no upper platform at x=1170).
+2. Character draw anchor is moved 7 world units downward only when grounded and not climbing, to remove the visual gap between feet and top surface. Character physics and collisions unchanged; online peers apply same visual adjustment.
+3. Foreground leaf image is rendered at opacity 1, not 0.45. Source PNG alpha (transparent gaps) is retained, and it still scrolls as foreground parallax.
+4. No server-side files or game physics were changed.

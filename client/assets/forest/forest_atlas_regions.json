@@ -1,0 +1,1245 @@
+{
+  "source": "assets/forest/forest_master_original.png",
+  "source_size": [
+    1774,
+    887
+  ],
+  "description": "Game render crops from forest-master. Master stored unmodified. All locations are fixed source pixels. Crops preserve native pixel dimensions except fringe cleanup for game visibility.",
+  "assets": {
+    "ground_r1_c1": {
+      "src": "assets/forest/ground_r1_c1.png",
+      "source_rect": [
+        16,
+        10,
+        96,
+        95
+      ],
+      "size_px": [
+        96,
+        95
+      ],
+      "alpha_bbox": [
+        4,
+        14,
+        93,
+        92
+      ]
+    },
+    "ground_r1_c2": {
+      "src": "assets/forest/ground_r1_c2.png",
+      "source_rect": [
+        112,
+        10,
+        96,
+        95
+      ],
+      "size_px": [
+        96,
+        95
+      ],
+      "alpha_bbox": [
+        1,
+        26,
+        92,
+        85
+      ]
+    },
+    "ground_r1_c3": {
+      "src": "assets/forest/ground_r1_c3.png",
+      "source_rect": [
+        208,
+        10,
+        96,
+        95
+      ],
+      "size_px": [
+        96,
+        95
+      ],
+      "alpha_bbox": [
+        1,
+        20,
+        95,
+        95
+      ]
+    },
+    "ground_r1_c4": {
+      "src": "assets/forest/ground_r1_c4.png",
+      "source_rect": [
+        304,
+        10,
+        96,
+        95
+      ],
+      "size_px": [
+        96,
+        95
+      ],
+      "alpha_bbox": [
+        0,
+        15,
+        96,
+        95
+      ]
+    },
+    "ground_r1_c5": {
+      "src": "assets/forest/ground_r1_c5.png",
+      "source_rect": [
+        400,
+        10,
+        96,
+        95
+      ],
+      "size_px": [
+        96,
+        95
+      ],
+      "alpha_bbox": [
+        0,
+        11,
+        94,
+        94
+      ]
+    },
+    "ground_r1_c6": {
+      "src": "assets/forest/ground_r1_c6.png",
+      "source_rect": [
+        496,
+        10,
+        96,
+        95
+      ],
+      "size_px": [
+        96,
+        95
+      ],
+      "alpha_bbox": [
+        3,
+        11,
+        96,
+        94
+      ]
+    },
+    "ground_r1_c7": {
+      "src": "assets/forest/ground_r1_c7.png",
+      "source_rect": [
+        592,
+        10,
+        96,
+        95
+      ],
+      "size_px": [
+        96,
+        95
+      ],
+      "alpha_bbox": [
+        0,
+        7,
+        95,
+        95
+      ]
+    },
+    "ground_r1_c8": {
+      "src": "assets/forest/ground_r1_c8.png",
+      "source_rect": [
+        688,
+        10,
+        100,
+        95
+      ],
+      "size_px": [
+        100,
+        95
+      ],
+      "alpha_bbox": [
+        4,
+        6,
+        97,
+        95
+      ]
+    },
+    "ground_r2_c1": {
+      "src": "assets/forest/ground_r2_c1.png",
+      "source_rect": [
+        16,
+        105,
+        96,
+        112
+      ],
+      "size_px": [
+        96,
+        112
+      ],
+      "alpha_bbox": [
+        3,
+        1,
+        91,
+        112
+      ]
+    },
+    "ground_r2_c2": {
+      "src": "assets/forest/ground_r2_c2.png",
+      "source_rect": [
+        112,
+        105,
+        96,
+        112
+      ],
+      "size_px": [
+        96,
+        112
+      ],
+      "alpha_bbox": [
+        3,
+        1,
+        92,
+        109
+      ]
+    },
+    "ground_r2_c3": {
+      "src": "assets/forest/ground_r2_c3.png",
+      "source_rect": [
+        208,
+        105,
+        96,
+        112
+      ],
+      "size_px": [
+        96,
+        112
+      ],
+      "alpha_bbox": [
+        3,
+        0,
+        93,
+        109
+      ]
+    },
+    "ground_r2_c4": {
+      "src": "assets/forest/ground_r2_c4.png",
+      "source_rect": [
+        304,
+        105,
+        96,
+        112
+      ],
+      "size_px": [
+        96,
+        112
+      ],
+      "alpha_bbox": [
+        2,
+        0,
+        91,
+        112
+      ]
+    },
+    "ground_r2_c5": {
+      "src": "assets/forest/ground_r2_c5.png",
+      "source_rect": [
+        400,
+        105,
+        96,
+        112
+      ],
+      "size_px": [
+        96,
+        112
+      ],
+      "alpha_bbox": [
+        11,
+        6,
+        78,
+        112
+      ]
+    },
+    "ground_r2_c6": {
+      "src": "assets/forest/ground_r2_c6.png",
+      "source_rect": [
+        496,
+        105,
+        96,
+        112
+      ],
+      "size_px": [
+        96,
+        112
+      ],
+      "alpha_bbox": [
+        23,
+        4,
+        82,
+        112
+      ]
+    },
+    "ground_r2_c7": {
+      "src": "assets/forest/ground_r2_c7.png",
+      "source_rect": [
+        592,
+        105,
+        96,
+        112
+      ],
+      "size_px": [
+        96,
+        112
+      ],
+      "alpha_bbox": [
+        17,
+        4,
+        84,
+        112
+      ]
+    },
+    "ground_r2_c8": {
+      "src": "assets/forest/ground_r2_c8.png",
+      "source_rect": [
+        688,
+        105,
+        100,
+        112
+      ],
+      "size_px": [
+        100,
+        112
+      ],
+      "alpha_bbox": [
+        16,
+        5,
+        86,
+        112
+      ]
+    },
+    "ground_r3_c1": {
+      "src": "assets/forest/ground_r3_c1.png",
+      "source_rect": [
+        16,
+        217,
+        96,
+        83
+      ],
+      "size_px": [
+        96,
+        83
+      ],
+      "alpha_bbox": [
+        0,
+        0,
+        91,
+        83
+      ]
+    },
+    "ground_r3_c2": {
+      "src": "assets/forest/ground_r3_c2.png",
+      "source_rect": [
+        112,
+        217,
+        96,
+        83
+      ],
+      "size_px": [
+        96,
+        83
+      ],
+      "alpha_bbox": [
+        1,
+        5,
+        92,
+        80
+      ]
+    },
+    "ground_r3_c3": {
+      "src": "assets/forest/ground_r3_c3.png",
+      "source_rect": [
+        208,
+        217,
+        96,
+        83
+      ],
+      "size_px": [
+        96,
+        83
+      ],
+      "alpha_bbox": [
+        2,
+        6,
+        92,
+        83
+      ]
+    },
+    "ground_r3_c4": {
+      "src": "assets/forest/ground_r3_c4.png",
+      "source_rect": [
+        304,
+        217,
+        96,
+        83
+      ],
+      "size_px": [
+        96,
+        83
+      ],
+      "alpha_bbox": [
+        1,
+        0,
+        93,
+        83
+      ]
+    },
+    "ground_r3_c5": {
+      "src": "assets/forest/ground_r3_c5.png",
+      "source_rect": [
+        400,
+        217,
+        96,
+        83
+      ],
+      "size_px": [
+        96,
+        83
+      ],
+      "alpha_bbox": [
+        7,
+        0,
+        94,
+        83
+      ]
+    },
+    "ground_r3_c6": {
+      "src": "assets/forest/ground_r3_c6.png",
+      "source_rect": [
+        496,
+        217,
+        96,
+        83
+      ],
+      "size_px": [
+        96,
+        83
+      ],
+      "alpha_bbox": [
+        2,
+        0,
+        89,
+        83
+      ]
+    },
+    "ground_r3_c7": {
+      "src": "assets/forest/ground_r3_c7.png",
+      "source_rect": [
+        592,
+        217,
+        96,
+        83
+      ],
+      "size_px": [
+        96,
+        83
+      ],
+      "alpha_bbox": [
+        2,
+        0,
+        94,
+        83
+      ]
+    },
+    "ground_r3_c8": {
+      "src": "assets/forest/ground_r3_c8.png",
+      "source_rect": [
+        688,
+        217,
+        100,
+        83
+      ],
+      "size_px": [
+        100,
+        83
+      ],
+      "alpha_bbox": [
+        4,
+        0,
+        93,
+        83
+      ]
+    },
+    "ground_r4_c1": {
+      "src": "assets/forest/ground_r4_c1.png",
+      "source_rect": [
+        16,
+        300,
+        96,
+        86
+      ],
+      "size_px": [
+        96,
+        86
+      ],
+      "alpha_bbox": [
+        2,
+        0,
+        96,
+        84
+      ]
+    },
+    "ground_r4_c2": {
+      "src": "assets/forest/ground_r4_c2.png",
+      "source_rect": [
+        112,
+        300,
+        96,
+        86
+      ],
+      "size_px": [
+        96,
+        86
+      ],
+      "alpha_bbox": [
+        0,
+        3,
+        92,
+        84
+      ]
+    },
+    "ground_r4_c3": {
+      "src": "assets/forest/ground_r4_c3.png",
+      "source_rect": [
+        208,
+        300,
+        96,
+        86
+      ],
+      "size_px": [
+        96,
+        86
+      ],
+      "alpha_bbox": [
+        2,
+        0,
+        92,
+        84
+      ]
+    },
+    "ground_r4_c4": {
+      "src": "assets/forest/ground_r4_c4.png",
+      "source_rect": [
+        304,
+        300,
+        96,
+        86
+      ],
+      "size_px": [
+        96,
+        86
+      ],
+      "alpha_bbox": [
+        1,
+        0,
+        92,
+        66
+      ]
+    },
+    "ground_r4_c5": {
+      "src": "assets/forest/ground_r4_c5.png",
+      "source_rect": [
+        400,
+        300,
+        96,
+        86
+      ],
+      "size_px": [
+        96,
+        86
+      ],
+      "alpha_bbox": [
+        2,
+        0,
+        92,
+        65
+      ]
+    },
+    "ground_r4_c6": {
+      "src": "assets/forest/ground_r4_c6.png",
+      "source_rect": [
+        496,
+        300,
+        96,
+        86
+      ],
+      "size_px": [
+        96,
+        86
+      ],
+      "alpha_bbox": [
+        3,
+        0,
+        94,
+        66
+      ]
+    },
+    "ground_r4_c7": {
+      "src": "assets/forest/ground_r4_c7.png",
+      "source_rect": [
+        592,
+        300,
+        96,
+        86
+      ],
+      "size_px": [
+        96,
+        86
+      ],
+      "alpha_bbox": [
+        4,
+        0,
+        95,
+        84
+      ]
+    },
+    "ground_r4_c8": {
+      "src": "assets/forest/ground_r4_c8.png",
+      "source_rect": [
+        688,
+        300,
+        100,
+        86
+      ],
+      "size_px": [
+        100,
+        86
+      ],
+      "alpha_bbox": [
+        4,
+        0,
+        95,
+        84
+      ]
+    },
+    "platform_r1_c1": {
+      "src": "assets/forest/platform_r1_c1.png",
+      "source_rect": [
+        877,
+        36,
+        110,
+        90
+      ],
+      "size_px": [
+        110,
+        90
+      ],
+      "alpha_bbox": [
+        10,
+        10,
+        106,
+        82
+      ]
+    },
+    "platform_r1_c2": {
+      "src": "assets/forest/platform_r1_c2.png",
+      "source_rect": [
+        987,
+        36,
+        111,
+        90
+      ],
+      "size_px": [
+        111,
+        90
+      ],
+      "alpha_bbox": [
+        4,
+        13,
+        106,
+        77
+      ]
+    },
+    "platform_r1_c3": {
+      "src": "assets/forest/platform_r1_c3.png",
+      "source_rect": [
+        1098,
+        36,
+        111,
+        90
+      ],
+      "size_px": [
+        111,
+        90
+      ],
+      "alpha_bbox": [
+        5,
+        12,
+        107,
+        79
+      ]
+    },
+    "platform_r1_c4": {
+      "src": "assets/forest/platform_r1_c4.png",
+      "source_rect": [
+        1209,
+        36,
+        116,
+        90
+      ],
+      "size_px": [
+        116,
+        90
+      ],
+      "alpha_bbox": [
+        6,
+        9,
+        101,
+        83
+      ]
+    },
+    "platform_r1_c5": {
+      "src": "assets/forest/platform_r1_c5.png",
+      "source_rect": [
+        1325,
+        36,
+        113,
+        90
+      ],
+      "size_px": [
+        113,
+        90
+      ],
+      "alpha_bbox": [
+        17,
+        19,
+        91,
+        75
+      ]
+    },
+    "platform_r1_c6": {
+      "src": "assets/forest/platform_r1_c6.png",
+      "source_rect": [
+        1438,
+        36,
+        110,
+        90
+      ],
+      "size_px": [
+        110,
+        90
+      ],
+      "alpha_bbox": [
+        4,
+        3,
+        100,
+        87
+      ]
+    },
+    "platform_r1_c7": {
+      "src": "assets/forest/platform_r1_c7.png",
+      "source_rect": [
+        1548,
+        36,
+        110,
+        90
+      ],
+      "size_px": [
+        110,
+        90
+      ],
+      "alpha_bbox": [
+        5,
+        5,
+        103,
+        85
+      ]
+    },
+    "platform_r1_c8": {
+      "src": "assets/forest/platform_r1_c8.png",
+      "source_rect": [
+        1658,
+        36,
+        109,
+        90
+      ],
+      "size_px": [
+        109,
+        90
+      ],
+      "alpha_bbox": [
+        5,
+        10,
+        100,
+        76
+      ]
+    },
+    "platform_r2_c1": {
+      "src": "assets/forest/platform_r2_c1.png",
+      "source_rect": [
+        877,
+        126,
+        110,
+        104
+      ],
+      "size_px": [
+        110,
+        104
+      ],
+      "alpha_bbox": [
+        3,
+        7,
+        107,
+        104
+      ]
+    },
+    "platform_r2_c2": {
+      "src": "assets/forest/platform_r2_c2.png",
+      "source_rect": [
+        987,
+        126,
+        111,
+        104
+      ],
+      "size_px": [
+        111,
+        104
+      ],
+      "alpha_bbox": [
+        5,
+        17,
+        108,
+        82
+      ]
+    },
+    "platform_r2_c3": {
+      "src": "assets/forest/platform_r2_c3.png",
+      "source_rect": [
+        1098,
+        126,
+        111,
+        104
+      ],
+      "size_px": [
+        111,
+        104
+      ],
+      "alpha_bbox": [
+        6,
+        13,
+        108,
+        84
+      ]
+    },
+    "platform_r2_c4": {
+      "src": "assets/forest/platform_r2_c4.png",
+      "source_rect": [
+        1209,
+        126,
+        116,
+        104
+      ],
+      "size_px": [
+        116,
+        104
+      ],
+      "alpha_bbox": [
+        5,
+        5,
+        107,
+        98
+      ]
+    },
+    "platform_r2_c5": {
+      "src": "assets/forest/platform_r2_c5.png",
+      "source_rect": [
+        1325,
+        126,
+        113,
+        104
+      ],
+      "size_px": [
+        113,
+        104
+      ],
+      "alpha_bbox": [
+        6,
+        16,
+        100,
+        89
+      ]
+    },
+    "platform_r2_c6": {
+      "src": "assets/forest/platform_r2_c6.png",
+      "source_rect": [
+        1438,
+        126,
+        110,
+        104
+      ],
+      "size_px": [
+        110,
+        104
+      ],
+      "alpha_bbox": [
+        3,
+        6,
+        102,
+        103
+      ]
+    },
+    "platform_r2_c7": {
+      "src": "assets/forest/platform_r2_c7.png",
+      "source_rect": [
+        1548,
+        126,
+        110,
+        104
+      ],
+      "size_px": [
+        110,
+        104
+      ],
+      "alpha_bbox": [
+        5,
+        6,
+        105,
+        104
+      ]
+    },
+    "platform_r2_c8": {
+      "src": "assets/forest/platform_r2_c8.png",
+      "source_rect": [
+        1658,
+        126,
+        109,
+        104
+      ],
+      "size_px": [
+        109,
+        104
+      ],
+      "alpha_bbox": [
+        3,
+        14,
+        101,
+        90
+      ]
+    },
+    "platform_r3_c1": {
+      "src": "assets/forest/platform_r3_c1.png",
+      "source_rect": [
+        877,
+        230,
+        110,
+        124
+      ],
+      "size_px": [
+        110,
+        124
+      ],
+      "alpha_bbox": [
+        1,
+        0,
+        108,
+        103
+      ]
+    },
+    "platform_r3_c2": {
+      "src": "assets/forest/platform_r3_c2.png",
+      "source_rect": [
+        987,
+        230,
+        111,
+        124
+      ],
+      "size_px": [
+        111,
+        124
+      ],
+      "alpha_bbox": [
+        2,
+        9,
+        107,
+        95
+      ]
+    },
+    "platform_r3_c3": {
+      "src": "assets/forest/platform_r3_c3.png",
+      "source_rect": [
+        1098,
+        230,
+        111,
+        124
+      ],
+      "size_px": [
+        111,
+        124
+      ],
+      "alpha_bbox": [
+        2,
+        2,
+        111,
+        97
+      ]
+    },
+    "platform_r3_c4": {
+      "src": "assets/forest/platform_r3_c4.png",
+      "source_rect": [
+        1209,
+        230,
+        116,
+        124
+      ],
+      "size_px": [
+        116,
+        124
+      ],
+      "alpha_bbox": [
+        0,
+        1,
+        101,
+        117
+      ]
+    },
+    "platform_r3_c5": {
+      "src": "assets/forest/platform_r3_c5.png",
+      "source_rect": [
+        1325,
+        230,
+        113,
+        124
+      ],
+      "size_px": [
+        113,
+        124
+      ],
+      "alpha_bbox": [
+        8,
+        12,
+        99,
+        95
+      ]
+    },
+    "platform_r3_c6": {
+      "src": "assets/forest/platform_r3_c6.png",
+      "source_rect": [
+        1438,
+        230,
+        110,
+        124
+      ],
+      "size_px": [
+        110,
+        124
+      ],
+      "alpha_bbox": [
+        6,
+        7,
+        101,
+        111
+      ]
+    },
+    "platform_r3_c7": {
+      "src": "assets/forest/platform_r3_c7.png",
+      "source_rect": [
+        1548,
+        230,
+        110,
+        124
+      ],
+      "size_px": [
+        110,
+        124
+      ],
+      "alpha_bbox": [
+        2,
+        0,
+        105,
+        119
+      ]
+    },
+    "platform_r3_c8": {
+      "src": "assets/forest/platform_r3_c8.png",
+      "source_rect": [
+        1658,
+        230,
+        109,
+        124
+      ],
+      "size_px": [
+        109,
+        124
+      ],
+      "alpha_bbox": [
+        0,
+        10,
+        105,
+        96
+      ]
+    },
+    "rope_top": {
+      "src": "assets/forest/rope_top.png",
+      "source_rect": [
+        60,
+        425,
+        100,
+        85
+      ],
+      "size_px": [
+        100,
+        85
+      ],
+      "alpha_bbox": [
+        4,
+        10,
+        96,
+        85
+      ]
+    },
+    "rope_mid": {
+      "src": "assets/forest/rope_mid.png",
+      "source_rect": [
+        278,
+        555,
+        48,
+        53
+      ],
+      "size_px": [
+        48,
+        53
+      ],
+      "alpha_bbox": [
+        12,
+        0,
+        40,
+        53
+      ]
+    },
+    "rope_alt_mid": {
+      "src": "assets/forest/rope_alt_mid.png",
+      "source_rect": [
+        467,
+        560,
+        58,
+        53
+      ],
+      "size_px": [
+        58,
+        53
+      ],
+      "alpha_bbox": [
+        0,
+        0,
+        48,
+        53
+      ]
+    },
+    "rope_bottom": {
+      "src": "assets/forest/rope_bottom.png",
+      "source_rect": [
+        636,
+        710,
+        105,
+        122
+      ],
+      "size_px": [
+        105,
+        122
+      ],
+      "alpha_bbox": [
+        0,
+        0,
+        102,
+        119
+      ]
+    },
+    "rope_knotted_mid": {
+      "src": "assets/forest/rope_knotted_mid.png",
+      "source_rect": [
+        464,
+        650,
+        68,
+        59
+      ],
+      "size_px": [
+        68,
+        59
+      ],
+      "alpha_bbox": [
+        0,
+        0,
+        58,
+        59
+      ]
+    },
+    "ladder_top": {
+      "src": "assets/forest/ladder_top.png",
+      "source_rect": [
+        918,
+        428,
+        137,
+        66
+      ],
+      "size_px": [
+        137,
+        66
+      ],
+      "alpha_bbox": [
+        12,
+        11,
+        128,
+        66
+      ]
+    },
+    "ladder_mid": {
+      "src": "assets/forest/ladder_mid.png",
+      "source_rect": [
+        1106,
+        509,
+        126,
+        48
+      ],
+      "size_px": [
+        126,
+        48
+      ],
+      "alpha_bbox": [
+        13,
+        0,
+        116,
+        48
+      ]
+    },
+    "ladder_bottom": {
+      "src": "assets/forest/ladder_bottom.png",
+      "source_rect": [
+        1472,
+        756,
+        133,
+        70
+      ],
+      "size_px": [
+        133,
+        70
+      ],
+      "alpha_bbox": [
+        4,
+        0,
+        128,
+        59
+      ]
+    },
+    "ladder_variant_mid": {
+      "src": "assets/forest/ladder_variant_mid.png",
+      "source_rect": [
+        1293,
+        509,
+        127,
+        48
+      ],
+      "size_px": [
+        127,
+        48
+      ],
+      "alpha_bbox": [
+        8,
+        0,
+        114,
+        48
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: wuxia-guest-arena
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    healthCheckPath: /healthz
+    envVars:
+      - key: MAX_GUESTS
+        value: 35

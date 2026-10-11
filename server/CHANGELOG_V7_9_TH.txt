@@ -1,0 +1,24 @@
+WUXIA FLUTE ARENA v7.9 — Server Authoritative AUTO PvE
+ฐาน: v7.8 GUEST ONLINE SERVER AFK RECONNECT
+
+เพิ่ม WebSocket command:
+{ "t": "auto", "enabled": true|false }
+ต้องเป็น JSON object ที่มีเฉพาะ t และ enabled (boolean แท้) ไม่มี x/y,damage,hp,monster id ฯลฯ
+
+- Guest.auto_mode อยู่ฝั่ง server; server เลือกเป้าหมาย ตรวจชั้นของแพลตฟอร์ม เดินด้วยความเร็วเดิม (205) ยิงสกิลด้วย cooldown และความแรงเดิม
+- server auto ยิงได้เฉพาะมอนสเตอร์ ไม่สามารถยิงผู้เล่นคนอื่นโดย AI ได้ (pve_only shots)
+- ยกเลิก AUTO ทันทีเมื่อผู้เล่นส่ง input เดินหรือสกิลเอง
+- หยุด AUTO เมื่อหลุดการเชื่อมต่อ; ไม่ฟาร์มระหว่างออฟไลน์จริง
+- ถ้า connection ค้างแต่แท็บถูกพัก server คำนวณ AUTO ต่อได้โดยไม่ต้องรอ input ปกติจาก JS
+- จำกัดความถี่คำสั่งเปิด/ปิด AUTO, ปฏิเสธ field แปลกปลอมด้วย websocket close 1008
+- ยังคงระบบ resume ของ v7.8 และฐานกันโกงเดิม
+
+การอัปเดต Render: แทนไฟล์ server.py เดิมใน GitHub แล้ว Commit; ไม่ต้องสร้าง Service ใหม่
+ไฟล์ tests สำหรับรันท้องถิ่น:
+  python test_auto_unit.py
+  python test_auto_mode.py
+  python test_security.py
+  python test_idle_resume.py  (ใช้เวลามากกว่า 29 วินาที)
+
+การทดสอบผ่าน: Auto PvE, ห้าม AUTO ยิงคน, AFK ไม่มี input แล้วเดินได้, manual override, reject fake x/y/damage, suite security เก่า
+ยังไม่ได้ Deploy / วัดจริงบน Render Singapore

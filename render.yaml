@@ -1,11 +1,30 @@
+previews:
+  generation: off
+
 services:
   - type: web
     name: wuxia-guest-arena
     runtime: python
     plan: free
+    autoDeployTrigger: off
     buildCommand: pip install -r requirements.txt
     startCommand: python server.py
     healthCheckPath: /healthz
+    buildFilter:
+      paths:
+        - server/**
+        - database/**
+        - server.py
+        - requirements.txt
+        - render.yaml
     envVars:
       - key: MAX_GUESTS
-        value: 35
+        value: "35"
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false

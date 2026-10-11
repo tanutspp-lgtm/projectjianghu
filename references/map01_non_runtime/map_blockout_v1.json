@@ -1,0 +1,124 @@
+{
+  "id": "flute_outer_mountain_01",
+  "title": "Whispering Bamboo Mountain Trail",
+  "role": "combat_field_after_flute_sect",
+  "width": 2060,
+  "drawing_height": 740,
+  "collision_system": "world_foot_pivot_and_foothold_lines",
+  "footholds": [
+    {
+      "id": "g0",
+      "x1": 0,
+      "y1": 550,
+      "x2": 2060,
+      "y2": 550,
+      "kind": "solid-ground"
+    },
+    {
+      "id": "m1",
+      "x1": 170,
+      "y1": 390,
+      "x2": 850,
+      "y2": 390,
+      "kind": "one-way-rock"
+    },
+    {
+      "id": "m2",
+      "x1": 1020,
+      "y1": 390,
+      "x2": 1770,
+      "y2": 390,
+      "kind": "one-way-rock"
+    },
+    {
+      "id": "u1",
+      "x1": 410,
+      "y1": 235,
+      "x2": 1070,
+      "y2": 235,
+      "kind": "one-way-wood"
+    },
+    {
+      "id": "u2",
+      "x1": 1210,
+      "y1": 235,
+      "x2": 1970,
+      "y2": 235,
+      "kind": "one-way-wood"
+    }
+  ],
+  "climbables": [
+    {
+      "id": "c1",
+      "x": 510,
+      "top": 235,
+      "bottom": 550,
+      "type": "rope"
+    },
+    {
+      "id": "c2",
+      "x": 1170,
+      "top": 235,
+      "bottom": 550,
+      "type": "ladder"
+    },
+    {
+      "id": "c3",
+      "x": 1590,
+      "top": 235,
+      "bottom": 550,
+      "type": "rope"
+    }
+  ],
+  "portals": [
+    {
+      "id": "back_to_flute_sect",
+      "x": 82,
+      "ground_y": 550,
+      "destination": "flute_sect_hub_safe_no_monsters"
+    },
+    {
+      "id": "to_next_map_placeholder",
+      "x": 2000,
+      "ground_y": 550,
+      "destination": "later"
+    }
+  ],
+  "safe_entry_zone": {
+    "x1": 0,
+    "x2": 240,
+    "no_monsters": true
+  },
+  "spawn_player": {
+    "x": 175,
+    "y": 550
+  },
+  "suggested_monster_zones": [
+    {
+      "x1": 280,
+      "x2": 850,
+      "tier": 1
+    },
+    {
+      "x1": 910,
+      "x2": 1500,
+      "tier": 2
+    },
+    {
+      "x1": 1550,
+      "x2": 1990,
+      "tier": 3
+    }
+  ],
+  "layers": [
+    "sky",
+    "far_peaks",
+    "mid_mountains",
+    "bamboo_forest",
+    "terrain",
+    "characters_and_enemies",
+    "foreground_leaves"
+  ],
+  "art_direction": "Fresh daylight Chinese wuxia mountain bamboo forest, soft muted pixel art, not glossy HD anime",
+  "note": "Footholds and climbables copy v7.9 geometry exactly. Final reachability and spawn positions need in-engine validation; this is a map design/mockup, not an integrated game level."
+}
