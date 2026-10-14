@@ -9,7 +9,7 @@ import math
 import os
 import secrets
 import time
-from collections import deque
+from collections import deque, defaultdict
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from typing import Optional
@@ -233,6 +233,13 @@ class Guest(Actor):
     qi_shield_until: float = 0
     qi_shield_cd: float = 0
     auto_state: farm_auto.State = field(default_factory=farm_auto.State)
+    snapshot_outbox: asyncio.Queue = field(default_factory=lambda:asyncio.Queue(maxsize=1))
+    snapshot_task: Optional[asyncio.Task] = None
+    snapshot_slot: int = 0  # 0..9, 10ms-phase staggering across each 100ms broadcast cycle
+    applied_input_seq: int = -1  # actual command consumed by the authoritative 30Hz simulation
+    protocol_delta: bool = False # legacy BX clients still require unfiltered full snapshots
+    stable_stats_key: object = None
+    stable_derived_stats: object = None
 
 
 @dataclass
@@ -294,6 +301,43 @@ LOOT_BAG_CAP=48
 events: list[dict] = []
 shot_seq = 0
 server_step = 0
+snapshot_join_sequence = 0
+# One-second bounded performance counters, cheap enough for the 30Hz game loop.
+perf_ticks = deque(maxlen=180)
+perf_data = {'tickP95Ms':0.0,'tickMaxMs':0.0,'rxInputsPerSec':0,'txKiBPerSec':0.0,'playerCount':0,'monsterCount':0}
+perf_last_report = time.monotonic()
+perf_in_count = 0
+perf_out_bytes = 0
+SPATIAL_CELL = 240
+
+def index_players_by_x():
+    # Share one indexed player roster across 20 beasts; combat remains authoritative.
+    cells = defaultdict(list)
+    for p in players.values():
+        if p.dead<=0:
+            cells[int(p.x // SPATIAL_CELL)].append(p)
+    return cells
+
+def candidate_players_by_x(m, grid):
+    if grid is None:
+        return players.values()  # direct unit calls still work without an index
+    radius=BEAST_AGGRO+65
+    first=int((m.x-radius)//SPATIAL_CELL)
+    last=int((m.x+radius)//SPATIAL_CELL)
+    return (p for cell in range(first,last+1) for p in grid.get(cell,()))
+
+def performance_rollup(now):
+    global perf_last_report,perf_in_count,perf_out_bytes
+    elapsed=now-perf_last_report
+    if elapsed<1:return
+    ordered=sorted(perf_ticks)
+    perf_data.update(tickP95Ms=round(ordered[min(len(ordered)-1,int(len(ordered)*.95))]*1000,2) if ordered else 0,
+                     tickMaxMs=round(max(ordered)*1000,2) if ordered else 0,
+                     rxInputsPerSec=round(perf_in_count/elapsed),
+                     txKiBPerSec=round(perf_out_bytes/1024/elapsed,1),
+                     playerCount=len(players),monsterCount=len(monsters))
+    perf_in_count=0;perf_out_bytes=0;perf_last_report=now
+
 
 
 # NOTE: The OFFLINE JavaScript spawner remains the source of truth for this test-map
@@ -456,6 +500,7 @@ def perform_action(p: Guest, action: str):
 
 
 def update_guest(p: Guest, dt, tick_now):
+    p.applied_input_seq=p.last_seq  # ack only after simulation consumes this input
     for v in ('cool', 'inv', 'stun', 'down', 'broken', 'climb_cd'):
         setattr(p, v, max(0, getattr(p, v) - dt))
     p.action_at += dt
@@ -561,7 +606,7 @@ def mob_patrol(m, t):
     return direction*BEAST_PATROL_SPEED
 
 
-def update_mob(m,dt):
+def update_mob(m,dt,player_grid=None):
     t=time.monotonic()
     if m.dead>0:
         m.dead=max(0,m.dead-dt)
@@ -578,9 +623,10 @@ def update_mob(m,dt):
     m.stun=max(0,m.stun-dt)
     m.down=max(0,m.down-dt)
     m.broken=max(0,m.broken-dt)
-    targets=[p for p in players.values() if reachable_player(m,p) and abs(p.x-m.x)<BEAST_AGGRO+65]
-    targets.sort(key=lambda p:abs(p.x-m.x))
-    p=targets[0] if targets else None
+    # Spatial grid reduces the candidate roster; no change to hit detection.
+    p=min((p for p in candidate_players_by_x(m,player_grid)
+           if reachable_player(m,p) and abs(p.x-m.x)<BEAST_AGGRO+65),
+          key=lambda p:abs(p.x-m.x),default=None)
     dx=p.x-m.x if p else 0
     dy=p.y-m.y if p else 10000
     near=bool(p and abs(dx)<BEAST_AGGRO)
@@ -747,7 +793,11 @@ def apply_qi_on_primary_hit(shot,victim,damage):
             target=min(candidates,key=lambda x:math.hypot(x.x-victim.x,x.y-victim.y))
             if not target.guard:bonus_hit(killer,target,damage*m['echoPct']/100,'qi_echo')
 
+# v8.0CA: Guest arena is strictly cooperative PvE, NOT a PK arena.
+# Fail closed: even if a future collision caller erroneously passes a Guest,
+# do not allow player damage, crowd-control, guard-break or projectile consumption.
 def apply_shot(s, victim, is_mob):
+    if not is_mob or not isinstance(victim, Monster): return False
     if victim.id in s.hit or victim.dead > 0: return False
     if not is_mob and victim.id == s.owner: return False
     s.hit.add(victim.id)
@@ -787,8 +837,9 @@ def update_shots(dt):
         s.life -= dt
         s.x += s.vx * dt
         if s.life <= 0 or s.x < -80 or s.x > WORLD_W + 80: continue
-        victims = [*monsters.values(), *players.values()]
-        victims = [v for v in victims if v.dead <= 0 and v.id != s.owner and abs(v.y - s.y - 78) < 95 and abs(v.x - s.x) < (60 if s.kind == 'aoe' else 36)]
+        # PvE only. Player bodies are not candidates: projectiles pass through
+        # all Guests, including their guards and overlapping farming positions.
+        victims = [v for v in monsters.values() if v.dead <= 0 and abs(v.y - s.y - 78) < 95 and abs(v.x - s.x) < (60 if s.kind == 'aoe' else 36)]
         victims.sort(key=lambda v: abs(v.x - s.x))
         consumed = False
         for v in victims:
@@ -819,56 +870,180 @@ def actor_json(a):
     return {'id': a.id, 'level': a.level if isinstance(a,(Guest,Monster)) else 1, 'x': round(a.x, 2), 'y': round(a.y, 2), 'vx': round(a.vx, 2), 'vy': round(a.vy, 2),
             'face': a.face, 'hp': a.hp, 'max': a.max_hp, 'ground': a.ground, 'guard': a.guard, 'down': round(a.down, 2), 'dead': round(a.dead, 2),
             'stun': round(a.stun, 2), 'inv': round(a.inv, 2), 'climb': bool(a.climb), 'frame': actor_frame(a, server_step), 'action': a.action,
-            **({'defense':a.defense} if isinstance(a,Monster) else {})}
+            **({'defense':a.defense} if isinstance(a,Monster) else {'lastAppliedSeq':a.applied_input_seq})}
 
+
+def derived_for_snapshot(p):
+    # Dirty-signature cache: recompute expensive gear/qi/derived totals only
+    # after server-owned level/stat/qi/equipment state changes, not every 100ms.
+    sig=(p.level,p.test_level,tuple(p.stats[k] for k in prog.STAT_KEYS),
+         tuple(p.qi_equipped),tuple(sorted((k,tuple(sorted(v.items()))) for k,v in p.qi_ranks.items())),
+         p.gear_level,p.gear_def_row,p.gear_atk_row,p.gear_enhancement)
+    if sig!=p.stable_stats_key:
+        p.stable_stats_key=sig
+        p.stable_derived_stats=prog.derive_stats(p,hp_reference)
+    return p.stable_derived_stats
 
 def private_progression(p):
     return {'expWithinLevel':p.exp,'expToNext':prog.exp_to_next(p.level),
             'statPoints':p.stat_points,'skillPoints':p.skill_points,'totalKills':p.total_kills,
             'stats':p.stats,'skillRanks':p.skill_ranks,
             'sp':round(p.sp,2),'maxSp':p.max_sp,'sta':round(p.sta,2),'maxSta':p.max_sta,
-            'defense':p.defense,'derived':prog.derive_stats(p,hp_reference),
+            'defense':p.defense,'derived':derived_for_snapshot(p),
             'auto':p.auto_state.enabled,'autoTarget':(dict(p.auto_state.goal) if p.auto_state.enabled and p.auto_state.goal else None),
             'autoTargetSeconds':round(max(0,p.auto_state.goal_due-time.monotonic()),1) if p.auto_state.enabled else 0,
-            'sandboxAvailable':ENABLE_GUEST_SANDBOX,**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
+            'sandboxAvailable':ENABLE_GUEST_SANDBOX,'inputAck':p.applied_input_seq,'performance':perf_data.copy(),**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
+
+
+# v8.0BY network scalability: one server-owned world sample per 100ms.
+# AOI is strictly visual; hit detection and rewards still use ALL server actors.
+AOI_RADIUS=int(os.environ.get('AOI_RADIUS','950'))
+if AOI_RADIUS<700 or AOI_RADIUS>6000:raise ValueError('AOI_RADIUS must be 700..6000')
+DELTA_REFRESH_TICKS=150 # 5 seconds at 30Hz, periodic full keyframe self-heals missed state.
 
 
 def snapshot():
-    return json.dumps({'t': 'snapshot', 'tick': server_step, 'players': [{**actor_json(p), 'avatar':p.avatar} for p in players.values()],
-                       'mobs': [{**actor_json(m), 'name': m.name, 'hum': m.hum, 'species': m.species, 'biteAge': round(max(0,time.monotonic()-m.bite_started_at),3) if m.bite_started_at>0 else -1, 'spawnId':m.slot} for m in monsters.values()],
-                       'loot': [{'id':d['id'],'item_id':d['item_id'],'x':d['x'],'y':d['y'],
-                                 'ownerId':d['ownerId'],'privateFor':round(max(0,d['privateUntil']-time.monotonic()),1),
-                                 'expiresIn':round(max(0,d['expiresAt']-time.monotonic()),1)} for d in loot_drops],
-                       'shots': [{'id': s.id, 'kind': s.kind, 'x': round(s.x, 1), 'y': round(s.y, 1), 'dir': 1 if s.vx >= 0 else -1} for s in shots],
-                       'events': events[:80]}, separators=(',', ':'))
+    """Shared immutable-by-convention world state; no per-guest JSON on the tick path."""
+    moment=time.monotonic()
+    return {'t':'snapshot','tick':server_step,
+            'players':[{**actor_json(p),'avatar':p.avatar} for p in players.values()],
+            'mobs':[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
+                     'biteAge':round(max(0,moment-m.bite_started_at),3) if m.bite_started_at>0 else -1,
+                     'spawnId':m.slot} for m in monsters.values()],
+            'loot':[{'id':d['id'],'item_id':d['item_id'],'x':d['x'],'y':d['y'],
+                     'ownerId':d['ownerId'],'privateFor':round(max(0,d['privateUntil']-moment),1),
+                     'expiresIn':round(max(0,d['expiresAt']-moment),1)} for d in loot_drops],
+            'shots':[{'id':s.id,'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
+                      'dir':1 if s.vx>=0 else -1} for s in shots],
+            'events':events[:80]}
+
+
+def aoi_view(world,p):
+    """Send a generous world-space window. Never let a client choose their AOI origin."""
+    cx=p.x
+    radius=AOI_RADIUS
+    view={}
+    for field in ('players','mobs','shots','loot'):
+        # Keep ranged projectile and enemy telegraphs visible slightly outside AOI.
+        extra=200 if field in ('mobs','shots') else 0
+        view[field]={e['id']:e for e in world[field]
+                     if (field=='players' and e['id']==p.id) or abs(e['x']-cx)<=radius+extra}
+    return view
+
+
+def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inventory=None):
+    """Diff from LAST SUCCESSFULLY SENT packet, not the newest queued packet.
+    Dropped mailbox packets can't corrupt the next delta's baseline.
+    """
+    current=aoi_view(world,p)
+    full=previous is None or world['tick']-last_full_tick>=DELTA_REFRESH_TICKS
+    result={'t':'snapshot','tick':world['tick']}
+    if full:
+        result['full']=True
+        for kind in current:result[kind]=list(current[kind].values())
+    else:
+        result['delta']=True
+        for kind,entities in current.items():
+            before=previous[kind]
+            changed=[]
+            for key,item in entities.items():
+                old=before.get(key)
+                if old is None:changed.append(item)
+                else:
+                    patch={'id':key}
+                    for attr,value in item.items():
+                        if attr!='id' and old.get(attr)!=value:patch[attr]=value
+                    if len(patch)>1:changed.append(patch)
+            result[kind]=changed
+            missing=[key for key in before if key not in entities]
+            if missing:result['removed'+kind.capitalize()]=missing
+    result['events']=[e for e in world['events'] if e.get('victim')==p.id or
+                       e.get('owner')==p.id or abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200]
+    priv=private_progression(p)
+    priv['inputAck']=current['players'][p.id]['lastAppliedSeq']
+    if full or prev_private is None:
+        result['self']=priv
+    else:
+        result['self']={k:v for k,v in priv.items() if prev_private.get(k)!=v}
+    inv=[dict(e) for e in p.inventory] # isolated ownership snapshot; no alias mutations
+    if full or prev_inventory!=inv:
+        result['inventory']=inv
+    return (json.dumps(result,separators=(',',':')),current,
+            (world['tick'] if full else last_full_tick),priv,inv)
+
+
+async def snapshot_writer(p: Guest):
+    """Stagger 10Hz sending, serialize/diff per client in that phase (not game tick).
+    Bounded one-snapshot mailbox; one slow socket cannot block simulation.
+    """
+    previous=None;last_full_tick=-1;prev_private=None;prev_inventory=None
+    try:
+        while True:
+            world=await p.snapshot_outbox.get()
+            period=.1;offset=p.snapshot_slot*.01
+            wait=(offset-(time.monotonic()%period))%period
+            if wait>.001:await asyncio.sleep(wait)
+            # Consume the newest world, if producer overran our send slot.
+            while not p.snapshot_outbox.empty():
+                try:world=p.snapshot_outbox.get_nowait()
+                except asyncio.QueueEmpty:break
+            if p.protocol_delta:
+                packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory)
+            else:
+                # Legacy clients receive original full-world shape until upgraded.
+                old={**world,'self':private_progression(p),'inventory':p.inventory}
+                packet=json.dumps(old,separators=(',',':'))
+                current,full_tick,priv,inv=None,-1,None,None
+            try:
+                await asyncio.wait_for(p.ws.send(packet),timeout=1.5)
+                global perf_out_bytes
+                perf_out_bytes += len(packet.encode('utf-8'))
+                previous,last_full_tick=current,full_tick
+                prev_private,prev_inventory=priv,inv
+            except (asyncio.TimeoutError,ConnectionClosed,OSError):
+                try:await p.ws.close(code=1011,reason='Snapshot send timeout')
+                except Exception:pass
+                return
+    except asyncio.CancelledError:return
+
+
+def queue_latest_snapshot(p: Guest, world):
+    q=p.snapshot_outbox
+    if q.full():
+        try:q.get_nowait()
+        except asyncio.QueueEmpty:pass
+    try:q.put_nowait(world)
+    except asyncio.QueueFull:pass
 
 
 async def game_loop():
     global server_step
-    next_tick = time.monotonic()
+    next_tick=time.monotonic()
     while True:
-        next_tick += DT
-        tick_now = time.monotonic()
-        server_step += 1
+        next_tick+=DT
+        tick_now=time.monotonic()
+        server_step+=1
         for p in list(players.values()):
             if p.auto_state.enabled:
                 buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,monsters)
                 p.buttons=buttons;p.last_input=tick_now
                 for action in actions:perform_action(p,action)
-            update_guest(p, DT, tick_now)
-        for m in monsters.values(): update_mob(m, DT)
+            update_guest(p,DT,tick_now)
+        grid=index_players_by_x()
+        for m in monsters.values():update_mob(m,DT,grid)
         update_shots(DT)
         advance_loot()
-        if server_step % 3 == 0 and players:
-            snap = snapshot()
-            # Build shared state once. Personal bag is injected per socket without
-            # serializing the entire world 30 extra times per frame.
-            targets=list(players.values())
-            await asyncio.gather(*(p.ws.send(snap[:-1]+',"self":'+json.dumps(private_progression(p),separators=(',',':'))+',"inventory":'+json.dumps(p.inventory,separators=(',',':'))+'}') for p in targets),return_exceptions=True)
+        if server_step%3==0 and players:
+            world=snapshot()
+            for p in list(players.values()):
+                if p.snapshot_task is not None and not p.snapshot_task.done():
+                    queue_latest_snapshot(p,world)
             events.clear()
-        elif server_step % 3 == 0: events.clear()
-        await asyncio.sleep(max(0, next_tick - time.monotonic()))
-        if time.monotonic() - next_tick > .4: next_tick = time.monotonic()
+        elif server_step%3==0:events.clear()
+        perf_ticks.append(time.monotonic()-tick_now)
+        performance_rollup(time.monotonic())
+        await asyncio.sleep(max(0,next_tick-time.monotonic()))
+        if time.monotonic()-next_tick>.4:next_tick=time.monotonic()
 
 
 def strict_message(raw):
@@ -887,12 +1062,13 @@ def check_rate(q, rate, window=1):
 
 async def handle_connection(ws):
     guest_id = None
+    global snapshot_join_sequence
     try:
         if ORIGINS and (ws.request.headers.get('Origin') not in ORIGINS):
             await ws.close(code=1008, reason='Origin not allowed');return
         raw = await asyncio.wait_for(ws.recv(), timeout=8)
         hello = strict_message(raw)
-        if not hello or set(hello.keys()) != {'t', 'avatar'} or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')):
+        if not hello or set(hello.keys()) not in ({'t', 'avatar'},{'t','avatar','protocol'}) or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')) or hello.get('protocol','legacy') not in ('legacy','aoi-delta-v80by'):
             await ws.close(code=1008, reason='Invalid guest join');return
         if len(players) >= MAX_GUESTS:
             await ws.send(json.dumps({'t': 'error', 'message': 'ห้องเต็ม ลองใหม่ภายหลัง'}));await ws.close(code=1013);return
@@ -905,10 +1081,15 @@ async def handle_connection(ws):
         p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp,
                   avatar=hello['avatar'], ws=ws, level=guest_level)
         prog.apply_derived_resources(p,hp_reference,full=True)
+        p.protocol_delta=(hello.get('protocol')=='aoi-delta-v80by')
+        # Evenly distribute connection slots; no random clumping for first 10 guests.
+        p.snapshot_slot=snapshot_join_sequence%10
+        snapshot_join_sequence+=1
         players[guest_id] = p
-        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto']
+        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
+        p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         event('join', p.x, p.y, victim=p.id)
         async for raw in ws:
             m = strict_message(raw)
@@ -958,6 +1139,8 @@ async def handle_connection(ws):
                 await ws.close(code=1008, reason='Invalid action');break
             if pressed and not check_rate(p.action_times, 12):
                 await ws.close(code=1008, reason='Action rate limit');break
+            global perf_in_count
+            perf_in_count += 1
             p.last_seq = seq
             # Manual movement/attacks cancel AUTO; inert heartbeats do not.
             if p.auto_state.enabled and (buttons or pressed):p.auto_state.enabled=False
@@ -969,6 +1152,11 @@ async def handle_connection(ws):
         pass
     finally:
         if guest_id and players.get(guest_id) and players[guest_id].ws is ws:
+            active=players[guest_id].snapshot_task
+            if active:
+                active.cancel()
+                try:await active
+                except asyncio.CancelledError:pass
             p = players.pop(guest_id)
             event('leave', p.x, p.y, victim=guest_id)
             shots[:] = [shot for shot in shots if shot.owner != guest_id]
@@ -976,7 +1164,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0BU monster HP DEF + server AUTO\n')
+        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CA immediate-walk+cooperative-PvE-no-PK; AOI/delta\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None

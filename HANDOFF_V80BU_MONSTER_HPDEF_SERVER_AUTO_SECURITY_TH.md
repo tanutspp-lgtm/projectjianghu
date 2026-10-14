@@ -43,3 +43,7 @@
 - เดินหน้า parity ของ AI หมาป่า Pounce, Humanoid mobs & manual zones, ข้ามแมพและ Map Manifest source เดียว, ไอเท็มเกราะ/สวมจากกระเป๋าจริง, persistence+auth, ปราณเลื่อนจาก QA ไป gameplay, PvP + LOS/server collision; เพิ่ม Load Test จริง, per-account quotas, security logging and fuzzing.
 - Audio LOCKED: hit 0.78, flute .24, boar death .66, wolf death .67, jump .52, pickup .42 (no cooldown), BGM70% SFX80%. ไฟล์ Audio ไม่ถูกแก้.
 - สำคัญ: อย่านำ Sandbox เลเวล/ชุด/ปราณของ Guest กลับมาเปิดโดยไม่มี permission แค่เพราะลูกค้าอยากลอง; เสนอ QA server แยก.
+
+
+## Follow-up v8.0BV
+Network simulation stability and client snapshot buffering are now in HANDOFF_V80BV_NETWORK_STABILITY_TH.md. v8.0BU HP/DEF, AUTO and security properties unchanged.

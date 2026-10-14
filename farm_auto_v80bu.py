@@ -26,6 +26,8 @@ class State:
     leg:dict|None=None
     changes:int=0
     unreachable:int=0
+    combat_target_id:str|None=None
+    combat_lock_until:float=0.0
 
 class Navigation:
     def __init__(self,platforms,climbs):
@@ -115,21 +117,22 @@ class Navigation:
             nearby=[m for m in monsters.values() if m.dead<=0 and m.hp>0 and abs(m.y-p.y)<55 and
                      abs(m.x-p.x)<305 and self.platform_at(m)==at]
             if nearby:
-                m=min(nearby,key=lambda mob:abs(mob.x-p.x))
+                # Hold target briefly: crowded mobs must not make AUTO flip sides every 33ms.
+                m=next((mob for mob in nearby if mob.id==state.combat_target_id),None) if t<state.combat_lock_until else None
+                if m is None:
+                    m=min(nearby,key=lambda mob:abs(mob.x-p.x))
+                    state.combat_target_id=m.id
+                state.combat_lock_until=t+0.75
                 dx=m.x-p.x;distance=abs(dx)
-                if distance<90:
-                    # Avoid backing off the platform edge. Knockback remains intact.
-                    platform=self.platforms[at]
-                    away=p.x-(1 if dx>0 else -1)*30
-                    if platform['x']+45 < away <platform['x2']-45:
-                        return (1 if dx>0 else 2),[]
                 if distance>265:return (2 if dx>0 else 1),[]
-                direction=1 if dx>0 else -1
-                if p.face!=direction:return (2 if direction>0 else 1),[]
+                # No backwards movement in melee range: that caused a deterministic
+                # left/right ping-pong at the attack threshold, not real lag.
+                if abs(dx)>8:p.face=1 if dx>0 else -1
                 if t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
                     state.last_attack=t
                     return 0,['attack']
                 return 0,[]
+            state.combat_target_id=None
         goal=state.goal
         if goal is None:return 0,[]
         if p.climb:
@@ -139,9 +142,13 @@ class Navigation:
             # Intermediate landing: jump sideways before passing the platform.
             intermediate=abs(target['y']-c['top'])>10 and abs(target['y']-c['bottom'])>10
             climb_up=target['y']<p.y
-            if intermediate and climb_up and target['y']+32<=p.y<=target['y']+55 and t-state.last_jump>1.25:
+            # Mid-rope platforms require a real jump-off in BOTH directions.
+            # When descending jump ABOVE the platform top; ascending jump BELOW it.
+            # The old logic only handled climbing up, so descending bots bounced
+            # top->bottom->top forever while trying to reach the middle tier.
+            takeoff=(target['y']+32<=p.y<=target['y']+58) if climb_up else (target['y']-65<=p.y<=target['y']-30)
+            if intermediate and takeoff and t-state.last_jump>1.25:
                 state.last_jump=t
-                # Jump toward the landing platform, never teleport.
                 side=1 if target['x2']-c['x']>=c['x']-target['x'] else -1
                 p.face=side
                 return 0,['jump']

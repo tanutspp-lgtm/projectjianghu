@@ -1,0 +1,90 @@
+[
+  {
+    "version": "BY",
+    "clients": 1,
+    "messages": 24,
+    "MiB": 0.02,
+    "wall_s": 2.36,
+    "cpu_s": 0.05,
+    "cpu_pct_of_one_core": 2.1,
+    "rssMiB": 100.6,
+    "tickP95Ms": null
+  },
+  {
+    "version": "BY",
+    "clients": 10,
+    "messages": 234,
+    "MiB": 0.494,
+    "wall_s": 2.35,
+    "cpu_s": 0.19,
+    "cpu_pct_of_one_core": 8.1,
+    "rssMiB": 100.6,
+    "tickP95Ms": null
+  },
+  {
+    "version": "BY",
+    "clients": 20,
+    "messages": 440,
+    "MiB": 1.379,
+    "wall_s": 2.36,
+    "cpu_s": 0.35,
+    "cpu_pct_of_one_core": 14.8,
+    "rssMiB": 100.9,
+    "tickP95Ms": null
+  },
+  {
+    "version": "BY",
+    "clients": 30,
+    "messages": 657,
+    "MiB": 2.48,
+    "wall_s": 2.42,
+    "cpu_s": 0.37,
+    "cpu_pct_of_one_core": 15.3,
+    "rssMiB": 101.5,
+    "tickP95Ms": null
+  },
+  {
+    "version": "BZ",
+    "clients": 1,
+    "messages": 23,
+    "MiB": 0.023,
+    "wall_s": 2.33,
+    "cpu_s": 0.05,
+    "cpu_pct_of_one_core": 2.1,
+    "rssMiB": 100.7,
+    "tickP95Ms": 0.54
+  },
+  {
+    "version": "BZ",
+    "clients": 10,
+    "messages": 226,
+    "MiB": 0.472,
+    "wall_s": 2.35,
+    "cpu_s": 0.15,
+    "cpu_pct_of_one_core": 6.4,
+    "rssMiB": 100.8,
+    "tickP95Ms": 1.21
+  },
+  {
+    "version": "BZ",
+    "clients": 20,
+    "messages": 458,
+    "MiB": 1.523,
+    "wall_s": 2.35,
+    "cpu_s": 0.24,
+    "cpu_pct_of_one_core": 10.2,
+    "rssMiB": 101.1,
+    "tickP95Ms": 1.43
+  },
+  {
+    "version": "BZ",
+    "clients": 30,
+    "messages": 696,
+    "MiB": 2.616,
+    "wall_s": 2.36,
+    "cpu_s": 0.33,
+    "cpu_pct_of_one_core": 14.0,
+    "rssMiB": 101.6,
+    "tickP95Ms": 1.62
+  }
+]

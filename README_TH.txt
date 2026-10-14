@@ -1,3 +1,9 @@
+# LATEST v8.0CA — READ HANDOFF_V80CA_RESPONSIVE_WALK_NO_PK_TH.md FIRST. Coop PvE only; no automatic PK. Paired Netlify ZIP must deploy.
+
+LATEST v8.0BZ Performance Phase 2: Pair Netlify and GitHub ZIPs. See HANDOFF_V80BZ_PERFORMANCE_PHASE2_TH.md; /healthz v8.0BZ, still Guest-only with no persistence.
+
+LATEST v8.0BY: OPT-IN AOI+DELTA protocol. New Netlify v80BY sends `protocol:"aoi-delta-v80by"` on join; old Clients still get Full Snapshot. Requires paired Netlify and Backend deployments. See HANDOFF_V80BY_AOI_DELTA_PREDICTION_PERFORMANCE_TH.md. Never trust browser positions or damage.
+
 UPDATE v8.0BS (2026-10-14)
 Server now implements Guest ephemeral Lv1 EXP exp_v1, level-up +3 Stat/+1 Skill, authoritative Stat/Flute Mastery attacks/CRIT/SP/STA, common beast loot/Bag and 30-guest support. EXP tables already exist in Supabase (unchanged); local exp_balance_v1.json fallback. Netlify v8.0BS is REQUIRED for full v8.0BS UI. Not 100% offline parity: Qi / actual gear/equip / persisted accounts / premium+manual mobs / map warps remain.
 Run: python test_online_parity_v80bs.py; python test_online_protocol_v80bs.py; python test_security.py; python test_beast_parity_v80bq.py; python test_balance_v80bo.py.
