@@ -1,0 +1,1 @@
+Project Jianghu v8.0CB server ZIP; see HANDOFF_V80CB_ROPE_JUMP_FX_IPAD_TH.md. Upload extracted contents to GitHub root; wait Render LIVE; /healthz should include v8.0CB. Deploy Netlify client AFTER the server.

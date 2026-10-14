@@ -143,6 +143,10 @@ WORLD_W = int(MAP_DATA['worldW'])
 DT = 1.0 / 30.0
 GROUND = [(p['x'], p['x2'], p['y']) for p in MAP_DATA['platforms']]
 CLIMBS = tuple((c['x'], c['top'], c['bottom']) for c in MAP_DATA['climbs'])
+# The centre ladder ends at the intermediate walkway, NOT the sky floor.
+_EXPECTED_CLIMBS=((510,235,550),(1170,390,550),(1590,235,550))
+if CLIMBS != _EXPECTED_CLIMBS:
+    raise RuntimeError(f'Unsafe map climbs: {CLIMBS}; expected {_EXPECTED_CLIMBS}')
 FARM_NAV=farm_auto.Navigation(GROUND,CLIMBS)
 ALLOWED_BUTTONS = (1 | 2 | 4 | 8 | 16)
 ATTACKS = {'attack': (0.34, 0.32, 520, 165, 1.45, 1), 'aoe': (0.62, 0.48, 365, 135, 1.15, 99), 'break': (0.52, 0.37, 560, 45, 1.1, 2)}
@@ -496,7 +500,11 @@ def perform_action(p: Guest, action: str):
     shot_seq += 1
     y = p.y - 84 - (3 if action == 'aoe' else 4 if action == 'break' else 0)
     shots.append(Shot(shot_seq, p.id, action, p.x + p.face * 52, y, p.face * speed, damage, lifespan, pierce, critical=critical))
-    event('cast',p.x,p.y-34,kind=action)
+    # Every confirmed cast has a short-lived visual trace even when the actual
+    # server-owned projectile hits a mob before the next 10Hz snapshot.
+    event('cast',p.x,p.y-34,kind=action,owner=p.id,shotId=str(shot_seq),
+          shotX=round(p.x+p.face*52,1),shotY=round(y,1),shotDir=p.face,
+          shotSpeed=speed)
 
 
 def update_guest(p: Guest, dt, tick_now):
@@ -542,6 +550,11 @@ def update_guest(p: Guest, dt, tick_now):
     p.guard = bool(p.buttons & 16) and p.broken <= 0 and p.stun <= 0 and p.climb is None
     near = next((c for c in CLIMBS if abs(c[0] - p.x) < 36 and c[1] - 8 <= p.y <= c[2] + 12), None)
     axis = int(bool(p.buttons & 8)) - int(bool(p.buttons & 4))
+    # v8.0CE: Holding UP on the upper platform must never re-capture
+    # the ladder and start a fresh upward climb through open air.
+    # Players can still intentionally press DOWN to descend from the landing.
+    if near and axis < 0 and p.ground and p.y <= near[1] + 6:
+        near = None
     if near and axis and not p.guard and p.climb_cd <= 0:
         p.climb = near
         p.x, p.vx, p.vy, p.ground = near[0], 0, 0, False
@@ -549,6 +562,9 @@ def update_guest(p: Guest, dt, tick_now):
         cx, top, bottom = p.climb
         old_y = p.y
         p.y = clamp(p.y + axis * 175 * dt, top, bottom)
+        # Hard physical ceiling/floor; never allow any stale upward state to
+        # survive a climb that reaches the end of the ladder.
+        p.y = clamp(p.y, top, bottom)
         p.climb_dist += abs(p.y - old_y)
         p.x, p.vx, p.vy = cx, 0, 0
         if axis < 0 and p.y <= top + 1:
@@ -913,7 +929,7 @@ def snapshot():
             'loot':[{'id':d['id'],'item_id':d['item_id'],'x':d['x'],'y':d['y'],
                      'ownerId':d['ownerId'],'privateFor':round(max(0,d['privateUntil']-moment),1),
                      'expiresIn':round(max(0,d['expiresAt']-moment),1)} for d in loot_drops],
-            'shots':[{'id':s.id,'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
+            'shots':[{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
                       'dir':1 if s.vx>=0 else -1} for s in shots],
             'events':events[:80]}
 
@@ -1086,15 +1102,25 @@ async def handle_connection(ws):
         p.snapshot_slot=snapshot_join_sequence%10
         snapshot_join_sequence+=1
         players[guest_id] = p
-        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca']
+        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
-        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
+        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         event('join', p.x, p.y, victim=p.id)
         async for raw in ws:
             m = strict_message(raw)
             if not m:
                 await ws.close(code=1008,reason='Invalid message');break
+            # RTT probe is display-only: bounded, rate-limited, never used by
+            # movement, damage, rewind or anti-cheat decisions.
+            if m.get('t')=='ping':
+                nonce=m.get('nonce')
+                if set(m)!={'t','nonce'} or type(nonce) is not int or not 0<=nonce<2**31:
+                    await ws.close(code=1008,reason='Invalid ping');break
+                if not check_rate(p.packet_times,35):
+                    await ws.close(code=1008,reason='Ping rate limit');break
+                await ws.send(json.dumps({'t':'pong','nonce':nonce},separators=(',',':')))
+                continue
             # Only earned points are spendable; never accept client totals/ranks.
             if m.get('t') in ('stat_add','skill_up'):
                 t=m['t']
@@ -1164,7 +1190,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CA immediate-walk+cooperative-PvE-no-PK; AOI/delta\n')
+        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CE ladder-stop+small-fps-ping; cooperative-PvE; AOI/delta\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
