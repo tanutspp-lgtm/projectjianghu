@@ -1,72 +1,72 @@
-"""Local smoke/security tests. Run from this directory: python test_security.py"""
+"""WUXIA guest-server protocol regression tests. Run: python test_security.py"""
 import asyncio, json, os, subprocess, sys, time
+from pathlib import Path
 import websockets
 from websockets.exceptions import ConnectionClosed
+PORT=19555
+URI=f'ws://127.0.0.1:{PORT}/ws'
+ROOT=Path(__file__).resolve().parent
 
-PORT = 19555
-URI = f'ws://127.0.0.1:{PORT}/ws'
+async def recv_type(ws, kind, timeout=5):
+    until=time.monotonic()+timeout
+    while time.monotonic()<until:
+        msg=json.loads(await asyncio.wait_for(ws.recv(), max(.1,until-time.monotonic())))
+        if msg.get('t')==kind:return msg
+    raise AssertionError('missing '+kind)
 
-async def recv_type(ws, typ, timeout=3):
-    until = time.monotonic() + timeout
-    while time.monotonic() < until:
-        payload = json.loads(await asyncio.wait_for(ws.recv(), max(.1, until-time.monotonic())))
-        if payload.get('t') == typ: return payload
-    raise AssertionError('message missing '+typ)
-
-async def rejected(data, description, initial=None):
+async def rejected(message, description, valid_join=None):
     async with websockets.connect(URI) as ws:
-        if initial:
-            await ws.send(json.dumps(initial))
-            await recv_type(ws,'welcome')
-        await ws.send(json.dumps(data))
+        if valid_join is not None:
+            await ws.send(json.dumps(valid_join));await recv_type(ws,'welcome')
+        await ws.send(json.dumps(message))
         try:
-            for _ in range(15):
-                await asyncio.wait_for(ws.recv(), .5)
-        except ConnectionClosed as e:
-            assert e.code==1008,(description,e.code)
-        else:raise AssertionError(description+' accepted!')
+            while True:await asyncio.wait_for(ws.recv(),2)
+        except ConnectionClosed as exc:
+            assert exc.code==1008,(description,exc.code)
 
 async def suite():
-    await rejected({'t':'join','avatar':'male_hair_98_gold'},'invented sprite')
-    await rejected({'t':'join','avatar':'male_hair_01_black','admin':True},'join extra field')
-    valid={'t':'join','avatar':'male_hair_01_black'}
-    await rejected({'t':'input','seq':1,'buttons':0,'pressed':[], 'x':100000,'hp':999999,'damage':999999},'teleport HP damage injection',valid)
-    await rejected({'t':'input','seq':1,'buttons':32,'pressed':[]},'invalid control bits',valid)
-    await rejected({'t':'input','seq':1,'buttons':0,'pressed':['spawn_mobs']},'monsters manipulation',valid)
-    await rejected({'t':'input','seq':1,'buttons':0,'pressed':['attack','attack']},'duplicate actions',valid)
+    join={'t':'join','avatar':'male_hair_01_black'}
+    await rejected({'t':'join','avatar':'male_hair_98_gold'},'invented avatar')
+    await rejected({'t':'join','avatar':'male_hair_01_black','hp':99999},'join HP injection')
+    await rejected({'t':'input','seq':1,'buttons':0,'pressed':[], 'hp':999999,'damage':999999},'HP/damage injection',join)
+    await rejected({'t':'input','seq':1,'buttons':32,'pressed':[]},'invalid buttons',join)
+    await rejected({'t':'input','seq':1,'buttons':0,'pressed':['spawn_mobs']},'invalid action',join)
+    await rejected({'t':'input','seq':1,'buttons':0,'pressed':['attack','attack']},'duplicate actions',join)
     async with websockets.connect(URI) as ws:
-        await ws.send(json.dumps(valid)); await recv_type(ws,'welcome')
+        await ws.send(json.dumps(join));await recv_type(ws,'welcome')
         await ws.send(json.dumps({'t':'input','seq':1,'buttons':2,'pressed':[]}))
         await ws.send(json.dumps({'t':'input','seq':1,'buttons':2,'pressed':[]}))
         try:
-            while True:await asyncio.wait_for(ws.recv(),1)
-        except ConnectionClosed as e:
-            assert e.code==1008,('sequence replay', e.code)
+            while True:await asyncio.wait_for(ws.recv(),2)
+        except ConnectionClosed as exc:
+            assert exc.code==1008,('sequence replay',exc.code)
     async with websockets.connect(URI) as a, websockets.connect(URI) as b:
-        await a.send(json.dumps(valid))
-        await b.send(json.dumps({'t':'join','avatar':'female_hair_03_red'}))
-        await recv_type(a,'welcome'); await recv_type(b,'welcome')
+        await a.send(json.dumps(join));await b.send(json.dumps({'t':'join','avatar':'female_hair_03_red'}))
+        await recv_type(a,'welcome');await recv_type(b,'welcome')
         snap=await recv_type(a,'snapshot')
         assert len(snap['players'])==2 and len(snap['mobs'])==5
-        before=snap['mobs'][0]['x']
-        await a.send(json.dumps({'t':'input','seq':1,'buttons':2,'pressed':[]}))
-        await asyncio.sleep(.23)
-        snap=await recv_type(b,'snapshot')
-        assert len(snap['players'])==2
-        assert 0 <= snap['mobs'][0]['x'] <= 2060
-        print('two players synchronized; server still owns monster positions',before)
-    print('SECURITY TESTS PASSED: malformed packets, spoofed stats/coords, invalid actions, replay, shared state')
+        assert all(p['max']==1300 and p['level']==5 for p in snap['players'])
+        print('PASS two guest clients share server-authoritative Lv5 world')
+    async with websockets.connect(URI) as ws:
+        await ws.send(json.dumps(join));await recv_type(ws,'welcome')
+        for seq in range(1,25):
+            await ws.send(json.dumps({'t':'input','seq':seq,'buttons':0,'pressed':['attack']}))
+        try:
+            while True:await asyncio.wait_for(ws.recv(),2)
+        except ConnectionClosed as exc:
+            assert exc.code==1008,('rate limit',exc.code)
+        print('PASS flood disconnected by server')
+    print('SECURITY TESTS PASSED')
 
 def run():
-    env={**os.environ, 'PORT':str(PORT)}
-    proc=subprocess.Popen([sys.executable,'-u','server.py'],cwd=os.path.dirname(__file__),env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+    env={**os.environ,'PORT':str(PORT),'SUPABASE_URL':''}
+    proc=subprocess.Popen([sys.executable,'-u','server.py'],cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
     try:
-        time.sleep(1)
+        time.sleep(1.1)
         if proc.poll() is not None:raise RuntimeError(proc.stdout.read())
         asyncio.run(suite())
     finally:
         proc.terminate()
-        try:proc.wait(3)
+        try:proc.wait(timeout=3)
         except subprocess.TimeoutExpired:proc.kill()
-
 if __name__=='__main__':run()

@@ -15,6 +15,112 @@ from typing import Optional
 
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
+import random
+from urllib.request import Request, urlopen  # v8.0BO AUTHORITATIVE COMBAT
+
+"""Project Jianghu PvP-first reference combat data; read-only Supabase mirror.
+
+Server owns level, armor and hits. Never accept client damage/level/gear.
+Balances are loaded from two RLS read-only Supabase tables at boot (optional),
+with identical local v8.0BN calculations as a safe fallback on outage.
+This does NOT implement persisted Online inventory/level progression.
+"""
+import json
+import math
+import os
+
+
+ANCHORS=((1,1200),(5,1300),(10,1700),(14,1980),(15,2067),(20,3250),
+         (25,3460),(29,3690),(30,3850),(35,3950),(40,4000),(50,4150),(60,4300))
+TIERS={0:(0,0),5:(14,84),15:(60,207),30:(111,381),40:(162,545)}  # (DEF, flat gear HP)
+PCT={('common',False):(7,9),('common',True):(8,10),
+     ('premium',False):(12,14),('premium',True):(14,16),
+     ('manual',False):(15,17),('manual',True):(18,20)}
+REDUCTION_K=250
+BALANCE_VERSION='v8.0BN-pvp-first'
+_remote_hp=None
+_remote_attacks=None
+source='local-v8.0BN'
+
+
+def _round_pos(v):
+    return int(math.floor(v+0.5))  # JavaScript Math.round for nonnegative numbers
+
+
+def hp_reference(level):
+    if not isinstance(level,int) or not 1<=level<=60:
+        raise ValueError('combat level must be 1..60')
+    if _remote_hp is not None: return _remote_hp[level]
+    for (la,ha),(lb,hb) in zip(ANCHORS,ANCHORS[1:]):
+        if level<=lb:
+            hp=_round_pos(ha+(hb-ha)*(level-la)/(lb-la))
+            break
+    tier=0 if level<5 else 5 if level<15 else 15 if level<30 else 30 if level<40 else 40
+    defense,gear_hp=TIERS[tier]
+    return {'level':level,'gear_tier':tier,'max_hp':hp,'gear_hp':gear_hp,
+            'defense_0':defense,'defense_5':defense+(25 if tier else 0),
+            'defense_7':defense+(35 if tier else 0)}
+
+
+def monster_attack_range(level,mode='common',humanoid=False):
+    if (mode,bool(humanoid)) not in PCT: raise ValueError('bad zone mode')
+    ref=hp_reference(level)
+    if _remote_attacks is not None:
+        return _remote_attacks[(level,mode,bool(humanoid))]
+    lo,hi=PCT[(mode,bool(humanoid))]
+    raw_min=max(1,_round_pos(ref['max_hp']*lo/100*(REDUCTION_K+ref['defense_7'])/REDUCTION_K))
+    raw_max=max(raw_min,_round_pos(ref['max_hp']*hi/100*(REDUCTION_K+ref['defense_0'])/REDUCTION_K))
+    return (raw_min,raw_max)
+
+
+def mitigate(raw,defense):
+    if raw<=0: return 0
+    return max(1,_round_pos(raw*REDUCTION_K/(REDUCTION_K+max(0,defense))))
+
+
+def load_from_supabase():
+    """Read immutable combat reference. Inability to reach Supabase must not kill the arena."""
+    global _remote_hp,_remote_attacks,source
+    # Publishable key is designed for public clients; RLS limits these tables to read-only.
+    # Render env vars can override both defaults at any time. NEVER embed service_role.
+    base=os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co').rstrip('/')
+    key=os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M')
+    if not base or not key:
+        source='local-v8.0BN (Supabase not configured)'
+        return False
+    def load(path):
+        req=Request(f'{base}/rest/v1/{path}?select=*&limit=1000',headers={'apikey':key,'accept':'application/json'})
+        with urlopen(req,timeout=5) as resp:
+            result=json.load(resp)
+        if not isinstance(result,list): raise ValueError('balance response must be list')
+        return result
+    try:
+        hp=load('jianghu_pvp_hp_v80bo')
+        attack=load('jianghu_monster_damage_v80bo')
+        hmap={int(row['level']):row for row in hp}
+        amap={(int(row['level']),row['mode'],bool(row['humanoid'])):
+              (int(row['raw_min']),int(row['raw_max'])) for row in attack}
+        if len(hp)!=60 or len(hmap)!=60 or len(attack)!=360 or len(amap)!=360:
+            raise ValueError('incomplete balance table; expected 60 HP and 360 damage records')
+        if any(row.get('balance_version')!=BALANCE_VERSION for row in hp+attack):
+            raise ValueError('unapproved balance version')
+        for lv in range(1,61):
+            r=hmap[lv]
+            if not 0<int(r['max_hp'])<100000 or not 0<=int(r['defense_0'])<=int(r['defense_5'])<=int(r['defense_7'])<10000:
+                raise ValueError('invalid armor/HP values')
+            for mode,human in PCT:
+                low,high=amap[(lv,mode,human)]
+                if not 0<low<=high<1000000:raise ValueError('invalid monster raw range')
+        _remote_hp=hmap
+        _remote_attacks=amap
+        source='supabase-v8.0BN'
+        return True
+    except Exception as exc:
+        _remote_hp=None
+        _remote_attacks=None
+        source='local-v8.0BN (Supabase read failed: '+type(exc).__name__+')'
+        return False
+
 
 PORT = int(os.environ.get('PORT', '8765'))
 HOST = os.environ.get('HOST', '0.0.0.0')
@@ -34,13 +140,16 @@ def valid_avatar(s):
     bits = s.split('_')
     return len(bits) == 4 and bits[0] in ('male', 'female') and bits[1] == 'hair' and bits[2] in ('01', '02', '03') and bits[3] in COLORS
 
+
 def clamp(v, lo, hi): return max(lo, min(hi, v))
+
 
 def can_stand(x, y, prev):
     for lo, hi, top in GROUND:
         if lo + 8 < x < hi - 8 and prev <= top + 7 and y >= top:
             return top
     return None
+
 
 @dataclass
 class Actor:
@@ -68,6 +177,7 @@ class Actor:
     action_at: float = 0
     action_duration: float = 0
 
+
 @dataclass
 class Guest(Actor):
     ws: object = None
@@ -77,6 +187,10 @@ class Guest(Actor):
     last_seq: int = -1
     packet_times: deque = field(default_factory=deque)
     action_times: deque = field(default_factory=deque)
+    level: int = 5  # server-owned guest training level, not client-controlled
+    armor_enhance: int = 5  # server-owned reference +5 armor
+    last_attack_at: float = -1e9
+
 
 @dataclass
 class Monster(Actor):
@@ -88,6 +202,9 @@ class Monster(Actor):
     decision: float = 0
     attack_time: float = 0
     walk_direction: int = 1
+    level: int = 5
+    zone_mode: str = "common"
+
 
 @dataclass
 class Shot:
@@ -102,6 +219,7 @@ class Shot:
     pierce: int
     hit: set = field(default_factory=set)
 
+
 players: dict[str, Guest] = {}
 monsters: dict[str, Monster] = {}
 shots: list[Shot] = []
@@ -113,7 +231,9 @@ server_step = 0
 def spawn_mobs():
     specs = [('m1', 'ฝึกยุทธ์', 740, 390, 1100, True), ('m2', 'หมาป่า', 380, 550, 450, False), ('m3', 'หมาป่า', 1340, 390, 450, False), ('m4', 'หมาป่า', 1630, 235, 450, False), ('m5', 'จอมยุทธ์คู่ซ้อม', 1520, 550, 1100, True)]
     for mid, name, x, y, hp, hum in specs:
-        monsters[mid] = Monster(id=mid, name=name, x=x, y=y, hp=hp, max_hp=hp, home=x, spawn_y=y, hum=hum, ai_cool=0.5)
+        # Training arena stays Lv5 until progression/server map routing is implemented.
+        # Do not infer a monster level from player-submitted data.
+        monsters[mid] = Monster(id=mid, name=name, x=x, y=y, hp=hp, max_hp=hp, home=x, spawn_y=y, hum=hum, ai_cool=0.5, level=5, zone_mode='common')
 
 
 def event(event_type, x, y, **kwargs):
@@ -179,6 +299,11 @@ def perform_action(p: Guest, action: str):
         return
     if action == 'lock': return  # Lock targets never dictate damage on server.
     if action not in ATTACKS or p.cool > 0 or p.climb is not None or p.guard: return
+    # Second independent server clock check; rejects spoofed burst commands even
+    # when the animation/cool timer is accidentally changed. No queued attacks.
+    server_now=time.monotonic()
+    if server_now-p.last_attack_at+0.000001 < ATTACKS[action][0]: return
+    p.last_attack_at=server_now
     global shot_seq
     cooldown, duration, speed, damage, lifespan, pierce = ATTACKS[action]
     p.cool = cooldown
@@ -279,7 +404,13 @@ def update_mob(m, dt):
     if attack_timer_before > .10 >= m.attack_time and near and abs(m.x - near.x) < 110:
         if near.guard and near.broken <= 0: event('block', near.x, near.y - 82, victim=near.id)
         else:
-            hurt(near, 100 if m.hum else 70, near.x, near.y - 80, 'monster')
+            # Authoritative server-owned RawDamage, actual +5 armor DEF -> HP.
+            # Monster never directly subtracts a % of the victim's current HP.
+            lo,hi=monster_attack_range(m.level,m.zone_mode,m.hum)
+            raw=random.randint(lo,hi)
+            ref=hp_reference(near.level)
+            defense=ref['defense_5'] if near.armor_enhance==5 else ref['defense_0'] if near.armor_enhance==0 else ref['defense_7']
+            hurt(near,mitigate(raw,defense),near.x,near.y-80,'monster')
             if near.dead <= 0 and secrets.randbelow(100) < 18:
                 near.down = 1.35
                 if near.climb:
@@ -357,7 +488,7 @@ def actor_frame(a, tick):
 
 
 def actor_json(a):
-    return {'id': a.id, 'x': round(a.x, 2), 'y': round(a.y, 2), 'vx': round(a.vx, 2), 'vy': round(a.vy, 2),
+    return {'id': a.id, 'level': a.level if isinstance(a,(Guest,Monster)) else 1, 'x': round(a.x, 2), 'y': round(a.y, 2), 'vx': round(a.vx, 2), 'vy': round(a.vy, 2),
             'face': a.face, 'hp': a.hp, 'max': a.max_hp, 'guard': a.guard, 'down': round(a.down, 2), 'dead': round(a.dead, 2),
             'stun': round(a.stun, 2), 'inv': round(a.inv, 2), 'climb': bool(a.climb), 'frame': actor_frame(a, server_step), 'action': a.action}
 
@@ -417,7 +548,10 @@ async def handle_connection(ws):
         name = 'Guest-' + guest_id[-4:].upper()
         # All legal spawn points are server-defined, never supplied by client.
         spawn_x = 175 + (len(players) % 8) * 35
-        p = Guest(id=guest_id, x=spawn_x, y=550, hp=1200, max_hp=1200, avatar=hello['avatar'], ws=ws)
+        guest_level=5  # no online progression/gear endpoint exists yet
+        guest_hp=hp_reference(guest_level)['max_hp']
+        p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp,
+                  avatar=hello['avatar'], ws=ws, level=guest_level)
         players[guest_id] = p
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True}))
         event('join', p.x, p.y, victim=p.id)
@@ -457,6 +591,8 @@ def process_request(connection, request):
 
 
 async def main():
+    load_from_supabase()
+    print('Combat balance: '+source,flush=True)
     spawn_mobs()
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16, ping_interval=20, ping_timeout=20, process_request=process_request, compression=None):
         print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS}', flush=True)

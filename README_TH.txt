@@ -1,21 +1,43 @@
-WUXIA Guest-Only Authoritative Server v7.6
+PROJECT JIANGHU — ONLINE GUEST SERVER v8.0BO (2026-10-14)
 
-Python 3.11+ | websockets>=15,<17
-Start locally: pip install -r requirements.txt && python server.py
-Health endpoint: http://localhost:8765/healthz
-WebSocket endpoint: ws://localhost:8765/ws
+Primary service: Render projectjianghu, Python server.py (WebSocket /ws, HTTP /healthz)
+Repo: https://github.com/tanutspp-lgtm/projectjianghu
+Mode: Guest-only server authoritative arena Lv5. This is NOT a fully ported v8.0BN MMORPG.
 
-For Render.com:
-- New > Web Service, Python, repo root containing this server.py
-- build: pip install -r requirements.txt
-- start: python server.py
-- health: /healthz
-- env PORT is provided by Render
-- env ALLOWED_ORIGINS (optional but recommended) = https://your-site.netlify.app
-- env MAX_GUESTS = 20 to 35
-- Public URL is wss://<your-service>.onrender.com/ws
+SERVER CHANGE v8.0BO
+- Server-owned guest Lv5 HP 1300; PvP-first HP table Lv1–60 exists in Supabase.
+- Uses Supabase read-only tables jianghu_pvp_hp_v80bo (60 rows) and
+  jianghu_monster_damage_v80bo (360 rows), verifies version. Local fallback if unavailable.
+- Server calculates monster raw attack and defense reduction for +5 reference gear;
+  mode common Lv5 training arena. Other modes and tiers prepared as data, not active online maps.
+- Attack rate protection: server-side animation/action cooldown, second monotonic clock check,
+  input validation, 35 packets/s and 12 action packets/s rate limits. No attack queue.
+- Guest level/gear/spell strength cannot be supplied by client.
 
-State exists in memory; 1 server process = 1 world. Guest-only, no login/persistent profile.
-Security checks include strict input schema, cooldowns, sequence and packet rate checks, server-run monsters/HP/damage/positions. This is an early anti-cheat foundation, not a production security guarantee.
+FILES IN THIS REPOSITORY
+server.py             REQUIRED update (source of truth for current online server)
+requirements.txt      UNCHANGED: websockets>=15,<17
+render.yaml           UNCHANGED from the current repository; not needed for this code update
+README_TH.txt         UPDATED usage and limitations
+ test_security.py     UPDATED integration/security test; useful but not required by Render
+ test_balance_v80bo.py NEW balance/flood unit tests; useful but not required by Render
 
-Run tests: python test_security.py
+HOW TO DEPLOY
+1. Unzip the delivery archive on your device. Do NOT upload the ZIP as one file to GitHub.
+2. In GitHub repo main branch at ROOT, upload/replace server.py (required).
+3. Optionally also upload test_security.py, test_balance_v80bo.py, README_TH.txt,
+   requirements.txt and render.yaml from this package to bring all root files up to date.
+4. Commit changes. Render auto deploy tracks main; no separate Render upload required.
+5. Confirm the new commit was deployed in Render and healthz responds.
+6. Test join, movement, attacks and monster HP via web client (not confirmed yet).
+
+Local tests: pip install -r requirements.txt; python test_balance_v80bo.py; python test_security.py
+Note: server.py contains the project publishable Supabase key (safe to publish with correct RLS).
+Never add Supabase service_role keys or database passwords to code / public GitHub.
+
+KNOWN LIMITATIONS
+- Online arena remains fixed Lv5 and uses earlier simplified server projectile/AI/monster HP.
+- Offline v8.0BN monster AI and progression are NOT fully ported to Render.
+- Full online player level, equipment state, PvP damage scaling and item persistence not ready.
+- GitHub automatic code-writing from ChatGPT returned 403; browser upload required.
+- Supabase reference records created earlier; live Render deploy not yet verified.
