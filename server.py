@@ -398,6 +398,11 @@ def set_action(actor, a, dur):
 
 
 def physics(actor, dt):
+    # v8.0CI: Resolve horizontal world-wall collision BEFORE ground support.
+    # Dash can move > one collider margin in a single 30Hz server tick. If
+    # can_stand sees the out-of-bounds x before clamping, a grounded character
+    # may miss the one-way floor and fall underneath it permanently.
+    actor.x = clamp(actor.x, 27, WORLD_W - 27)
     old = actor.y
     if actor.climb is None:
         actor.vy += 1400 * dt
@@ -409,7 +414,6 @@ def physics(actor, dt):
                 actor.y = top
                 actor.vy = 0
                 actor.ground = True
-    actor.x = clamp(actor.x, 27, WORLD_W - 27)
     if actor.y > 800:
         actor.y, actor.vy, actor.ground = 550, 0, True
         if isinstance(actor, Guest):
@@ -1190,7 +1194,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CE ladder-stop+small-fps-ping; cooperative-PvE; AOI/delta\n')
+        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CI wall-dash collision + v8.0CE ladder/ping; cooperative-PvE; AOI/delta\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
