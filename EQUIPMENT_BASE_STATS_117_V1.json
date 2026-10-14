@@ -1,0 +1,4545 @@
+{
+  "version": "equipment_def_k250_v80an_proposal",
+  "status": "DEF proposal integrated into offline test only; monster-drop +7 loadouts are sandbox, NOT permanent or online equipment",
+  "weapon_base_attack_by_level": {
+    "5": 12,
+    "15": 30,
+    "30": 58,
+    "40": 82
+  },
+  "armor_base_def_hp_sp_by_level": {
+    "5": {
+      "head": {
+        "defense": 2,
+        "max_hp": 12,
+        "max_sp": 10
+      },
+      "top": {
+        "defense": 5,
+        "max_hp": 30,
+        "max_sp": 0
+      },
+      "bottom": {
+        "defense": 4,
+        "max_hp": 24,
+        "max_sp": 0
+      },
+      "wrist": {
+        "defense": 1,
+        "max_hp": 6,
+        "max_sp": 12
+      },
+      "shoes": {
+        "defense": 2,
+        "max_hp": 12,
+        "max_sp": 4
+      }
+    },
+    "15": {
+      "head": {
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 20
+      },
+      "top": {
+        "defense": 15,
+        "max_hp": 72,
+        "max_sp": 0
+      },
+      "bottom": {
+        "defense": 13,
+        "max_hp": 60,
+        "max_sp": 0
+      },
+      "wrist": {
+        "defense": 10,
+        "max_hp": 15,
+        "max_sp": 24
+      },
+      "shoes": {
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 8
+      }
+    },
+    "30": {
+      "head": {
+        "defense": 21,
+        "max_hp": 54,
+        "max_sp": 34
+      },
+      "top": {
+        "defense": 26,
+        "max_hp": 135,
+        "max_sp": 0
+      },
+      "bottom": {
+        "defense": 23,
+        "max_hp": 110,
+        "max_sp": 0
+      },
+      "wrist": {
+        "defense": 20,
+        "max_hp": 30,
+        "max_sp": 42
+      },
+      "shoes": {
+        "defense": 21,
+        "max_hp": 52,
+        "max_sp": 15
+      }
+    },
+    "40": {
+      "head": {
+        "defense": 31,
+        "max_hp": 80,
+        "max_sp": 48
+      },
+      "top": {
+        "defense": 37,
+        "max_hp": 190,
+        "max_sp": 0
+      },
+      "bottom": {
+        "defense": 33,
+        "max_hp": 158,
+        "max_sp": 0
+      },
+      "wrist": {
+        "defense": 30,
+        "max_hp": 42,
+        "max_sp": 56
+      },
+      "shoes": {
+        "defense": 31,
+        "max_hp": 75,
+        "max_sp": 20
+      }
+    }
+  },
+  "weapons": [
+    {
+      "item_id": "WPN-R01-C01",
+      "set_id": "WEAPON_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 1,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยฝึกยุทธ์",
+      "file": "assets/loot/weapons/row01_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R01-C02",
+      "set_id": "WEAPON_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 2,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่ฝึกยุทธ์",
+      "file": "assets/loot/weapons/row01_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R01-C03",
+      "set_id": "WEAPON_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 3,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่ฝึกยุทธ์",
+      "file": "assets/loot/weapons/row01_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R01-C04",
+      "set_id": "WEAPON_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 4,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มฝึกยุทธ์",
+      "file": "assets/loot/weapons/row01_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R02-C01",
+      "set_id": "WEAPON_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 1,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยจอมยุทธ์พเนจร",
+      "file": "assets/loot/weapons/row02_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R02-C02",
+      "set_id": "WEAPON_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 2,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่จอมยุทธ์พเนจร",
+      "file": "assets/loot/weapons/row02_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R02-C03",
+      "set_id": "WEAPON_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 3,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่จอมยุทธ์พเนจร",
+      "file": "assets/loot/weapons/row02_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R02-C04",
+      "set_id": "WEAPON_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 4,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มจอมยุทธ์พเนจร",
+      "file": "assets/loot/weapons/row02_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 12,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R03-C01",
+      "set_id": "WEAPON_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 1,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยนักเดินทางชายแดน",
+      "file": "assets/loot/weapons/row03_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R03-C02",
+      "set_id": "WEAPON_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 2,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่นักเดินทางชายแดน",
+      "file": "assets/loot/weapons/row03_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R03-C03",
+      "set_id": "WEAPON_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 3,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่นักเดินทางชายแดน",
+      "file": "assets/loot/weapons/row03_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R03-C04",
+      "set_id": "WEAPON_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 4,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มนักเดินทางชายแดน",
+      "file": "assets/loot/weapons/row03_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R04-C01",
+      "set_id": "WEAPON_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 1,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยพรานพงไพร",
+      "file": "assets/loot/weapons/row04_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R04-C02",
+      "set_id": "WEAPON_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 2,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่พรานพงไพร",
+      "file": "assets/loot/weapons/row04_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R04-C03",
+      "set_id": "WEAPON_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 3,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่พรานพงไพร",
+      "file": "assets/loot/weapons/row04_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R04-C04",
+      "set_id": "WEAPON_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 4,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มพรานพงไพร",
+      "file": "assets/loot/weapons/row04_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R05-C01",
+      "set_id": "WEAPON_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 1,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยโจรภูเขา",
+      "file": "assets/loot/weapons/row05_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R05-C02",
+      "set_id": "WEAPON_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 2,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่โจรภูเขา",
+      "file": "assets/loot/weapons/row05_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R05-C03",
+      "set_id": "WEAPON_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 3,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่โจรภูเขา",
+      "file": "assets/loot/weapons/row05_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R05-C04",
+      "set_id": "WEAPON_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 4,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มโจรภูเขา",
+      "file": "assets/loot/weapons/row05_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 30,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R06-C01",
+      "set_id": "WEAPON_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยผู้คุ้มกันคาราวาน",
+      "file": "assets/loot/weapons/row06_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R06-C02",
+      "set_id": "WEAPON_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่ผู้คุ้มกันคาราวาน",
+      "file": "assets/loot/weapons/row06_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R06-C03",
+      "set_id": "WEAPON_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่ผู้คุ้มกันคาราวาน",
+      "file": "assets/loot/weapons/row06_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R06-C04",
+      "set_id": "WEAPON_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มผู้คุ้มกันคาราวาน",
+      "file": "assets/loot/weapons/row06_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R07-C01",
+      "set_id": "WEAPON_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยนักล่าอสูร",
+      "file": "assets/loot/weapons/row07_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R07-C02",
+      "set_id": "WEAPON_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่นักล่าอสูร",
+      "file": "assets/loot/weapons/row07_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R07-C03",
+      "set_id": "WEAPON_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่นักล่าอสูร",
+      "file": "assets/loot/weapons/row07_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R07-C04",
+      "set_id": "WEAPON_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มนักล่าอสูร",
+      "file": "assets/loot/weapons/row07_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R08-C01",
+      "set_id": "WEAPON_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยศิลาเหล็ก",
+      "file": "assets/loot/weapons/row08_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R08-C02",
+      "set_id": "WEAPON_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่ศิลาเหล็ก",
+      "file": "assets/loot/weapons/row08_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R08-C03",
+      "set_id": "WEAPON_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่ศิลาเหล็ก",
+      "file": "assets/loot/weapons/row08_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R08-C04",
+      "set_id": "WEAPON_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มศิลาเหล็ก",
+      "file": "assets/loot/weapons/row08_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R09-C01",
+      "set_id": "WEAPON_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยราชันคูหา",
+      "file": "assets/loot/weapons/row09_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "WPN-R09-C02",
+      "set_id": "WEAPON_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่ราชันคูหา",
+      "file": "assets/loot/weapons/row09_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "WPN-R09-C03",
+      "set_id": "WEAPON_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่ราชันคูหา",
+      "file": "assets/loot/weapons/row09_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "WPN-R09-C04",
+      "set_id": "WEAPON_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มราชันคูหา",
+      "file": "assets/loot/weapons/row09_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 58,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "WPN-R10-C01",
+      "set_id": "WEAPON_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยยอดองครักษ์ชายแดน",
+      "file": "assets/loot/weapons/row10_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R10-C02",
+      "set_id": "WEAPON_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่ยอดองครักษ์ชายแดน",
+      "file": "assets/loot/weapons/row10_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R10-C03",
+      "set_id": "WEAPON_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่ยอดองครักษ์ชายแดน",
+      "file": "assets/loot/weapons/row10_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R10-C04",
+      "set_id": "WEAPON_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มยอดองครักษ์ชายแดน",
+      "file": "assets/loot/weapons/row10_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "WPN-R11-C01",
+      "set_id": "WEAPON_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยม่านเงา",
+      "file": "assets/loot/weapons/row11_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R11-C02",
+      "set_id": "WEAPON_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่ม่านเงา",
+      "file": "assets/loot/weapons/row11_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R11-C03",
+      "set_id": "WEAPON_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่ม่านเงา",
+      "file": "assets/loot/weapons/row11_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R11-C04",
+      "set_id": "WEAPON_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มม่านเงา",
+      "file": "assets/loot/weapons/row11_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "WPN-R12-C01",
+      "set_id": "WEAPON_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยเกล็ดมังกร",
+      "file": "assets/loot/weapons/row12_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R12-C02",
+      "set_id": "WEAPON_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่เกล็ดมังกร",
+      "file": "assets/loot/weapons/row12_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R12-C03",
+      "set_id": "WEAPON_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่เกล็ดมังกร",
+      "file": "assets/loot/weapons/row12_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R12-C04",
+      "set_id": "WEAPON_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มเกล็ดมังกร",
+      "file": "assets/loot/weapons/row12_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "WPN-R13-C01",
+      "set_id": "WEAPON_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "kind": "flute",
+      "kind_th": "ขลุ่ย",
+      "name_th": "ขลุ่ยจ้าวยุทธภพ",
+      "file": "assets/loot/weapons/row13_flute.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "WPN-R13-C02",
+      "set_id": "WEAPON_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "kind": "jian",
+      "kind_th": "กระบี่",
+      "name_th": "กระบี่จ้าวยุทธภพ",
+      "file": "assets/loot/weapons/row13_jian.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "WPN-R13-C03",
+      "set_id": "WEAPON_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "kind": "dual_knives",
+      "kind_th": "มีดสั้นคู่",
+      "name_th": "มีดสั้นคู่จ้าวยุทธภพ",
+      "file": "assets/loot/weapons/row13_dual_knives.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "WPN-R13-C04",
+      "set_id": "WEAPON_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "kind": "acupuncture",
+      "kind_th": "ชุดเข็มฝังเข็ม",
+      "name_th": "ชุดเข็มฝังเข็มจ้าวยุทธภพ",
+      "file": "assets/loot/weapons/row13_acupuncture.png",
+      "planned_map_id": null,
+      "planned_monster_id": null,
+      "planned_npc_id": null,
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 82,
+        "defense": 0,
+        "max_hp": 0,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    }
+  ],
+  "armor": [
+    {
+      "item_id": "ARM-R01-C01",
+      "set_id": "ARMOR_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 1,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ผ้าคาดหัวฝึกยุทธ์",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row01_head.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 2,
+        "max_hp": 12,
+        "max_sp": 10
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R01-C02",
+      "set_id": "ARMOR_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 2,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อฝึกยุทธ์",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row01_top.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 5,
+        "max_hp": 30,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R01-C03",
+      "set_id": "ARMOR_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 3,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงฝึกยุทธ์",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row01_bottom.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 4,
+        "max_hp": 24,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R01-C04",
+      "set_id": "ARMOR_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 4,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ผ้าพันแขนฝึกยุทธ์",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row01_wrist.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 1,
+        "max_hp": 6,
+        "max_sp": 12
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R01-C05",
+      "set_id": "ARMOR_SET_R01",
+      "set_key": "basic_martial_training",
+      "row": 1,
+      "col": 5,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าฝึกยุทธ์",
+      "set_name_th": "ชุดฝึกยุทธ์",
+      "set_name_en": "BASIC MARTIAL TRAINING",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row01_shoes.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 2,
+        "max_hp": 12,
+        "max_sp": 4
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R02-C01",
+      "set_id": "ARMOR_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 1,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "งอบจอมยุทธ์พเนจร",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row02_head.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 2,
+        "max_hp": 12,
+        "max_sp": 10
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R02-C02",
+      "set_id": "ARMOR_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 2,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อจอมยุทธ์พเนจร",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row02_top.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 5,
+        "max_hp": 30,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R02-C03",
+      "set_id": "ARMOR_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 3,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงจอมยุทธ์พเนจร",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row02_bottom.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 4,
+        "max_hp": 24,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R02-C04",
+      "set_id": "ARMOR_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 4,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนจอมยุทธ์พเนจร",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row02_wrist.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 1,
+        "max_hp": 6,
+        "max_sp": 12
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R02-C05",
+      "set_id": "ARMOR_SET_R02",
+      "set_key": "wandering_disciple",
+      "row": 2,
+      "col": 5,
+      "level": 5,
+      "required_level": 5,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าจอมยุทธ์พเนจร",
+      "set_name_th": "ชุดจอมยุทธ์พเนจร",
+      "set_name_en": "WANDERING DISCIPLE",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row02_shoes.png",
+      "requirements": {
+        "level": 5
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 2,
+        "max_hp": 12,
+        "max_sp": 4
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R03-C01",
+      "set_id": "ARMOR_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 1,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ผ้าโพกหัวนักเดินทางชายแดน",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row03_head.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 20
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R03-C02",
+      "set_id": "ARMOR_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 2,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อนักเดินทางชายแดน",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row03_top.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 15,
+        "max_hp": 72,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R03-C03",
+      "set_id": "ARMOR_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 3,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงนักเดินทางชายแดน",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row03_bottom.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 13,
+        "max_hp": 60,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R03-C04",
+      "set_id": "ARMOR_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 4,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนนักเดินทางชายแดน",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row03_wrist.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 10,
+        "max_hp": 15,
+        "max_sp": 24
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R03-C05",
+      "set_id": "ARMOR_SET_R03",
+      "set_key": "borderland_traveler",
+      "row": 3,
+      "col": 5,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้านักเดินทางชายแดน",
+      "set_name_th": "ชุดนักเดินทางชายแดน",
+      "set_name_en": "BORDERLAND TRAVELER",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row03_shoes.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 8
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R04-C01",
+      "set_id": "ARMOR_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 1,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "หมวกม่านพรานพงไพร",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row04_head.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 20
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R04-C02",
+      "set_id": "ARMOR_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 2,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อพรานพงไพร",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row04_top.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 15,
+        "max_hp": 72,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R04-C03",
+      "set_id": "ARMOR_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 3,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงพรานพงไพร",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row04_bottom.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 13,
+        "max_hp": 60,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R04-C04",
+      "set_id": "ARMOR_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 4,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนพรานพงไพร",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row04_wrist.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 10,
+        "max_hp": 15,
+        "max_sp": 24
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R04-C05",
+      "set_id": "ARMOR_SET_R04",
+      "set_key": "forest_hunter",
+      "row": 4,
+      "col": 5,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าพรานพงไพร",
+      "set_name_th": "ชุดพรานพงไพร",
+      "set_name_en": "FOREST HUNTER",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row04_shoes.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 8
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R05-C01",
+      "set_id": "ARMOR_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 1,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ผ้าโพกหัวโจรภูเขา",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row05_head.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 20
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R05-C02",
+      "set_id": "ARMOR_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 2,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อโจรภูเขา",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row05_top.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 15,
+        "max_hp": 72,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R05-C03",
+      "set_id": "ARMOR_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 3,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงโจรภูเขา",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row05_bottom.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 13,
+        "max_hp": 60,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R05-C04",
+      "set_id": "ARMOR_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 4,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนโจรภูเขา",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row05_wrist.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 10,
+        "max_hp": 15,
+        "max_sp": 24
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R05-C05",
+      "set_id": "ARMOR_SET_R05",
+      "set_key": "mountain_bandit",
+      "row": 5,
+      "col": 5,
+      "level": 15,
+      "required_level": 15,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าโจรภูเขา",
+      "set_name_th": "ชุดโจรภูเขา",
+      "set_name_en": "MOUNTAIN BANDIT",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row05_shoes.png",
+      "requirements": {
+        "level": 15
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 11,
+        "max_hp": 30,
+        "max_sp": 8
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R06-C01",
+      "set_id": "ARMOR_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เครื่องศีรษะผู้คุ้มกันคาราวาน",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row06_head.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 54,
+        "max_sp": 34
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R06-C02",
+      "set_id": "ARMOR_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อผู้คุ้มกันคาราวาน",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row06_top.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 26,
+        "max_hp": 135,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R06-C03",
+      "set_id": "ARMOR_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงผู้คุ้มกันคาราวาน",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row06_bottom.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 23,
+        "max_hp": 110,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R06-C04",
+      "set_id": "ARMOR_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนผู้คุ้มกันคาราวาน",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row06_wrist.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 20,
+        "max_hp": 30,
+        "max_sp": 42
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R06-C05",
+      "set_id": "ARMOR_SET_R06",
+      "set_key": "caravan_guard",
+      "row": 6,
+      "col": 5,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าผู้คุ้มกันคาราวาน",
+      "set_name_th": "ชุดผู้คุ้มกันคาราวาน",
+      "set_name_en": "CARAVAN GUARD",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row06_shoes.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 52,
+        "max_sp": 15
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R07-C01",
+      "set_id": "ARMOR_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ผ้าคาดหัวนักล่าอสูร",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row07_head.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 54,
+        "max_sp": 34
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R07-C02",
+      "set_id": "ARMOR_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อนักล่าอสูร",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row07_top.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 26,
+        "max_hp": 135,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R07-C03",
+      "set_id": "ARMOR_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงนักล่าอสูร",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row07_bottom.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 23,
+        "max_hp": 110,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R07-C04",
+      "set_id": "ARMOR_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนนักล่าอสูร",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row07_wrist.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 20,
+        "max_hp": 30,
+        "max_sp": 42
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R07-C05",
+      "set_id": "ARMOR_SET_R07",
+      "set_key": "beast_fang",
+      "row": 7,
+      "col": 5,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้านักล่าอสูร",
+      "set_name_th": "ชุดนักล่าอสูร",
+      "set_name_en": "BEAST FANG",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row07_shoes.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 52,
+        "max_sp": 15
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R08-C01",
+      "set_id": "ARMOR_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เครื่องศีรษะศิลาเหล็ก",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row08_head.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 54,
+        "max_sp": 34
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R08-C02",
+      "set_id": "ARMOR_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อศิลาเหล็ก",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row08_top.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 26,
+        "max_hp": 135,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R08-C03",
+      "set_id": "ARMOR_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงศิลาเหล็ก",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row08_bottom.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 23,
+        "max_hp": 110,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R08-C04",
+      "set_id": "ARMOR_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนศิลาเหล็ก",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row08_wrist.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 20,
+        "max_hp": 30,
+        "max_sp": 42
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R08-C05",
+      "set_id": "ARMOR_SET_R08",
+      "set_key": "ironstone",
+      "row": 8,
+      "col": 5,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าศิลาเหล็ก",
+      "set_name_th": "ชุดศิลาเหล็ก",
+      "set_name_en": "IRONSTONE",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row08_shoes.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 52,
+        "max_sp": 15
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R09-C01",
+      "set_id": "ARMOR_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 1,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เครื่องศีรษะราชันคูหา",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row09_head.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 54,
+        "max_sp": 34
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R09-C02",
+      "set_id": "ARMOR_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 2,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อราชันคูหา",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row09_top.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 26,
+        "max_hp": 135,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R09-C03",
+      "set_id": "ARMOR_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 3,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงราชันคูหา",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row09_bottom.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 23,
+        "max_hp": 110,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R09-C04",
+      "set_id": "ARMOR_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 4,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนราชันคูหา",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row09_wrist.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 20,
+        "max_hp": 30,
+        "max_sp": 42
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R09-C05",
+      "set_id": "ARMOR_SET_R09",
+      "set_key": "cavern_sovereign",
+      "row": 9,
+      "col": 5,
+      "level": 30,
+      "required_level": 30,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าราชันคูหา",
+      "set_name_th": "ชุดราชันคูหา",
+      "set_name_en": "CAVERN SOVEREIGN",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row09_shoes.png",
+      "requirements": {
+        "level": 30
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 21,
+        "max_hp": 52,
+        "max_sp": 15
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R10-C01",
+      "set_id": "ARMOR_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เครื่องศีรษะยอดองครักษ์ชายแดน",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row10_head.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 80,
+        "max_sp": 48
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R10-C02",
+      "set_id": "ARMOR_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อยอดองครักษ์ชายแดน",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row10_top.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 37,
+        "max_hp": 190,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R10-C03",
+      "set_id": "ARMOR_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงยอดองครักษ์ชายแดน",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row10_bottom.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 33,
+        "max_hp": 158,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R10-C04",
+      "set_id": "ARMOR_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนยอดองครักษ์ชายแดน",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row10_wrist.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 30,
+        "max_hp": 42,
+        "max_sp": 56
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R10-C05",
+      "set_id": "ARMOR_SET_R10",
+      "set_key": "frontier_elite_guard",
+      "row": 10,
+      "col": 5,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "NPC",
+      "monster_variant": null,
+      "source_label": "NPC",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้ายอดองครักษ์ชายแดน",
+      "set_name_th": "ชุดยอดองครักษ์ชายแดน",
+      "set_name_en": "FRONTIER ELITE GUARD",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row10_shoes.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 75,
+        "max_sp": 20
+      },
+      "affix_min": 0,
+      "affix_max": 0,
+      "affix_pool": []
+    },
+    {
+      "item_id": "ARM-R11-C01",
+      "set_id": "ARMOR_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "หมวกม่านเงา",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row11_head.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 80,
+        "max_sp": 48
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R11-C02",
+      "set_id": "ARMOR_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อม่านเงา",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row11_top.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 37,
+        "max_hp": 190,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R11-C03",
+      "set_id": "ARMOR_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงม่านเงา",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row11_bottom.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 33,
+        "max_hp": 158,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R11-C04",
+      "set_id": "ARMOR_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนม่านเงา",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row11_wrist.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 30,
+        "max_hp": 42,
+        "max_sp": 56
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R11-C05",
+      "set_id": "ARMOR_SET_R11",
+      "set_key": "shadow_veil",
+      "row": 11,
+      "col": 5,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "A",
+      "source_label": "มอนสเตอร์ A",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าม่านเงา",
+      "set_name_th": "ชุดม่านเงา",
+      "set_name_en": "SHADOW VEIL",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row11_shoes.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 75,
+        "max_sp": 20
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_rate",
+        "hit",
+        "max_sp"
+      ]
+    },
+    {
+      "item_id": "ARM-R12-C01",
+      "set_id": "ARMOR_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "หมวกม่านเกล็ดมังกร",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row12_head.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 80,
+        "max_sp": 48
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R12-C02",
+      "set_id": "ARMOR_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อเกล็ดมังกร",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row12_top.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 37,
+        "max_hp": 190,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R12-C03",
+      "set_id": "ARMOR_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงเกล็ดมังกร",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row12_bottom.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 33,
+        "max_hp": 158,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R12-C04",
+      "set_id": "ARMOR_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนเกล็ดมังกร",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row12_wrist.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 30,
+        "max_hp": 42,
+        "max_sp": 56
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R12-C05",
+      "set_id": "ARMOR_SET_R12",
+      "set_key": "dragon_scale",
+      "row": 12,
+      "col": 5,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "MONSTER",
+      "monster_variant": "B",
+      "source_label": "มอนสเตอร์ B",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าเกล็ดมังกร",
+      "set_name_th": "ชุดเกล็ดมังกร",
+      "set_name_en": "DRAGON SCALE",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row12_shoes.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 75,
+        "max_sp": 20
+      },
+      "affix_min": 0,
+      "affix_max": 3,
+      "affix_pool": [
+        "crit_damage_pct",
+        "max_hp",
+        "defense"
+      ]
+    },
+    {
+      "item_id": "ARM-R13-C01",
+      "set_id": "ARMOR_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 1,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "มงกุฎจ้าวยุทธภพ",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "slot": "head",
+      "piece": "head",
+      "piece_th": "หมวก",
+      "file": "assets/loot/wolf_armor/row13_head.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 80,
+        "max_sp": 48
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R13-C02",
+      "set_id": "ARMOR_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 2,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "เสื้อจ้าวยุทธภพ",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "slot": "top",
+      "piece": "top",
+      "piece_th": "เสื้อ",
+      "file": "assets/loot/wolf_armor/row13_top.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 37,
+        "max_hp": 190,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R13-C03",
+      "set_id": "ARMOR_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 3,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "กางเกงจ้าวยุทธภพ",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "slot": "bottom",
+      "piece": "bottom",
+      "piece_th": "กางเกง",
+      "file": "assets/loot/wolf_armor/row13_bottom.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 33,
+        "max_hp": 158,
+        "max_sp": 0
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R13-C04",
+      "set_id": "ARMOR_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 4,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "ปลอกแขนจ้าวยุทธภพ",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "slot": "wrist",
+      "piece": "wrist",
+      "piece_th": "ปลอกแขน",
+      "file": "assets/loot/wolf_armor/row13_wrist.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 30,
+        "max_hp": 42,
+        "max_sp": 56
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    },
+    {
+      "item_id": "ARM-R13-C05",
+      "set_id": "ARMOR_SET_R13",
+      "set_key": "supreme_martial_lord",
+      "row": 13,
+      "col": 5,
+      "level": 40,
+      "required_level": 40,
+      "source_type": "BOSS",
+      "monster_variant": null,
+      "source_label": "บอส",
+      "planned_monster_id": null,
+      "planned_map_id": null,
+      "planned_npc_id": null,
+      "name_th": "รองเท้าจ้าวยุทธภพ",
+      "set_name_th": "ชุดจ้าวยุทธภพ",
+      "set_name_en": "SUPREME MARTIAL LORD",
+      "slot": "shoes",
+      "piece": "shoes",
+      "piece_th": "รองเท้า",
+      "file": "assets/loot/wolf_armor/row13_shoes.png",
+      "requirements": {
+        "level": 40
+      },
+      "balance_version": "equipment_def_k250_v80an_proposal",
+      "stats": {
+        "attack": 0,
+        "defense": 31,
+        "max_hp": 75,
+        "max_sp": 20
+      },
+      "affix_min": 0,
+      "affix_max": 4,
+      "affix_pool": [
+        "crit_rate",
+        "crit_damage_pct",
+        "max_hp",
+        "max_sp",
+        "defense",
+        "hit"
+      ]
+    }
+  ]
+}

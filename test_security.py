@@ -44,9 +44,10 @@ async def suite():
         await a.send(json.dumps(join));await b.send(json.dumps({'t':'join','avatar':'female_hair_03_red'}))
         await recv_type(a,'welcome');await recv_type(b,'welcome')
         snap=await recv_type(a,'snapshot')
-        assert len(snap['players'])==2 and len(snap['mobs'])==5
-        assert all(p['max']==1300 and p['level']==5 for p in snap['players'])
-        print('PASS two guest clients share server-authoritative Lv5 world')
+        assert len(snap['players'])==2 and len(snap['mobs'])==20
+        assert all(p['max']==1200 and p['level']==1 for p in snap['players'])
+        assert sum(m['species']=='boar' for m in snap['mobs'])==6 and sum(m['species']=='wolf' for m in snap['mobs'])==14
+        print('PASS two guest clients share server-authoritative Lv1 world')
     async with websockets.connect(URI) as ws:
         await ws.send(json.dumps(join));await recv_type(ws,'welcome')
         for seq in range(1,25):

@@ -35,7 +35,7 @@ class Balance(unittest.TestCase):
   self.assertEqual(len(server.shots),1)
  def test_server_owns_level_and_armor(self):
   server.spawn_mobs()
-  self.assertEqual(len(server.monsters),5)
-  self.assertTrue(all(m.level==5 and m.zone_mode=='common' for m in server.monsters.values()))
+  self.assertEqual(len(server.monsters),20)
+  self.assertTrue(all(1<=m.level<=5 and m.zone_mode=='common' for m in server.monsters.values()))
 
 if __name__=='__main__':unittest.main(verbosity=2)

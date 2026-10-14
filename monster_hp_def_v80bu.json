@@ -1,0 +1,786 @@
+{
+  "source": "monster_balance_v80ao.js",
+  "version": "v8.0AO",
+  "presets": [
+    {
+      "level": 1,
+      "normal": {
+        "hp": 280,
+        "defense": 0,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 281,
+        "defense": 2,
+        "hits": 2
+      }
+    },
+    {
+      "level": 2,
+      "normal": {
+        "hp": 286,
+        "defense": 1,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 287,
+        "defense": 4,
+        "hits": 2
+      }
+    },
+    {
+      "level": 3,
+      "normal": {
+        "hp": 292,
+        "defense": 2,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 293,
+        "defense": 6,
+        "hits": 2
+      }
+    },
+    {
+      "level": 4,
+      "normal": {
+        "hp": 297,
+        "defense": 3,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 298,
+        "defense": 8,
+        "hits": 2
+      }
+    },
+    {
+      "level": 5,
+      "normal": {
+        "hp": 339,
+        "defense": 4,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 603,
+        "defense": 10,
+        "hits": 3
+      }
+    },
+    {
+      "level": 6,
+      "normal": {
+        "hp": 344,
+        "defense": 5,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 608,
+        "defense": 12,
+        "hits": 3
+      }
+    },
+    {
+      "level": 7,
+      "normal": {
+        "hp": 351,
+        "defense": 6,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 618,
+        "defense": 13,
+        "hits": 3
+      }
+    },
+    {
+      "level": 8,
+      "normal": {
+        "hp": 358,
+        "defense": 6,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 624,
+        "defense": 15,
+        "hits": 3
+      }
+    },
+    {
+      "level": 9,
+      "normal": {
+        "hp": 364,
+        "defense": 7,
+        "hits": 2
+      },
+      "humanoid": {
+        "hp": 633,
+        "defense": 16,
+        "hits": 3
+      }
+    },
+    {
+      "level": 10,
+      "normal": {
+        "hp": 664,
+        "defense": 8,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 925,
+        "defense": 18,
+        "hits": 4
+      }
+    },
+    {
+      "level": 11,
+      "normal": {
+        "hp": 675,
+        "defense": 9,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 933,
+        "defense": 20,
+        "hits": 4
+      }
+    },
+    {
+      "level": 12,
+      "normal": {
+        "hp": 676,
+        "defense": 10,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 933,
+        "defense": 22,
+        "hits": 4
+      }
+    },
+    {
+      "level": 13,
+      "normal": {
+        "hp": 676,
+        "defense": 12,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 935,
+        "defense": 23,
+        "hits": 4
+      }
+    },
+    {
+      "level": 14,
+      "normal": {
+        "hp": 677,
+        "defense": 13,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 935,
+        "defense": 25,
+        "hits": 4
+      }
+    },
+    {
+      "level": 15,
+      "normal": {
+        "hp": 717,
+        "defense": 14,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 27,
+        "hits": 4
+      }
+    },
+    {
+      "level": 16,
+      "normal": {
+        "hp": 717,
+        "defense": 15,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 29,
+        "hits": 4
+      }
+    },
+    {
+      "level": 17,
+      "normal": {
+        "hp": 717,
+        "defense": 17,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 31,
+        "hits": 4
+      }
+    },
+    {
+      "level": 18,
+      "normal": {
+        "hp": 717,
+        "defense": 18,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 34,
+        "hits": 4
+      }
+    },
+    {
+      "level": 19,
+      "normal": {
+        "hp": 717,
+        "defense": 20,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 36,
+        "hits": 4
+      }
+    },
+    {
+      "level": 20,
+      "normal": {
+        "hp": 718,
+        "defense": 21,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 38,
+        "hits": 4
+      }
+    },
+    {
+      "level": 21,
+      "normal": {
+        "hp": 719,
+        "defense": 22,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 40,
+        "hits": 4
+      }
+    },
+    {
+      "level": 22,
+      "normal": {
+        "hp": 719,
+        "defense": 24,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 42,
+        "hits": 4
+      }
+    },
+    {
+      "level": 23,
+      "normal": {
+        "hp": 719,
+        "defense": 25,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 44,
+        "hits": 4
+      }
+    },
+    {
+      "level": 24,
+      "normal": {
+        "hp": 720,
+        "defense": 26,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 46,
+        "hits": 4
+      }
+    },
+    {
+      "level": 25,
+      "normal": {
+        "hp": 720,
+        "defense": 28,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 48,
+        "hits": 4
+      }
+    },
+    {
+      "level": 26,
+      "normal": {
+        "hp": 721,
+        "defense": 29,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 49,
+        "hits": 4
+      }
+    },
+    {
+      "level": 27,
+      "normal": {
+        "hp": 723,
+        "defense": 30,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 51,
+        "hits": 4
+      }
+    },
+    {
+      "level": 28,
+      "normal": {
+        "hp": 723,
+        "defense": 31,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 53,
+        "hits": 4
+      }
+    },
+    {
+      "level": 29,
+      "normal": {
+        "hp": 723,
+        "defense": 33,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 983,
+        "defense": 55,
+        "hits": 4
+      }
+    },
+    {
+      "level": 30,
+      "normal": {
+        "hp": 778,
+        "defense": 34,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 57,
+        "hits": 5
+      }
+    },
+    {
+      "level": 31,
+      "normal": {
+        "hp": 778,
+        "defense": 35,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 59,
+        "hits": 5
+      }
+    },
+    {
+      "level": 32,
+      "normal": {
+        "hp": 778,
+        "defense": 37,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 61,
+        "hits": 5
+      }
+    },
+    {
+      "level": 33,
+      "normal": {
+        "hp": 778,
+        "defense": 38,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 63,
+        "hits": 5
+      }
+    },
+    {
+      "level": 34,
+      "normal": {
+        "hp": 779,
+        "defense": 39,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 65,
+        "hits": 5
+      }
+    },
+    {
+      "level": 35,
+      "normal": {
+        "hp": 779,
+        "defense": 41,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 68,
+        "hits": 5
+      }
+    },
+    {
+      "level": 36,
+      "normal": {
+        "hp": 779,
+        "defense": 42,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 70,
+        "hits": 5
+      }
+    },
+    {
+      "level": 37,
+      "normal": {
+        "hp": 780,
+        "defense": 43,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 72,
+        "hits": 5
+      }
+    },
+    {
+      "level": 38,
+      "normal": {
+        "hp": 781,
+        "defense": 44,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 74,
+        "hits": 5
+      }
+    },
+    {
+      "level": 39,
+      "normal": {
+        "hp": 781,
+        "defense": 46,
+        "hits": 3
+      },
+      "humanoid": {
+        "hp": 1355,
+        "defense": 76,
+        "hits": 5
+      }
+    },
+    {
+      "level": 40,
+      "normal": {
+        "hp": 1189,
+        "defense": 47,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 78,
+        "hits": 5
+      }
+    },
+    {
+      "level": 41,
+      "normal": {
+        "hp": 1192,
+        "defense": 48,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 80,
+        "hits": 5
+      }
+    },
+    {
+      "level": 42,
+      "normal": {
+        "hp": 1192,
+        "defense": 49,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 81,
+        "hits": 5
+      }
+    },
+    {
+      "level": 43,
+      "normal": {
+        "hp": 1194,
+        "defense": 50,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 83,
+        "hits": 5
+      }
+    },
+    {
+      "level": 44,
+      "normal": {
+        "hp": 1195,
+        "defense": 51,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 85,
+        "hits": 5
+      }
+    },
+    {
+      "level": 45,
+      "normal": {
+        "hp": 1195,
+        "defense": 53,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 87,
+        "hits": 5
+      }
+    },
+    {
+      "level": 46,
+      "normal": {
+        "hp": 1195,
+        "defense": 54,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 88,
+        "hits": 5
+      }
+    },
+    {
+      "level": 47,
+      "normal": {
+        "hp": 1195,
+        "defense": 55,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 90,
+        "hits": 5
+      }
+    },
+    {
+      "level": 48,
+      "normal": {
+        "hp": 1195,
+        "defense": 56,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 92,
+        "hits": 5
+      }
+    },
+    {
+      "level": 49,
+      "normal": {
+        "hp": 1198,
+        "defense": 57,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 93,
+        "hits": 5
+      }
+    },
+    {
+      "level": 50,
+      "normal": {
+        "hp": 1199,
+        "defense": 58,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 95,
+        "hits": 5
+      }
+    },
+    {
+      "level": 51,
+      "normal": {
+        "hp": 1201,
+        "defense": 59,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 97,
+        "hits": 5
+      }
+    },
+    {
+      "level": 52,
+      "normal": {
+        "hp": 1201,
+        "defense": 60,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 98,
+        "hits": 5
+      }
+    },
+    {
+      "level": 53,
+      "normal": {
+        "hp": 1201,
+        "defense": 62,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 100,
+        "hits": 5
+      }
+    },
+    {
+      "level": 54,
+      "normal": {
+        "hp": 1201,
+        "defense": 63,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 102,
+        "hits": 5
+      }
+    },
+    {
+      "level": 55,
+      "normal": {
+        "hp": 1202,
+        "defense": 64,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 104,
+        "hits": 5
+      }
+    },
+    {
+      "level": 56,
+      "normal": {
+        "hp": 1202,
+        "defense": 65,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 105,
+        "hits": 5
+      }
+    },
+    {
+      "level": 57,
+      "normal": {
+        "hp": 1204,
+        "defense": 66,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 107,
+        "hits": 5
+      }
+    },
+    {
+      "level": 58,
+      "normal": {
+        "hp": 1204,
+        "defense": 68,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 109,
+        "hits": 5
+      }
+    },
+    {
+      "level": 59,
+      "normal": {
+        "hp": 1204,
+        "defense": 69,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 110,
+        "hits": 5
+      }
+    },
+    {
+      "level": 60,
+      "normal": {
+        "hp": 1204,
+        "defense": 70,
+        "hits": 4
+      },
+      "humanoid": {
+        "hp": 1408,
+        "defense": 112,
+        "hits": 5
+      }
+    }
+  ]
+}

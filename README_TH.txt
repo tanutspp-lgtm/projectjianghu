@@ -1,3 +1,9 @@
+UPDATE v8.0BS (2026-10-14)
+Server now implements Guest ephemeral Lv1 EXP exp_v1, level-up +3 Stat/+1 Skill, authoritative Stat/Flute Mastery attacks/CRIT/SP/STA, common beast loot/Bag and 30-guest support. EXP tables already exist in Supabase (unchanged); local exp_balance_v1.json fallback. Netlify v8.0BS is REQUIRED for full v8.0BS UI. Not 100% offline parity: Qi / actual gear/equip / persisted accounts / premium+manual mobs / map warps remain.
+Run: python test_online_parity_v80bs.py; python test_online_protocol_v80bs.py; python test_security.py; python test_beast_parity_v80bq.py; python test_balance_v80bo.py.
+
+v8.0BQ TEST SERVER: เพิ่ม beast_map_common_v80bq.json + server.py ใหม่ (20 มอน) ดู HANDOFF_SERVER_V80BQ_BEAST_PARITY_TH.md ก่อนอัปเดต Render
+
 PROJECT JIANGHU — ONLINE GUEST SERVER v8.0BO (2026-10-14)
 
 Primary service: Render projectjianghu, Python server.py (WebSocket /ws, HTTP /healthz)

@@ -1,0 +1,314 @@
+[
+  {
+    "item_id": "WPN-R01-C01",
+    "level": 5,
+    "file": "assets/loot/weapons/row01_flute.png",
+    "name_th": "ขลุ่ยฝึกยุทธ์"
+  },
+  {
+    "item_id": "WPN-R01-C02",
+    "level": 5,
+    "file": "assets/loot/weapons/row01_jian.png",
+    "name_th": "กระบี่ฝึกยุทธ์"
+  },
+  {
+    "item_id": "WPN-R01-C03",
+    "level": 5,
+    "file": "assets/loot/weapons/row01_dual_knives.png",
+    "name_th": "มีดสั้นคู่ฝึกยุทธ์"
+  },
+  {
+    "item_id": "WPN-R01-C04",
+    "level": 5,
+    "file": "assets/loot/weapons/row01_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มฝึกยุทธ์"
+  },
+  {
+    "item_id": "WPN-R02-C01",
+    "level": 5,
+    "file": "assets/loot/weapons/row02_flute.png",
+    "name_th": "ขลุ่ยจอมยุทธ์พเนจร"
+  },
+  {
+    "item_id": "WPN-R02-C02",
+    "level": 5,
+    "file": "assets/loot/weapons/row02_jian.png",
+    "name_th": "กระบี่จอมยุทธ์พเนจร"
+  },
+  {
+    "item_id": "WPN-R02-C03",
+    "level": 5,
+    "file": "assets/loot/weapons/row02_dual_knives.png",
+    "name_th": "มีดสั้นคู่จอมยุทธ์พเนจร"
+  },
+  {
+    "item_id": "WPN-R02-C04",
+    "level": 5,
+    "file": "assets/loot/weapons/row02_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มจอมยุทธ์พเนจร"
+  },
+  {
+    "item_id": "WPN-R03-C01",
+    "level": 15,
+    "file": "assets/loot/weapons/row03_flute.png",
+    "name_th": "ขลุ่ยนักเดินทางชายแดน"
+  },
+  {
+    "item_id": "WPN-R03-C02",
+    "level": 15,
+    "file": "assets/loot/weapons/row03_jian.png",
+    "name_th": "กระบี่นักเดินทางชายแดน"
+  },
+  {
+    "item_id": "WPN-R03-C03",
+    "level": 15,
+    "file": "assets/loot/weapons/row03_dual_knives.png",
+    "name_th": "มีดสั้นคู่นักเดินทางชายแดน"
+  },
+  {
+    "item_id": "WPN-R03-C04",
+    "level": 15,
+    "file": "assets/loot/weapons/row03_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มนักเดินทางชายแดน"
+  },
+  {
+    "item_id": "WPN-R04-C01",
+    "level": 15,
+    "file": "assets/loot/weapons/row04_flute.png",
+    "name_th": "ขลุ่ยพรานพงไพร"
+  },
+  {
+    "item_id": "WPN-R04-C02",
+    "level": 15,
+    "file": "assets/loot/weapons/row04_jian.png",
+    "name_th": "กระบี่พรานพงไพร"
+  },
+  {
+    "item_id": "WPN-R04-C03",
+    "level": 15,
+    "file": "assets/loot/weapons/row04_dual_knives.png",
+    "name_th": "มีดสั้นคู่พรานพงไพร"
+  },
+  {
+    "item_id": "WPN-R04-C04",
+    "level": 15,
+    "file": "assets/loot/weapons/row04_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มพรานพงไพร"
+  },
+  {
+    "item_id": "WPN-R05-C01",
+    "level": 15,
+    "file": "assets/loot/weapons/row05_flute.png",
+    "name_th": "ขลุ่ยโจรภูเขา"
+  },
+  {
+    "item_id": "WPN-R05-C02",
+    "level": 15,
+    "file": "assets/loot/weapons/row05_jian.png",
+    "name_th": "กระบี่โจรภูเขา"
+  },
+  {
+    "item_id": "WPN-R05-C03",
+    "level": 15,
+    "file": "assets/loot/weapons/row05_dual_knives.png",
+    "name_th": "มีดสั้นคู่โจรภูเขา"
+  },
+  {
+    "item_id": "WPN-R05-C04",
+    "level": 15,
+    "file": "assets/loot/weapons/row05_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มโจรภูเขา"
+  },
+  {
+    "item_id": "WPN-R06-C01",
+    "level": 30,
+    "file": "assets/loot/weapons/row06_flute.png",
+    "name_th": "ขลุ่ยผู้คุ้มกันคาราวาน"
+  },
+  {
+    "item_id": "WPN-R06-C02",
+    "level": 30,
+    "file": "assets/loot/weapons/row06_jian.png",
+    "name_th": "กระบี่ผู้คุ้มกันคาราวาน"
+  },
+  {
+    "item_id": "WPN-R06-C03",
+    "level": 30,
+    "file": "assets/loot/weapons/row06_dual_knives.png",
+    "name_th": "มีดสั้นคู่ผู้คุ้มกันคาราวาน"
+  },
+  {
+    "item_id": "WPN-R06-C04",
+    "level": 30,
+    "file": "assets/loot/weapons/row06_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มผู้คุ้มกันคาราวาน"
+  },
+  {
+    "item_id": "WPN-R07-C01",
+    "level": 30,
+    "file": "assets/loot/weapons/row07_flute.png",
+    "name_th": "ขลุ่ยนักล่าอสูร"
+  },
+  {
+    "item_id": "WPN-R07-C02",
+    "level": 30,
+    "file": "assets/loot/weapons/row07_jian.png",
+    "name_th": "กระบี่นักล่าอสูร"
+  },
+  {
+    "item_id": "WPN-R07-C03",
+    "level": 30,
+    "file": "assets/loot/weapons/row07_dual_knives.png",
+    "name_th": "มีดสั้นคู่นักล่าอสูร"
+  },
+  {
+    "item_id": "WPN-R07-C04",
+    "level": 30,
+    "file": "assets/loot/weapons/row07_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มนักล่าอสูร"
+  },
+  {
+    "item_id": "WPN-R08-C01",
+    "level": 30,
+    "file": "assets/loot/weapons/row08_flute.png",
+    "name_th": "ขลุ่ยศิลาเหล็ก"
+  },
+  {
+    "item_id": "WPN-R08-C02",
+    "level": 30,
+    "file": "assets/loot/weapons/row08_jian.png",
+    "name_th": "กระบี่ศิลาเหล็ก"
+  },
+  {
+    "item_id": "WPN-R08-C03",
+    "level": 30,
+    "file": "assets/loot/weapons/row08_dual_knives.png",
+    "name_th": "มีดสั้นคู่ศิลาเหล็ก"
+  },
+  {
+    "item_id": "WPN-R08-C04",
+    "level": 30,
+    "file": "assets/loot/weapons/row08_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มศิลาเหล็ก"
+  },
+  {
+    "item_id": "WPN-R09-C01",
+    "level": 30,
+    "file": "assets/loot/weapons/row09_flute.png",
+    "name_th": "ขลุ่ยราชันคูหา"
+  },
+  {
+    "item_id": "WPN-R09-C02",
+    "level": 30,
+    "file": "assets/loot/weapons/row09_jian.png",
+    "name_th": "กระบี่ราชันคูหา"
+  },
+  {
+    "item_id": "WPN-R09-C03",
+    "level": 30,
+    "file": "assets/loot/weapons/row09_dual_knives.png",
+    "name_th": "มีดสั้นคู่ราชันคูหา"
+  },
+  {
+    "item_id": "WPN-R09-C04",
+    "level": 30,
+    "file": "assets/loot/weapons/row09_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มราชันคูหา"
+  },
+  {
+    "item_id": "WPN-R10-C01",
+    "level": 40,
+    "file": "assets/loot/weapons/row10_flute.png",
+    "name_th": "ขลุ่ยยอดองครักษ์ชายแดน"
+  },
+  {
+    "item_id": "WPN-R10-C02",
+    "level": 40,
+    "file": "assets/loot/weapons/row10_jian.png",
+    "name_th": "กระบี่ยอดองครักษ์ชายแดน"
+  },
+  {
+    "item_id": "WPN-R10-C03",
+    "level": 40,
+    "file": "assets/loot/weapons/row10_dual_knives.png",
+    "name_th": "มีดสั้นคู่ยอดองครักษ์ชายแดน"
+  },
+  {
+    "item_id": "WPN-R10-C04",
+    "level": 40,
+    "file": "assets/loot/weapons/row10_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มยอดองครักษ์ชายแดน"
+  },
+  {
+    "item_id": "WPN-R11-C01",
+    "level": 40,
+    "file": "assets/loot/weapons/row11_flute.png",
+    "name_th": "ขลุ่ยม่านเงา"
+  },
+  {
+    "item_id": "WPN-R11-C02",
+    "level": 40,
+    "file": "assets/loot/weapons/row11_jian.png",
+    "name_th": "กระบี่ม่านเงา"
+  },
+  {
+    "item_id": "WPN-R11-C03",
+    "level": 40,
+    "file": "assets/loot/weapons/row11_dual_knives.png",
+    "name_th": "มีดสั้นคู่ม่านเงา"
+  },
+  {
+    "item_id": "WPN-R11-C04",
+    "level": 40,
+    "file": "assets/loot/weapons/row11_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มม่านเงา"
+  },
+  {
+    "item_id": "WPN-R12-C01",
+    "level": 40,
+    "file": "assets/loot/weapons/row12_flute.png",
+    "name_th": "ขลุ่ยเกล็ดมังกร"
+  },
+  {
+    "item_id": "WPN-R12-C02",
+    "level": 40,
+    "file": "assets/loot/weapons/row12_jian.png",
+    "name_th": "กระบี่เกล็ดมังกร"
+  },
+  {
+    "item_id": "WPN-R12-C03",
+    "level": 40,
+    "file": "assets/loot/weapons/row12_dual_knives.png",
+    "name_th": "มีดสั้นคู่เกล็ดมังกร"
+  },
+  {
+    "item_id": "WPN-R12-C04",
+    "level": 40,
+    "file": "assets/loot/weapons/row12_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มเกล็ดมังกร"
+  },
+  {
+    "item_id": "WPN-R13-C01",
+    "level": 40,
+    "file": "assets/loot/weapons/row13_flute.png",
+    "name_th": "ขลุ่ยจ้าวยุทธภพ"
+  },
+  {
+    "item_id": "WPN-R13-C02",
+    "level": 40,
+    "file": "assets/loot/weapons/row13_jian.png",
+    "name_th": "กระบี่จ้าวยุทธภพ"
+  },
+  {
+    "item_id": "WPN-R13-C03",
+    "level": 40,
+    "file": "assets/loot/weapons/row13_dual_knives.png",
+    "name_th": "มีดสั้นคู่จ้าวยุทธภพ"
+  },
+  {
+    "item_id": "WPN-R13-C04",
+    "level": 40,
+    "file": "assets/loot/weapons/row13_acupuncture.png",
+    "name_th": "ชุดเข็มฝังเข็มจ้าวยุทธภพ"
+  }
+]

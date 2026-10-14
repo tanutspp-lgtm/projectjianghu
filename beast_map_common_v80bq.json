@@ -1,0 +1,252 @@
+{
+  "version": "8.0BQ",
+  "mode": "common",
+  "mapId": "guest_forest_test",
+  "worldW": 2060,
+  "platforms": [
+    {
+      "x": 0,
+      "x2": 2060,
+      "y": 550
+    },
+    {
+      "x": 170,
+      "x2": 850,
+      "y": 390
+    },
+    {
+      "x": 1020,
+      "x2": 1770,
+      "y": 390
+    },
+    {
+      "x": 410,
+      "x2": 1070,
+      "y": 235
+    },
+    {
+      "x": 1210,
+      "x2": 1970,
+      "y": 235
+    }
+  ],
+  "climbs": [
+    {
+      "x": 510,
+      "top": 235,
+      "bottom": 550
+    },
+    {
+      "x": 1170,
+      "top": 235,
+      "bottom": 550
+    },
+    {
+      "x": 1590,
+      "top": 235,
+      "bottom": 550
+    }
+  ],
+  "slots": [
+    {
+      "id": "platform_0:0",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 185.625,
+      "y": 550,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_0:1",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 426.875,
+      "y": 550,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": true
+    },
+    {
+      "id": "platform_0:2",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 668.125,
+      "y": 550,
+      "kind": "boar",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_0:3",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 909.375,
+      "y": 550,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_0:4",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 1108.625,
+      "y": 550,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": true
+    },
+    {
+      "id": "platform_0:5",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 1391.875,
+      "y": 550,
+      "kind": "boar",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_0:6",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 1633.125,
+      "y": 550,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_0:7",
+      "lane": "platform_0",
+      "platformId": "platform_0",
+      "x": 1874.375,
+      "y": 550,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": true
+    },
+    {
+      "id": "platform_1:0",
+      "lane": "platform_1",
+      "platformId": "platform_1",
+      "x": 326.6666666666667,
+      "y": 390,
+      "kind": "boar",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_1:1",
+      "lane": "platform_1",
+      "platformId": "platform_1",
+      "x": 468,
+      "y": 390,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_1:2",
+      "lane": "platform_1",
+      "platformId": "platform_1",
+      "x": 693.3333333333333,
+      "y": 390,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": true
+    },
+    {
+      "id": "platform_2:0",
+      "lane": "platform_2",
+      "platformId": "platform_2",
+      "x": 1146.3333333333333,
+      "y": 390,
+      "kind": "boar",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_2:1",
+      "lane": "platform_2",
+      "platformId": "platform_2",
+      "x": 1395,
+      "y": 390,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_2:2",
+      "lane": "platform_2",
+      "platformId": "platform_2",
+      "x": 1559.6666666666665,
+      "y": 390,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": true
+    },
+    {
+      "id": "platform_3:0",
+      "lane": "platform_3",
+      "platformId": "platform_3",
+      "x": 563.3333333333334,
+      "y": 235,
+      "kind": "boar",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_3:1",
+      "lane": "platform_3",
+      "platformId": "platform_3",
+      "x": 740,
+      "y": 235,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_3:2",
+      "lane": "platform_3",
+      "platformId": "platform_3",
+      "x": 916.6666666666667,
+      "y": 235,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": true
+    },
+    {
+      "id": "platform_4:0",
+      "lane": "platform_4",
+      "platformId": "platform_4",
+      "x": 1380,
+      "y": 235,
+      "kind": "boar",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_4:1",
+      "lane": "platform_4",
+      "platformId": "platform_4",
+      "x": 1548,
+      "y": 235,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": false
+    },
+    {
+      "id": "platform_4:2",
+      "lane": "platform_4",
+      "platformId": "platform_4",
+      "x": 1800,
+      "y": 235,
+      "kind": "wolf",
+      "role": "beast",
+      "pouncer": true
+    }
+  ]
+}
