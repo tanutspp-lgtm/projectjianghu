@@ -1,0 +1,68 @@
+[
+  {
+    "version": "CI",
+    "clients": 1,
+    "messages": 23,
+    "MiB": 0.023,
+    "wall_s": 2.27,
+    "cpu_s": 0.06,
+    "cpu_pct_of_one_core": 2.6,
+    "rssMiB": 100.8,
+    "tickP95Ms": 0.47
+  },
+  {
+    "version": "CI",
+    "clients": 10,
+    "messages": 231,
+    "MiB": 0.449,
+    "wall_s": 2.35,
+    "cpu_s": 0.15,
+    "cpu_pct_of_one_core": 6.4,
+    "rssMiB": 100.9,
+    "tickP95Ms": 0.89
+  },
+  {
+    "version": "CI",
+    "clients": 30,
+    "messages": 680,
+    "MiB": 2.299,
+    "wall_s": 2.37,
+    "cpu_s": 0.4,
+    "cpu_pct_of_one_core": 16.9,
+    "rssMiB": 101.8,
+    "tickP95Ms": 2.26
+  },
+  {
+    "version": "CK",
+    "clients": 1,
+    "messages": 22,
+    "MiB": 0.021,
+    "wall_s": 2.3,
+    "cpu_s": 0.05,
+    "cpu_pct_of_one_core": 2.2,
+    "rssMiB": 100.9,
+    "tickP95Ms": 0.64
+  },
+  {
+    "version": "CK",
+    "clients": 10,
+    "messages": 231,
+    "MiB": 0.453,
+    "wall_s": 2.35,
+    "cpu_s": 0.15,
+    "cpu_pct_of_one_core": 6.4,
+    "rssMiB": 101.0,
+    "tickP95Ms": 1.07
+  },
+  {
+    "version": "CK",
+    "clients": 30,
+    "messages": 690,
+    "MiB": 2.488,
+    "wall_s": 2.36,
+    "cpu_s": 0.37,
+    "cpu_pct_of_one_core": 15.7,
+    "rssMiB": 101.9,
+    "tickP95Ms": 2.35
+  }
+]

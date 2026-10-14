@@ -244,6 +244,8 @@ class Guest(Actor):
     protocol_delta: bool = False # legacy BX clients still require unfiltered full snapshots
     stable_stats_key: object = None
     stable_derived_stats: object = None
+    client_perf: dict = field(default_factory=dict)
+    client_perf_at: float = 0.0
 
 
 @dataclass
@@ -308,10 +310,21 @@ server_step = 0
 snapshot_join_sequence = 0
 # One-second bounded performance counters, cheap enough for the 30Hz game loop.
 perf_ticks = deque(maxlen=180)
-perf_data = {'tickP95Ms':0.0,'tickMaxMs':0.0,'rxInputsPerSec':0,'txKiBPerSec':0.0,'playerCount':0,'monsterCount':0}
+perf_loop_lags = deque(maxlen=180)
+perf_encodes = deque(maxlen=360)
+perf_data = {'tickP95Ms':0.0,'tickMaxMs':0.0,'rxInputsPerSec':0,'txKiBPerSec':0.0,'playerCount':0,'monsterCount':0,'eventLoopLagP95Ms':0,'eventLoopLagMaxMs':0,'snapshotEncodeP95Ms':0,'snapshotEncodeMaxMs':0}
 perf_last_report = time.monotonic()
 perf_in_count = 0
 perf_out_bytes = 0
+# v8.0CL: bounded anonymous diagnostic aggregates printed to Render app logs.
+# No guest names, addresses, IPs, inventory or player positions are logged.
+DIAG_WINDOW_SEC = 15.0
+_diag_last = time.monotonic()
+_diag_process_cpu = time.process_time()
+_diag_sent = 0
+_diag_overwritten = 0
+_diag_send_durations = deque(maxlen=1500)
+_diag_boot = secrets.token_hex(4)
 SPATIAL_CELL = 240
 
 def index_players_by_x():
@@ -335,13 +348,54 @@ def performance_rollup(now):
     elapsed=now-perf_last_report
     if elapsed<1:return
     ordered=sorted(perf_ticks)
+    lags=sorted(perf_loop_lags)
+    encodes=sorted(perf_encodes)
+    def p95(a):return round(a[min(len(a)-1,int(len(a)*.95))]*1000,2) if a else 0
+    def peak(a):return round(a[-1]*1000,2) if a else 0
     perf_data.update(tickP95Ms=round(ordered[min(len(ordered)-1,int(len(ordered)*.95))]*1000,2) if ordered else 0,
                      tickMaxMs=round(max(ordered)*1000,2) if ordered else 0,
                      rxInputsPerSec=round(perf_in_count/elapsed),
                      txKiBPerSec=round(perf_out_bytes/1024/elapsed,1),
-                     playerCount=len(players),monsterCount=len(monsters))
+                     playerCount=len(players),monsterCount=len(monsters),
+                     eventLoopLagP95Ms=p95(lags),eventLoopLagMaxMs=peak(lags),
+                     snapshotEncodeP95Ms=p95(encodes),snapshotEncodeMaxMs=peak(encodes))
     perf_in_count=0;perf_out_bytes=0;perf_last_report=now
 
+
+
+def report_performance_to_render(now):
+    """Emit one compact, structured, anonymous JSON line every 15s.
+    Read these with Render list_logs text='JIANGHU_DIAG' and compare with CPU metrics.
+    No external IO here beyond a bounded print; no database dependency in game loop.
+    """
+    global _diag_last, _diag_process_cpu, _diag_sent, _diag_overwritten
+    if now-_diag_last<DIAG_WINDOW_SEC:return
+    window=now-_diag_last
+    cpu_delta=time.process_time()-_diag_process_cpu
+    _diag_last=now;_diag_process_cpu=time.process_time()
+    active=[p.client_perf for p in players.values() if p.client_perf and now-p.client_perf_at<35]
+    sends=sorted(_diag_send_durations)
+    def percentile(a, ratio):
+        return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
+    data={
+        'v':'v8.0CL','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'guests':len(players),'autoGuests':sum(bool(p.auto_state.enabled) for p in players.values()),
+        'monsters':len(monsters),'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
+        'tickP95Ms':perf_data['tickP95Ms'],'tickMaxMs':perf_data['tickMaxMs'],
+        'loopP95Ms':perf_data['eventLoopLagP95Ms'],'loopMaxMs':perf_data['eventLoopLagMaxMs'],
+        'encodeP95Ms':perf_data['snapshotEncodeP95Ms'],'encodeMaxMs':perf_data['snapshotEncodeMaxMs'],
+        'snapSent':_diag_sent,'snapOverwritten':_diag_overwritten,
+        'wsSendP95Ms':percentile(sends,0.95),'wsSendMaxMs':percentile(sends,1.0),
+        'txKiBs':perf_data['txKiBPerSec'],'rxInputsSec':perf_data['rxInputsPerSec'],
+        'browserCount':len(active),'browserFpsMin':min((a['fps'] for a in active),default=None),
+        'browserPingMsP95':percentile(sorted(a['pingMs'] for a in active if a['pingMs'] is not None),0.95),
+        'browserSnapGapP95Ms':percentile(sorted(a['gapP95Ms'] for a in active),0.95),
+        'browserSnapGapMaxMs':max((a['gapMaxMs'] for a in active),default=None),
+        'browserFrameMsP95':percentile(sorted(a['frameMs'] for a in active),0.95),
+    }
+    # No telemetry is written to Supabase until a separate authenticated storage path exists.
+    print('JIANGHU_DIAG '+json.dumps(data,separators=(',',':')),flush=True)
+    _diag_sent=0;_diag_overwritten=0;_diag_send_durations.clear()
 
 
 # NOTE: The OFFLINE JavaScript spawner remains the source of truth for this test-map
@@ -1007,6 +1061,7 @@ async def snapshot_writer(p: Guest):
             while not p.snapshot_outbox.empty():
                 try:world=p.snapshot_outbox.get_nowait()
                 except asyncio.QueueEmpty:break
+            encode_start=time.monotonic()
             if p.protocol_delta:
                 packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory)
             else:
@@ -1014,8 +1069,13 @@ async def snapshot_writer(p: Guest):
                 old={**world,'self':private_progression(p),'inventory':p.inventory}
                 packet=json.dumps(old,separators=(',',':'))
                 current,full_tick,priv,inv=None,-1,None,None
+            perf_encodes.append(time.monotonic()-encode_start)
             try:
+                send_start=time.monotonic()
                 await asyncio.wait_for(p.ws.send(packet),timeout=1.5)
+                global _diag_sent
+                _diag_sent+=1
+                _diag_send_durations.append((time.monotonic()-send_start)*1000)
                 global perf_out_bytes
                 perf_out_bytes += len(packet.encode('utf-8'))
                 previous,last_full_tick=current,full_tick
@@ -1030,6 +1090,8 @@ async def snapshot_writer(p: Guest):
 def queue_latest_snapshot(p: Guest, world):
     q=p.snapshot_outbox
     if q.full():
+        global _diag_overwritten
+        _diag_overwritten+=1
         try:q.get_nowait()
         except asyncio.QueueEmpty:pass
     try:q.put_nowait(world)
@@ -1042,12 +1104,20 @@ async def game_loop():
     while True:
         next_tick+=DT
         tick_now=time.monotonic()
+        # Tick P95 excludes the snapshot_writer coroutine. Measure scheduling
+        # lag separately so 30-socket bottlenecks become observable.
+        perf_loop_lags.append(min(3.0,max(0.0,tick_now-(next_tick-DT))))
         server_step+=1
         for p in list(players.values()):
             if p.auto_state.enabled:
-                buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,monsters)
-                p.buttons=buttons;p.last_input=tick_now
-                for action in actions:perform_action(p,action)
+                # Keep authoritative physics at 30Hz; decisions at <=10Hz.
+                # Movement remains held between decisions, no browser AI.
+                if tick_now >= p.auto_state.next_step:
+                    buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,monsters)
+                    p.buttons=buttons
+                    p.auto_state.next_step=tick_now+.1
+                    for action in actions:perform_action(p,action)
+                p.last_input=tick_now
             update_guest(p,DT,tick_now)
         grid=index_players_by_x()
         for m in monsters.values():update_mob(m,DT,grid)
@@ -1062,6 +1132,7 @@ async def game_loop():
         elif server_step%3==0:events.clear()
         perf_ticks.append(time.monotonic()-tick_now)
         performance_rollup(time.monotonic())
+        report_performance_to_render(time.monotonic())
         await asyncio.sleep(max(0,next_tick-time.monotonic()))
         if time.monotonic()-next_tick>.4:next_tick=time.monotonic()
 
@@ -1106,7 +1177,7 @@ async def handle_connection(ws):
         p.snapshot_slot=snapshot_join_sequence%10
         snapshot_join_sequence+=1
         players[guest_id] = p
-        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce']
+        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
@@ -1124,6 +1195,19 @@ async def handle_connection(ws):
                 if not check_rate(p.packet_times,35):
                     await ws.close(code=1008,reason='Ping rate limit');break
                 await ws.send(json.dumps({'t':'pong','nonce':nonce},separators=(',',':')))
+                continue
+            # v8.0CL diagnostic only, never used for movement/combat decisions.
+            if m.get('t')=='client_perf':
+                names={'t','fps','pingMs','gapP95Ms','gapMaxMs','frameMs'}
+                if set(m)==names and time.monotonic()-p.client_perf_at>=8:
+                    fields=('fps','gapP95Ms','gapMaxMs','frameMs')
+                    valid=all(type(m.get(k)) in (int,float) and math.isfinite(m[k]) and 0<=m[k]<=10000 for k in fields)
+                    ping=m.get('pingMs')
+                    valid=valid and (ping is None or (type(ping) in (int,float) and math.isfinite(ping) and 0<=ping<=10000))
+                    if valid:
+                        p.client_perf={k:round(float(m[k]),2) for k in fields}
+                        p.client_perf['pingMs']=None if ping is None else round(float(ping),2)
+                        p.client_perf_at=time.monotonic()
                 continue
             # Only earned points are spendable; never accept client totals/ranks.
             if m.get('t') in ('stat_add','skill_up'):
@@ -1156,7 +1240,7 @@ async def handle_connection(ws):
                 p.buttons=0
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
-                    p.auto_state.goal=None;p.auto_state.goal_due=0
+                    p.auto_state.goal=None;p.auto_state.goal_due=0;p.auto_state.next_step=0
                 continue
             if m.get('t')!='input' or set(m)!={'t','seq','buttons','pressed'}:
                 await ws.close(code=1008, reason='Invalid input payload');break
@@ -1194,7 +1278,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CI wall-dash collision + v8.0CE ladder/ping; cooperative-PvE; AOI/delta\n')
+        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CL render diagnostic telemetry + v8.0CI wall-dash collision; cooperative-PvE; AOI/delta\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
