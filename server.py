@@ -570,7 +570,7 @@ def update_guest(p: Guest, dt, tick_now):
     for v in ('cool', 'inv', 'stun', 'down', 'broken', 'climb_cd'):
         setattr(p, v, max(0, getattr(p, v) - dt))
     p.action_at += dt
-    derived=prog.derive_stats(p,hp_reference)
+    derived=derived_for_snapshot(p)
     if p.qi_shield and (tick_now>=p.qi_shield_until or not loadouts.active_qi(p,0)):p.qi_shield=0
     p.sp=min(p.max_sp,p.sp+derived['spRegenPerSec']*dt)
     p.sta=min(p.max_sta,p.sta+derived['staRegenPerSec']*dt)
@@ -634,7 +634,7 @@ def update_guest(p: Guest, dt, tick_now):
     if move and p.stun <= 0 and not p.guard:
         p.face = 1 if move > 0 else -1
         if p.action != 'dash' or p.action_at > .26:
-            p.vx = 205 * move * prog.derive_stats(p,hp_reference)['moveSpeedMultiplier']
+            p.vx = 205 * move * derived['moveSpeedMultiplier']
     elif p.action != 'dash' or p.action_at > .26:
         p.vx *= max(0, 1 - 12 * dt)
     if p.guard: p.vx = 0
@@ -751,7 +751,7 @@ def update_mob(m,dt,player_grid=None):
             raw=random.randint(lo,hi)
             # Actual Guest defense is gear-derived, not an imaginary +5 armor.
             # .88 source beast bite coefficient is retained from v8.0BQ test map.
-            dodge=prog.derive_stats(p,hp_reference)['dodgeVsMonsters']
+            dodge=derived_for_snapshot(p)['dodgeVsMonsters']
             if random.random()*100<dodge:event('miss',p.x,p.y-80,victim=p.id)
             else:hurt(p,mitigate(prog.jsround(raw*.88),p.defense),m.x,m.y-80,'monster')
 
