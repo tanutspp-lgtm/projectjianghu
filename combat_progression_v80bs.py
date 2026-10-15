@@ -149,9 +149,9 @@ def upgrade_skill(p,skill,amount):
     p.skill_ranks[skill]+=amount;p.skill_points-=amount
     return True
 
-def preview_skill(p,kind,hp_reference):
+def preview_skill(p,kind,hp_reference,derived=None):
     if kind not in SKILL_BASE:return None
-    d=derive_stats(p,hp_reference)
+    d=derive_stats(p,hp_reference) if derived is None else derived
     stat=d['magicDamageBonus']
     stat_bonus=jsround(stat*.55) if kind=='break' else stat-12 if kind=='aoe' else stat
     rank=p.skill_ranks[kind]
@@ -161,8 +161,11 @@ def preview_skill(p,kind,hp_reference):
     return mn,mx
 
 def roll_attack(p,kind,hp_reference,rng=random):
-    r=preview_skill(p,kind,hp_reference)
-    if r is None:return None
+    # v8.0CP: derive once per cast, not once for range + crit + crit damage.
+    # Preserve RNG calls, range calculation and all authoritative combat formulas.
+    if kind not in SKILL_BASE:return None
+    derived=derive_stats(p,hp_reference)
+    r=preview_skill(p,kind,hp_reference,derived=derived)
     base=rng.randint(*r)
-    crit=rng.random()*100<derive_stats(p,hp_reference)['critRate']
-    return (jsround(base*derive_stats(p,hp_reference)['critDamageMultiplier']) if crit else base),crit
+    crit=rng.random()*100<derived['critRate']
+    return (jsround(base*derived['critDamageMultiplier']) if crit else base),crit

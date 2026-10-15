@@ -246,6 +246,7 @@ class Guest(Actor):
     stable_derived_stats: object = None
     client_perf: dict = field(default_factory=dict)
     client_perf_at: float = 0.0
+    writer_probe_counter: int = 0 # v8.0CR: sample 1 in 32 delta packets
 
 
 @dataclass
@@ -390,6 +391,15 @@ def performance_rollup(now):
 
 
 
+# v8.0CQ passive server-only profiler: sample one complete 30Hz tick per second.
+# Report stage wall-times, not CPU-time. Throttling can inflate these values.
+_profile_samples={name:[] for name in ('player','monster','projectile_loot','world_snapshot')}
+# v8.0CR: independent writer-stage timings. Bounded samples, private to Render
+# diagnostics. Do not place wall-time diagnostics into packets/gameplay.
+_writer_stage_samples={name:deque(maxlen=1800) for name in
+                       ('aoi','delta','private','json','send')}
+
+
 def report_performance_to_render(now):
     """Emit one compact, structured, anonymous JSON line every 15s.
     Read these with Render list_logs text='JIANGHU_DIAG' and compare with CPU metrics.
@@ -411,7 +421,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0CO','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0CR','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(players),'autoGuests':sum(bool(p.auto_state.enabled) for p in players.values()),
         'monsters':len(monsters),'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -428,6 +438,14 @@ def report_performance_to_render(now):
         'browserSnapGapMaxMs':max((a['gapMaxMs'] for a in active),default=None),
         'browserFrameMsP95':percentile(sorted(a['frameMs'] for a in active),0.95),
     }
+    data['profileTickStageAvgMs']={k:round(sum(values)/len(values),3) if values else None
+                                    for k,values in _profile_samples.items()}
+    data['profileWriterStageP95Ms']={k:percentile(sorted(values),0.95) for k,values in _writer_stage_samples.items()}
+    data['profileWriterStageAvgMs']={k:round(sum(values)/len(values),3) if values else None
+                                      for k,values in _writer_stage_samples.items()}
+    data['profileWriterStageSamples']={k:len(values) for k,values in _writer_stage_samples.items()}
+    for values in _writer_stage_samples.values():values.clear()
+    for values in _profile_samples.values():values.clear()
     # No telemetry is written to Supabase until a separate authenticated storage path exists.
     print('JIANGHU_DIAG '+json.dumps(data,separators=(',',':')),flush=True)
     _diag_sent=0;_diag_overwritten=0;_diag_send_durations.clear()
@@ -454,8 +472,10 @@ def supported(m, x=None):
 def own_lane(m):
     return next(((lo,hi,y) for lo,hi,y in GROUND if abs(m.y-y)<12 and lo+12<m.x<hi-12),None)
 
-def reachable_player(m,p):
-    lane=own_lane(m)
+# v8.0CQ: query one lane per mob-target selection, not once per candidate player.
+_LANE_NOT_GIVEN=object()
+def reachable_player(m,p,lane=_LANE_NOT_GIVEN):
+    if lane is _LANE_NOT_GIVEN:lane=own_lane(m)
     if not lane or p.dead>0 or p.climb or not lane[0]+12<p.x<lane[1]-12:return False
     if p.ground:return abs(p.y-m.y)<12
     return m.y-128<=p.y<=m.y+22
@@ -732,9 +752,11 @@ def update_mob(m,dt,player_grid=None):
     m.stun=max(0,m.stun-dt)
     m.down=max(0,m.down-dt)
     m.broken=max(0,m.broken-dt)
-    # Spatial grid reduces the candidate roster; no change to hit detection.
+    # Spatial grid reduces candidates; lane is constant for this target selection.
+    # Cache only across candidate checks BEFORE movement, never across game ticks.
+    target_lane=own_lane(m)
     p=min((p for p in candidate_players_by_x(m,player_grid)
-           if reachable_player(m,p) and abs(p.x-m.x)<BEAST_AGGRO+65),
+           if reachable_player(m,p,target_lane) and abs(p.x-m.x)<BEAST_AGGRO+65),
           key=lambda p:abs(p.x-m.x),default=None)
     dx=p.x-m.x if p else 0
     dy=p.y-m.y if p else 10000
@@ -940,7 +962,21 @@ def apply_shot(s, victim, is_mob):
     return s.pierce <= 0
 
 
+# v8.0CQ: 1D broadphase for swept projectiles. Per-tick only (monsters move and
+# can die during a shot). Keep old narrowphase/ordering as the reference.
+SHOT_CELL = 160
+SHOT_GRID_MIN_SHOTS = 4
+SHOT_GRID_MIN_MONSTERS = 16
+
+
 def update_shots(dt):
+    # Do not pay the index build cost for small combat encounters. Index stores
+    # ORIGINAL insertion index, preserving Python's stable sort on tied x values.
+    grid = None
+    if len(shots) >= SHOT_GRID_MIN_SHOTS and len(monsters) >= SHOT_GRID_MIN_MONSTERS:
+        grid = defaultdict(list)
+        for order, monster in enumerate(monsters.values()):
+            grid[int(monster.x // SHOT_CELL)].append((order, monster))
     active = []
     for s in shots:
         old_x = s.origin_x if s.origin_x is not None else s.x
@@ -948,22 +984,30 @@ def update_shots(dt):
         s.life -= dt
         s.x += s.vx * dt
         if s.life <= 0: continue
-        # Server-owned swept segment: catch beasts overlapping the player before
-        # the visual muzzle at +/-52, including when a wall forces overlap.
-        # Later ticks also catch fast shots crossing a beast between samples.
-        # Keep original vertical threshold, pierce, damage and PvE-only rules.
+        # Original exact swept collision: do NOT change strict comparisons,
+        # height, wall edge rules, multi-target pierce or first-tick origin.
         lo, hi = min(old_x, s.x), max(old_x, s.x)
         radius = 60 if s.kind == 'aoe' else 36
-        victims = [v for v in monsters.values() if v.dead <= 0 and
-                   abs(v.y - s.y - 78) < 95 and lo-radius < v.x < hi+radius]
-        victims.sort(key=lambda v: (v.x-old_x)*(1 if s.vx >= 0 else -1))
+        if grid is None:
+            victims = [v for v in monsters.values() if v.dead <= 0 and
+                       abs(v.y - s.y - 78) < 95 and lo-radius < v.x < hi+radius]
+            victims.sort(key=lambda v: (v.x-old_x)*(1 if s.vx >= 0 else -1))
+        else:
+            # Gather from exactly those x cells crossed by the swept segment.
+            # Use an insertion-order tie breaker, including across cell boundaries.
+            ranked = []
+            for cell in range(int((lo-radius)//SHOT_CELL),
+                              int((hi+radius)//SHOT_CELL)+1):
+                for order, v in grid.get(cell, ()):
+                    if v.dead <= 0 and abs(v.y-s.y-78) < 95 and lo-radius < v.x < hi+radius:
+                        ranked.append(((v.x-old_x)*(1 if s.vx >= 0 else -1), order, v))
+            ranked.sort(key=lambda x: (x[0], x[1]))
+            victims = [item[2] for item in ranked]
         consumed = False
         for v in victims:
             if apply_shot(s, v, isinstance(v, Monster)):
                 consumed = True
                 break
-        # Resolve contact BEFORE culling shots outside world bounds, so the
-        # outermost platform edge cannot discard an overlapping target's hit.
         if not consumed and -80 <= s.x <= WORLD_W + 80: active.append(s)
     shots[:] = active
 
@@ -1013,6 +1057,11 @@ def private_progression(p):
             'sandboxAvailable':ENABLE_GUEST_SANDBOX,'inputAck':p.applied_input_seq,'performance':perf_data.copy(),**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
 
 
+# v8.0CR reuse the exact stdlib encoder config instead of constructing a
+# JSONEncoder object on every 10Hz packet. Still JSON/UTF-8, wire-identical:
+# default ensure_ascii=True, allow_nan=True, sort_keys=False and same separators.
+_COMPACT_WIRE_JSON_ENCODER=json.JSONEncoder(separators=(',',':'))
+
 # v8.0BY network scalability: one server-owned world sample per 100ms.
 # AOI is strictly visual; hit detection and rewards still use ALL server actors.
 AOI_RADIUS=int(os.environ.get('AOI_RADIUS','950'))
@@ -1024,11 +1073,12 @@ class SharedSnapshot(dict):
     """Wire-compatible dict with a private cache shared by per-client delta encoders.
     Cache lifetime equals this one world sample; it is never serialized or global.
     """
-    __slots__ = ('entity_patch_cache',)
+    __slots__ = ('entity_patch_cache','aoi_bucket_cache',)
 
     def __init__(self, content):
         super().__init__(content)
         self.entity_patch_cache = {}
+        self.aoi_bucket_cache = {}
 
 
 def snapshot():
@@ -1047,24 +1097,107 @@ def snapshot():
             'events':events[:80]})
 
 
+# Share a positional coarse index within ONE immutable SharedSnapshot only.
+# 64+ entities is the break-even guard: ordinary 20-mob test maps keep the
+# original fast linear scan. Candidate hits are restored to original insertion
+# order, and final filtering always uses the EXACT old abs() comparison.
+AOI_INDEX_MIN_ENTITIES=64
+AOI_INDEX_CELL=240
+
+
+def _aoi_entities(world,kind,p,cx,radius):
+    entities=world[kind]
+    if not isinstance(world,SharedSnapshot) or len(entities)<AOI_INDEX_MIN_ENTITIES:
+        if kind=='players':
+            return {e['id']:e for e in entities if e['id']==p.id or abs(e['x']-cx)<=radius}
+        return {e['id']:e for e in entities if abs(e['x']-cx)<=radius}
+    buckets=world.aoi_bucket_cache.get(kind)
+    if buckets is False:
+        if kind=='players':
+            return {e['id']:e for e in entities if e['id']==p.id or abs(e['x']-cx)<=radius}
+        return {e['id']:e for e in entities if abs(e['x']-cx)<=radius}
+    if buckets is None:
+        # If the entire map section fits inside roughly one AOI, sorting
+        # candidates costs more than a plain list comprehension.
+        xlo=min(e['x'] for e in entities)
+        xhi=max(e['x'] for e in entities)
+        if xhi-xlo<=radius*4:
+            world.aoi_bucket_cache[kind]=False
+            if kind=='players':
+                return {e['id']:e for e in entities if e['id']==p.id or abs(e['x']-cx)<=radius}
+            return {e['id']:e for e in entities if abs(e['x']-cx)<=radius}
+        buckets={}
+        for idx,e in enumerate(entities):
+            buckets.setdefault(int(e['x']//AOI_INDEX_CELL),[]).append((idx,e))
+        world.aoi_bucket_cache[kind]=buckets
+        if kind=='players':
+            world.aoi_bucket_cache['players_by_id']={e['id']:(idx,e) for idx,e in enumerate(entities)}
+    lo=int((cx-radius)//AOI_INDEX_CELL)
+    hi=int((cx+radius)//AOI_INDEX_CELL)
+    selected=[entry for cell in range(lo,hi+1) for entry in buckets.get(cell,())]
+    # Preserve the 'self always visible' rule even if p.x has moved between
+    # snapshot creation and this writer's turn. Never index by live actor position.
+    if kind=='players':
+        self_entry=world.aoi_bucket_cache['players_by_id'].get(p.id)
+        if self_entry is not None and not lo<=int(self_entry[1]['x']//AOI_INDEX_CELL)<=hi:
+            selected.append(self_entry)
+    selected.sort(key=lambda entry:entry[0])
+    if kind=='players':
+        return {e['id']:e for _,e in selected if e['id']==p.id or abs(e['x']-cx)<=radius}
+    return {e['id']:e for _,e in selected if abs(e['x']-cx)<=radius}
+
+
 def aoi_view(world,p):
-    """Send a generous world-space window. Never let a client choose their AOI origin."""
+    """Exact v8.0CQ wire semantics; indexed only for dense immutable worlds."""
     cx=p.x
     radius=AOI_RADIUS
-    view={}
-    for field in ('players','mobs','shots','loot'):
-        # Keep ranged projectile and enemy telegraphs visible slightly outside AOI.
-        extra=200 if field in ('mobs','shots') else 0
-        view[field]={e['id']:e for e in world[field]
-                     if (field=='players' and e['id']==p.id) or abs(e['x']-cx)<=radius+extra}
-    return view
+    ranged_radius=radius+200
+    # One-time per-world decision; a 100-mob but COMPACT map shouldn't route
+    # every viewer through the indexed path just because its roster is large.
+    # For ordinary forest maps this branch skips all index setup.
+    use_index=False
+    if isinstance(world,SharedSnapshot):
+        if (len(world['players'])<AOI_INDEX_MIN_ENTITIES and
+            len(world['mobs'])<AOI_INDEX_MIN_ENTITIES and
+            len(world['shots'])<AOI_INDEX_MIN_ENTITIES and
+            len(world['loot'])<AOI_INDEX_MIN_ENTITIES):
+            use_index=False
+        else:
+            use_index=world.aoi_bucket_cache.get('_use_index')
+            if use_index is None:
+                use_index=False
+                for kind,extra in (('players',0),('mobs',200),('shots',200),('loot',0)):
+                    entities=world[kind]
+                    if len(entities)<AOI_INDEX_MIN_ENTITIES:continue
+                    lo=min(e['x'] for e in entities)
+                    hi=max(e['x'] for e in entities)
+                    if hi-lo>4*(radius+extra):use_index=True
+                    else:world.aoi_bucket_cache[kind]=False
+                world.aoi_bucket_cache['_use_index']=use_index
+    if not use_index:
+        return {
+            'players':{e['id']:e for e in world['players'] if e['id']==p.id or abs(e['x']-cx)<=radius},
+            'mobs':{e['id']:e for e in world['mobs'] if abs(e['x']-cx)<=ranged_radius},
+            'shots':{e['id']:e for e in world['shots'] if abs(e['x']-cx)<=ranged_radius},
+            'loot':{e['id']:e for e in world['loot'] if abs(e['x']-cx)<=radius},
+        }
+    return {'players':_aoi_entities(world,'players',p,cx,radius),
+            'mobs':_aoi_entities(world,'mobs',p,cx,ranged_radius),
+            'shots':_aoi_entities(world,'shots',p,cx,ranged_radius),
+            'loot':_aoi_entities(world,'loot',p,cx,radius)}
 
 
 def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inventory=None):
     """Diff from LAST SUCCESSFULLY SENT packet, not the newest queued packet.
     Dropped mailbox packets can't corrupt the next delta's baseline.
     """
+    _trace_writer=(p.writer_probe_counter & 31)==0
+    p.writer_probe_counter+=1
+    if _trace_writer:_writer_aoi_start=time.perf_counter_ns()
     current=aoi_view(world,p)
+    if _trace_writer:
+        _writer_stage_samples['aoi'].append((time.perf_counter_ns()-_writer_aoi_start)/1e6)
+        _writer_delta_start=time.perf_counter_ns()
     full=previous is None or world['tick']-last_full_tick>=DELTA_REFRESH_TICKS
     result={'t':'snapshot','tick':world['tick']}
     if full:
@@ -1103,6 +1236,9 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
             if missing:result['removed'+kind.capitalize()]=missing
     result['events']=[e for e in world['events'] if e.get('victim')==p.id or
                        e.get('owner')==p.id or abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200]
+    if _trace_writer:
+        _writer_stage_samples['delta'].append((time.perf_counter_ns()-_writer_delta_start)/1e6)
+        _writer_private_start=time.perf_counter_ns()
     priv=private_progression(p)
     priv['inputAck']=current['players'][p.id]['lastAppliedSeq']
     if full or prev_private is None:
@@ -1112,7 +1248,13 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     inv=[dict(e) for e in p.inventory] # isolated ownership snapshot; no alias mutations
     if full or prev_inventory!=inv:
         result['inventory']=inv
-    return (json.dumps(result,separators=(',',':')),current,
+    if _trace_writer:
+        _writer_stage_samples['private'].append((time.perf_counter_ns()-_writer_private_start)/1e6)
+        _writer_json_start=time.perf_counter_ns()
+    packet=_COMPACT_WIRE_JSON_ENCODER.encode(result)
+    if _trace_writer:
+        _writer_stage_samples['json'].append((time.perf_counter_ns()-_writer_json_start)/1e6)
+    return (packet,current,
             (world['tick'] if full else last_full_tick),priv,inv)
 
 
@@ -1137,7 +1279,7 @@ async def snapshot_writer(p: Guest):
             else:
                 # Legacy clients receive original full-world shape until upgraded.
                 old={**world,'self':private_progression(p),'inventory':p.inventory}
-                packet=json.dumps(old,separators=(',',':'))
+                packet=_COMPACT_WIRE_JSON_ENCODER.encode(old)
                 current,full_tick,priv,inv=None,-1,None,None
             perf_encodes.append(time.monotonic()-encode_start)
             try:
@@ -1146,6 +1288,7 @@ async def snapshot_writer(p: Guest):
                 global _diag_sent
                 _diag_sent+=1
                 _diag_send_durations.append((time.monotonic()-send_start)*1000)
+                _writer_stage_samples['send'].append((time.monotonic()-send_start)*1000)
                 global perf_out_bytes
                 perf_out_bytes += len(packet.encode('utf-8'))
                 previous,last_full_tick=current,full_tick
@@ -1178,6 +1321,9 @@ async def game_loop():
         # lag separately so 30-socket bottlenecks become observable.
         perf_loop_lags.append(min(3.0,max(0.0,tick_now-(next_tick-DT))))
         server_step+=1
+        # Sampling only 1/30 ticks keeps the profiler passive on Render Free.
+        profile_tick=server_step%30==0
+        stage_start=time.perf_counter_ns() if profile_tick else 0
         for p in list(players.values()):
             if p.auto_state.enabled:
                 # Keep authoritative physics at 30Hz; decisions at <=10Hz.
@@ -1189,10 +1335,22 @@ async def game_loop():
                     for action in actions:perform_action(p,action)
                 p.last_input=tick_now
             update_guest(p,DT,tick_now)
+        if profile_tick:
+            stage_end=time.perf_counter_ns()
+            _profile_samples['player'].append((stage_end-stage_start)/1e6)
+            stage_start=stage_end
         grid=index_players_by_x()
         for m in monsters.values():update_mob(m,DT,grid)
+        if profile_tick:
+            stage_end=time.perf_counter_ns()
+            _profile_samples['monster'].append((stage_end-stage_start)/1e6)
+            stage_start=stage_end
         update_shots(DT)
         advance_loot()
+        if profile_tick:
+            stage_end=time.perf_counter_ns()
+            _profile_samples['projectile_loot'].append((stage_end-stage_start)/1e6)
+            stage_start=stage_end
         if server_step%3==0 and players:
             world=snapshot()
             for p in list(players.values()):
@@ -1200,6 +1358,8 @@ async def game_loop():
                     queue_latest_snapshot(p,world)
             events.clear()
         elif server_step%3==0:events.clear()
+        if profile_tick:
+            _profile_samples['world_snapshot'].append((time.perf_counter_ns()-stage_start)/1e6)
         perf_ticks.append(time.monotonic()-tick_now)
         performance_rollup(time.monotonic())
         report_performance_to_render(time.monotonic())
@@ -1348,7 +1508,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CO overlap projectile + arrival goal + v8.0CN perf cache; cooperative-PvE; AOI/delta\n')
+        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CR network writer stage profile + dense-world AOI index; cooperative-PvE; AOI/delta\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
