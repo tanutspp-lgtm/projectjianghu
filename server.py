@@ -209,6 +209,8 @@ class Guest(Actor):
     level: int = 5  # server-owned guest training level, not client-controlled
     armor_enhance: int = 5  # server-owned reference +5 armor
     last_attack_at: float = -1e9
+    # DJ: Keep firing the same living target until it dies or leaves legal range.
+    manual_target_id: Optional[str] = None
     kb_time: float = 0.0
     kb_dir: int = 0
     # Server-authoritative ephemeral Guest character, not yet account persistent.
@@ -641,10 +643,17 @@ def perform_action(p: Guest, action: str):
     # monster coordinates, never from an untrusted client-supplied aim/position.
     shot_dir=p.face
     if not p.auto_state.enabled and p.room=='forest':
-        candidate=min((m for m in monsters.values() if m.dead<=0 and m.hp>0 and m.down<=0
-                       and abs(m.x-p.x)<900 and abs(m.y-p.y)<120),
-                      key=lambda m:abs(m.x-p.x),default=None)
-        if candidate is not None and candidate.x!=p.x:
+        # DJ: Re-select ONLY after death or truly invalid position. Never
+        # retarget mid-combat just because the other mob takes one step closer.
+        def legal_aim(m):
+            return (m is not None and m.dead<=0 and m.hp>0 and
+                    abs(m.x-p.x)<900 and abs(m.y-p.y)<120)
+        candidate=monsters.get(p.manual_target_id)
+        if not legal_aim(candidate):
+            candidate=min((m for m in monsters.values() if legal_aim(m)),
+                          key=lambda m:abs(m.x-p.x),default=None)
+            p.manual_target_id=candidate.id if candidate else None
+        if candidate is not None and abs(candidate.x-p.x)>12:
             shot_dir=1 if candidate.x>p.x else -1
     p.cast_face=shot_dir
     global shot_seq
@@ -733,6 +742,22 @@ def update_guest(p: Guest, dt, tick_now):
     if near and axis and not p.guard and p.climb_cd <= 0:
         p.climb = near
         p.x, p.vx, p.vy, p.ground = near[0], 0, 0, False
+    # DJ: The long ropes cross a real second-floor platform. A human pressing
+    # LEFT/RIGHT at that height can step off safely. Previously the server
+    # ignored horizontal input for the entire climb; only AUTO could jump off.
+    # Do not permit mid-air or wall-clipping exits: require a crossing foothold.
+    sideways = int(bool(p.buttons & 2)) - int(bool(p.buttons & 1))
+    if p.climb is not None and sideways and axis == 0 and p.stun <= 0 and not p.guard:
+        cx, top, bottom = p.climb
+        landing = min((fy for lo, hi, fy in GROUND
+                       if lo + 28 < cx < hi - 28 and top + 20 < fy < bottom - 20
+                       and abs(p.y - fy) <= 23),
+                      key=lambda fy: abs(p.y - fy), default=None)
+        if landing is not None:
+            p.climb = None
+            p.climb_cd = .32
+            p.y, p.x, p.vx, p.vy, p.ground = landing, cx + sideways * 18, 0, 0, True
+            p.face = sideways
     if p.climb is not None:
         cx, top, bottom = p.climb
         old_y = p.y
@@ -1635,7 +1660,7 @@ async def handle_connection(ws):
                 p.auto_state.enabled=m['enabled'] if p.room=='forest' else False
                 p.buttons=0
                 p.manual_guard=False
-                p.auto_state.stay_alert=False;p.auto_state.anchor=None
+                p.auto_state.stay_alert=False;p.auto_state.anchor=None;p.auto_state.anchor_evade_side=0
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
                     p.auto_state.goal=None;p.auto_state.goal_due=0
@@ -1658,7 +1683,7 @@ async def handle_connection(ws):
                     p.auto_state.anchor=({'platform':platform,'x':float(p.x),'y':float(p.y)} if requested else None)
                     p.auto_state.goal=dict(p.auto_state.anchor) if requested else None
                     p.auto_state.goal_due=0;p.auto_state.leg=None
-                    p.auto_state.combat_target_id=None;p.auto_state.combat_lock_until=0
+                    p.auto_state.combat_target_id=None;p.auto_state.combat_lock_until=0;p.auto_state.anchor_evade_side=0
                     p.auto_state.next_step=0.0  # React on next simulation tick.
                 await ws.send(json.dumps({'t':'auto_stay_ack','ok':valid,'enabled':p.auto_state.stay_alert}))
                 continue
@@ -1681,7 +1706,7 @@ async def handle_connection(ws):
             # Client input NEVER overrides the AI's movement or goal.
             if p.auto_state.enabled and (buttons & (1|2|4|8)):
                 p.auto_state.enabled=False
-                p.auto_state.stay_alert=False;p.auto_state.anchor=None
+                p.auto_state.stay_alert=False;p.auto_state.anchor=None;p.auto_state.anchor_evade_side=0
                 p.manual_guard=False
             if p.auto_state.enabled:
                 p.manual_guard=bool(buttons & 16)

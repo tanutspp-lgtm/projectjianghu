@@ -33,6 +33,9 @@ class State:
     stay_alert:bool=False
     anchor:dict|None=None
     last_face_turn:float=-1e9
+    # DI: Keep a consistent dodge direction while the Stay anchor is occupied.
+    # Never changes anchor/goal; side stepping is an ephemeral firing position.
+    anchor_evade_side:int=0
 
 class Navigation:
     def __init__(self,platforms,climbs):
@@ -148,6 +151,7 @@ class Navigation:
         # Stay bots may shoot while walking back; combat must NOT permanently
         # prevent return to the standing anchor when mobs keep respawning.
         stay_cast=[]
+        stay_clearance_x=None
         # Prefer legitimate same-platform targets encountered along the travel route.
         if at>=0 and p.stun<=0 and p.down<=0 and not p.climb:
             # Optional server-owned broadphase, identical final eligibility checks.
@@ -155,8 +159,37 @@ class Navigation:
             candidates=(monsters.near(p.x,305) if hasattr(monsters,'near') else monsters.values())
             nearby=[m for m in candidates if m.dead<=0 and m.hp>0 and abs(m.y-p.y)<55 and
                      abs(m.x-p.x)<(265 if state.stay_alert else 305) and self.platform_at(m)==at]
+            if state.stay_alert and state.anchor and at==state.anchor['platform']:
+                # A mob on top of the standing anchor may sit behind the caster's
+                # muzzle or on the wrong side of its shot. Temporarily step to a
+                # legal firing position on the SAME foothold; keep anchor intact.
+                blockers=[mob for mob in nearby if abs(mob.x-state.anchor['x'])<=82]
+                if blockers:
+                    platform=self.platforms[at]
+                    low=platform['x']+24; high=platform['x2']-24
+                    if state.anchor_evade_side not in (-1,1):
+                        nearest=min(blockers,key=lambda mob:abs(mob.x-state.anchor['x']))
+                        preferred=(-1 if nearest.x>state.anchor['x']+16 else
+                                    1 if nearest.x<state.anchor['x']-16 else
+                                    (1 if high-state.anchor['x']>=state.anchor['x']-low else -1))
+                        if ((preferred==1 and high-state.anchor['x']<100) or
+                            (preferred==-1 and state.anchor['x']-low<100)):
+                            preferred=-preferred
+                        state.anchor_evade_side=preferred
+                    target_x=max(low,min(high,state.anchor['x']+state.anchor_evade_side*140))
+                    # If map edge prevents adequate separation, try opposite
+                    # side once rather than oscillating every AI decision.
+                    if min(abs(target_x-mob.x) for mob in blockers)<78:
+                        other=max(low,min(high,state.anchor['x']-state.anchor_evade_side*140))
+                        if min(abs(other-mob.x) for mob in blockers)>min(abs(target_x-mob.x) for mob in blockers)+20:
+                            state.anchor_evade_side=-state.anchor_evade_side
+                            target_x=other
+                    stay_clearance_x=target_x
+                else:
+                    state.anchor_evade_side=0
             if nearby:
-                # Hold target briefly: crowded mobs must not make AUTO flip sides every 33ms.
+                # Hold the chosen target until it dies/leaves the lane. Do not
+                # continually face each newly nearest monster during cooldown.
                 m=next((mob for mob in nearby if mob.id==state.combat_target_id),None) if t<state.combat_lock_until else None
                 if m is None:
                     m=min(nearby,key=lambda mob:abs(mob.x-p.x))
@@ -178,10 +211,14 @@ class Navigation:
                     # returning while shooting reachable monsters along the way.
                 else:
                     if distance>265:return (2 if dx>0 else 1),[]
-                    # No backwards movement in melee range: that caused a deterministic
-                    # left/right ping-pong at the attack threshold, not real lag.
-                    if abs(dx)>24:p.face=1 if dx>0 else -1
+                    # Never twitch while waiting for skill cooldown. Turn to
+                    # the committed target only when an actual cast can occur.
                     if t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
+                        new_face=(1 if dx>0 else -1) if abs(dx)>12 else p.face
+                        if new_face!=p.face and t-state.last_face_turn<.33:
+                            return 0,[]
+                        if new_face!=p.face:
+                            p.face=new_face;state.last_face_turn=t
                         state.last_attack=t
                         return 0,['attack']
                     return 0,[]
@@ -196,7 +233,9 @@ class Navigation:
             target=self.platforms[leg['to']];c=self.climbs[leg['climb']]
             # Intermediate landing: jump sideways before passing the platform.
             intermediate=abs(target['y']-c['top'])>10 and abs(target['y']-c['bottom'])>10
-            climb_up=target['y']<p.y
+            # DJ: Direction is fixed by the route leg, not current rope Y.
+            # At exact top Y, comparing target.y < p.y would flip UP to DOWN.
+            climb_up=target['y']<self.platforms[leg['from']]['y']
             # Mid-rope platforms require a real jump-off in BOTH directions.
             # When descending jump ABOVE the platform top; ascending jump BELOW it.
             # The old logic only handled climbing up, so descending bots bounced
@@ -212,7 +251,9 @@ class Navigation:
         if state.leg and state.leg['to']==at:state.leg=None
         if at==goal['platform']:
             state.leg=None
-            return self.approach(p.x,goal['x'],margin=12 if state.stay_alert else 17),stay_cast
+            stand_x=(stay_clearance_x if state.stay_alert and stay_clearance_x is not None
+                     else goal['x'])
+            return self.approach(p.x,stand_x,margin=12 if state.stay_alert else 17),stay_cast
         if not state.leg or state.leg['from']!=at:
             state.leg=self.route_next(at,goal['platform'],state.route_seed)
             if not state.leg:
