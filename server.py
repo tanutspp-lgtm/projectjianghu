@@ -291,6 +291,9 @@ class Shot:
     pierce: int
     hit: set = field(default_factory=set)
     critical: bool = False
+    # First-tick swept collision starts at the caster center, not the +52 visual muzzle.
+    # Used only for first update; never supplied/trusted from the browser.
+    origin_x: Optional[float] = None
 
 
 players: dict[str, Guest] = {}
@@ -325,7 +328,31 @@ _diag_sent = 0
 _diag_overwritten = 0
 _diag_send_durations = deque(maxlen=1500)
 _diag_boot = secrets.token_hex(4)
+_diag_cgroup_prev = None
 SPATIAL_CELL = 240
+
+
+def read_cgroup_cpu():
+    """Best-effort cgroup-v2 CPU limit/throttling counters, once per 15s.
+    Missing/unsupported Linux cgroups leave nullable diagnostics; no game logic.
+    """
+    root = Path('/sys/fs/cgroup')
+    quota = None
+    throttling = None
+    try:
+        parts = (root / 'cpu.max').read_text(encoding='utf-8').split()
+        if len(parts) == 2 and parts[0] != 'max':
+            quota = round(int(parts[0]) / int(parts[1]), 3)
+    except (OSError, ValueError, ZeroDivisionError):
+        pass
+    try:
+        stats = dict(line.split()[:2] for line in
+                     (root / 'cpu.stat').read_text(encoding='utf-8').splitlines()
+                     if len(line.split()) >= 2)
+        throttling = (int(stats['nr_throttled']), int(stats['throttled_usec']))
+    except (OSError, ValueError, KeyError):
+        pass
+    return quota, throttling
 
 def index_players_by_x():
     # Share one indexed player roster across 20 beasts; combat remains authoritative.
@@ -368,19 +395,27 @@ def report_performance_to_render(now):
     Read these with Render list_logs text='JIANGHU_DIAG' and compare with CPU metrics.
     No external IO here beyond a bounded print; no database dependency in game loop.
     """
-    global _diag_last, _diag_process_cpu, _diag_sent, _diag_overwritten
+    global _diag_last, _diag_process_cpu, _diag_sent, _diag_overwritten, _diag_cgroup_prev
     if now-_diag_last<DIAG_WINDOW_SEC:return
     window=now-_diag_last
     cpu_delta=time.process_time()-_diag_process_cpu
+    quota, cgroup=read_cgroup_cpu()
+    throttled_periods=throttled_ms_per_sec=None
+    if cgroup is not None and _diag_cgroup_prev is not None:
+        throttled_periods=max(0,cgroup[0]-_diag_cgroup_prev[0])
+        throttled_ms_per_sec=round(max(0,cgroup[1]-_diag_cgroup_prev[1])/1000/window,2)
+    _diag_cgroup_prev=cgroup
     _diag_last=now;_diag_process_cpu=time.process_time()
     active=[p.client_perf for p in players.values() if p.client_perf and now-p.client_perf_at<35]
     sends=sorted(_diag_send_durations)
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0CL','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0CO','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(players),'autoGuests':sum(bool(p.auto_state.enabled) for p in players.values()),
         'monsters':len(monsters),'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
+        'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
+        'cgroupThrottleMsPerSec':throttled_ms_per_sec,
         'tickP95Ms':perf_data['tickP95Ms'],'tickMaxMs':perf_data['tickMaxMs'],
         'loopP95Ms':perf_data['eventLoopLagP95Ms'],'loopMaxMs':perf_data['eventLoopLagMaxMs'],
         'encodeP95Ms':perf_data['snapshotEncodeP95Ms'],'encodeMaxMs':perf_data['snapshotEncodeMaxMs'],
@@ -557,7 +592,7 @@ def perform_action(p: Guest, action: str):
     set_action(p, action, duration)
     shot_seq += 1
     y = p.y - 84 - (3 if action == 'aoe' else 4 if action == 'break' else 0)
-    shots.append(Shot(shot_seq, p.id, action, p.x + p.face * 52, y, p.face * speed, damage, lifespan, pierce, critical=critical))
+    shots.append(Shot(shot_seq, p.id, action, p.x + p.face * 52, y, p.face * speed, damage, lifespan, pierce, critical=critical, origin_x=p.x))
     # Every confirmed cast has a short-lived visual trace even when the actual
     # server-owned projectile hits a mob before the next 10Hz snapshot.
     event('cast',p.x,p.y-34,kind=action,owner=p.id,shotId=str(shot_seq),
@@ -908,19 +943,28 @@ def apply_shot(s, victim, is_mob):
 def update_shots(dt):
     active = []
     for s in shots:
+        old_x = s.origin_x if s.origin_x is not None else s.x
+        s.origin_x = None  # only the first tick starts at the owner's center
         s.life -= dt
         s.x += s.vx * dt
-        if s.life <= 0 or s.x < -80 or s.x > WORLD_W + 80: continue
-        # PvE only. Player bodies are not candidates: projectiles pass through
-        # all Guests, including their guards and overlapping farming positions.
-        victims = [v for v in monsters.values() if v.dead <= 0 and abs(v.y - s.y - 78) < 95 and abs(v.x - s.x) < (60 if s.kind == 'aoe' else 36)]
-        victims.sort(key=lambda v: abs(v.x - s.x))
+        if s.life <= 0: continue
+        # Server-owned swept segment: catch beasts overlapping the player before
+        # the visual muzzle at +/-52, including when a wall forces overlap.
+        # Later ticks also catch fast shots crossing a beast between samples.
+        # Keep original vertical threshold, pierce, damage and PvE-only rules.
+        lo, hi = min(old_x, s.x), max(old_x, s.x)
+        radius = 60 if s.kind == 'aoe' else 36
+        victims = [v for v in monsters.values() if v.dead <= 0 and
+                   abs(v.y - s.y - 78) < 95 and lo-radius < v.x < hi+radius]
+        victims.sort(key=lambda v: (v.x-old_x)*(1 if s.vx >= 0 else -1))
         consumed = False
         for v in victims:
             if apply_shot(s, v, isinstance(v, Monster)):
                 consumed = True
                 break
-        if not consumed: active.append(s)
+        # Resolve contact BEFORE culling shots outside world bounds, so the
+        # outermost platform edge cannot discard an overlapping target's hit.
+        if not consumed and -80 <= s.x <= WORLD_W + 80: active.append(s)
     shots[:] = active
 
 
@@ -976,10 +1020,21 @@ if AOI_RADIUS<700 or AOI_RADIUS>6000:raise ValueError('AOI_RADIUS must be 700..6
 DELTA_REFRESH_TICKS=150 # 5 seconds at 30Hz, periodic full keyframe self-heals missed state.
 
 
+class SharedSnapshot(dict):
+    """Wire-compatible dict with a private cache shared by per-client delta encoders.
+    Cache lifetime equals this one world sample; it is never serialized or global.
+    """
+    __slots__ = ('entity_patch_cache',)
+
+    def __init__(self, content):
+        super().__init__(content)
+        self.entity_patch_cache = {}
+
+
 def snapshot():
     """Shared immutable-by-convention world state; no per-guest JSON on the tick path."""
     moment=time.monotonic()
-    return {'t':'snapshot','tick':server_step,
+    return SharedSnapshot({'t':'snapshot','tick':server_step,
             'players':[{**actor_json(p),'avatar':p.avatar} for p in players.values()],
             'mobs':[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
                      'biteAge':round(max(0,moment-m.bite_started_at),3) if m.bite_started_at>0 else -1,
@@ -989,7 +1044,7 @@ def snapshot():
                      'expiresIn':round(max(0,d['expiresAt']-moment),1)} for d in loot_drops],
             'shots':[{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
                       'dir':1 if s.vx>=0 else -1} for s in shots],
-            'events':events[:80]}
+            'events':events[:80]})
 
 
 def aoi_view(world,p):
@@ -1024,10 +1079,25 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
                 old=before.get(key)
                 if old is None:changed.append(item)
                 else:
-                    patch={'id':key}
-                    for attr,value in item.items():
-                        if attr!='id' and old.get(attr)!=value:patch[attr]=value
-                    if len(patch)>1:changed.append(patch)
+                    # Most viewers compare the SAME two server-owned entity dicts.
+                    # Reuse their patch within this shared world sample, but key by
+                    # both actual object identities: each client may have a different
+                    # last-successfully-SENT baseline after mailbox drops.
+                    cache=world.entity_patch_cache if isinstance(world,SharedSnapshot) else None
+                    cache_key=(id(old),id(item)) if cache is not None else None
+                    entry=cache.get(cache_key) if cache is not None else None
+                    if entry is not None:
+                        patch=entry[2]
+                    elif old == item:
+                        # Equal full dictionaries need no per-attribute diff.
+                        patch=None
+                        if cache is not None and len(cache)<2048:cache[cache_key]=(old,item,patch)
+                    else:
+                        patch={'id':key}
+                        for attr,value in item.items():
+                            if attr!='id' and old.get(attr)!=value:patch[attr]=value
+                        if cache is not None and len(cache)<2048:cache[cache_key]=(old,item,patch)
+                    if patch is not None and len(patch)>1:changed.append(patch)
             result[kind]=changed
             missing=[key for key in before if key not in entities]
             if missing:result['removed'+kind.capitalize()]=missing
@@ -1278,7 +1348,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CL render diagnostic telemetry + v8.0CI wall-dash collision; cooperative-PvE; AOI/delta\n')
+        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CO overlap projectile + arrival goal + v8.0CN perf cache; cooperative-PvE; AOI/delta\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None

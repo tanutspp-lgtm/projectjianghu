@@ -71,10 +71,18 @@ class Navigation:
                 if link['to'] not in seen:seen.add(link['to']);todo.append(link['to'])
         return seen
 
-    def pick_goal(self,at=-1):
+    def pick_goal(self,at=-1,avoid_platform=None,avoid_x=None):
         viable=self.connected_component(at)
         ground=[t for t in self.ground if t['platform'] in viable]
         upper=[t for t in self.upper if t['platform'] in viable]
+        # On arrival draw another STANDABLE reachable tile, not a tiny patrol
+        # step around the same spot. Keep the 25/75 ground/upper probability
+        # whenever both pools have eligible distant candidates.
+        if avoid_platform is not None and avoid_x is not None:
+            far=lambda tiles:[t for t in tiles if t['platform']!=avoid_platform or
+                              abs(t['x']-avoid_x)>=96]
+            far_ground,far_upper=far(ground),far(upper)
+            if far_ground or far_upper:ground,upper=far_ground,far_upper
         if ground and upper:return dict(random.choice(ground if random.random()<GROUND_WEIGHT else upper))
         pool=ground or upper
         return dict(random.choice(pool)) if pool else None
@@ -111,8 +119,15 @@ class Navigation:
             state.leg=None;state.patrol_x=None;state.patrol_due=0
             state.route_seed=random.random()*999;state.changes+=1
         if p.dead>0 or p.hp<=0:return 0,[]
-        # Prefer legitimate same-platform targets encountered along the travel route.
         at=self.platform_at(p)
+        # An arrived bot commits to a fresh tile even if monsters are standing
+        # on its destination. Combat still uses the ordinary legal cooldowns.
+        if at>=0 and state.goal is not None and at==state.goal['platform'] and abs(p.x-state.goal['x'])<=27:
+            state.goal=self.pick_goal(at,avoid_platform=at,avoid_x=p.x)
+            state.goal_due=t+DESTINATION_SECONDS
+            state.leg=None;state.patrol_x=None;state.patrol_due=0
+            state.route_seed=random.random()*999;state.changes+=1
+        # Prefer legitimate same-platform targets encountered along the travel route.
         if at>=0 and p.stun<=0 and p.down<=0 and not p.climb:
             nearby=[m for m in monsters.values() if m.dead<=0 and m.hp>0 and abs(m.y-p.y)<55 and
                      abs(m.x-p.x)<305 and self.platform_at(m)==at]
@@ -127,7 +142,8 @@ class Navigation:
                 if distance>265:return (2 if dx>0 else 1),[]
                 # No backwards movement in melee range: that caused a deterministic
                 # left/right ping-pong at the attack threshold, not real lag.
-                if abs(dx)>8:p.face=1 if dx>0 else -1
+                # Ignore tiny target-side oscillations while monsters overlap.
+                if abs(dx)>24:p.face=1 if dx>0 else -1
                 if t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
                     state.last_attack=t
                     return 0,['attack']
@@ -157,15 +173,7 @@ class Navigation:
         if state.leg and state.leg['to']==at:state.leg=None
         if at==goal['platform']:
             state.leg=None
-            if abs(p.x-goal['x'])>27:return self.approach(p.x,goal['x']),[]
-            if state.patrol_x is None or t>=state.patrol_due:
-                s=self.platforms[at]
-                span=min(380,(s['x2']-s['x'])*.65)
-                lo=s['x']+min(EDGE,(s['x2']-s['x'])/3)
-                hi=s['x2']-min(EDGE,(s['x2']-s['x'])/3)
-                state.patrol_x=max(lo,min(hi,goal['x']+(random.random()-.5)*span))
-                state.patrol_due=t+6+random.random()*5
-            return self.approach(p.x,state.patrol_x),[]
+            return self.approach(p.x,goal['x']),[]
         if not state.leg or state.leg['from']!=at:
             state.leg=self.route_next(at,goal['platform'],state.route_seed)
             if not state.leg:
