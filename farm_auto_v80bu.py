@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 import heapq
 import math
 import random
+from functools import lru_cache
 
 DESTINATION_SECONDS=120.0
 GROUND_WEIGHT=0.25
@@ -63,13 +64,14 @@ class Navigation:
                 if d<17 and d<diff:best=i;diff=d
         return best
 
+    @lru_cache(maxsize=128)
     def connected_component(self,start):
-        if start<0:return set(range(len(self.platforms)))
+        if start<0:return frozenset(range(len(self.platforms)))
         seen={start};todo=[start]
         while todo:
             for link in self.graph[todo.pop()]:
                 if link['to'] not in seen:seen.add(link['to']);todo.append(link['to'])
-        return seen
+        return frozenset(seen)
 
     def pick_goal(self,at=-1,avoid_platform=None,avoid_x=None):
         viable=self.connected_component(at)
@@ -88,6 +90,14 @@ class Navigation:
         return dict(random.choice(pool)) if pool else None
 
     def route_next(self,start,goal,seed):
+        # Immutable fixed navigation graph: identical queries with the same bot
+        # seed and destination must yield the same leg. Return a fresh dict to
+        # prevent callers from mutating the cached route.
+        leg=self._route_next_cached(start,goal,seed)
+        return dict(leg) if leg is not None else None
+
+    @lru_cache(maxsize=512)
+    def _route_next_cached(self,start,goal,seed):
         if start<0 or goal<0 or start==goal:return None
         best={start:0.0};prior={};pq=[(0.0,start)];visited=set()
         while pq:
@@ -106,7 +116,7 @@ class Navigation:
         if goal not in prior:return None
         cur=goal
         while prior[cur]['from']!=start:cur=prior[cur]['from']
-        return prior[cur]
+        return tuple(prior[cur].items())
 
     @staticmethod
     def approach(x,to,margin=17):
@@ -129,7 +139,10 @@ class Navigation:
             state.route_seed=random.random()*999;state.changes+=1
         # Prefer legitimate same-platform targets encountered along the travel route.
         if at>=0 and p.stun<=0 and p.down<=0 and not p.climb:
-            nearby=[m for m in monsters.values() if m.dead<=0 and m.hp>0 and abs(m.y-p.y)<55 and
+            # Optional server-owned broadphase, identical final eligibility checks.
+            # Strict X bound is applied by the index; plain dict remains supported.
+            candidates=(monsters.near(p.x,305) if hasattr(monsters,'near') else monsters.values())
+            nearby=[m for m in candidates if m.dead<=0 and m.hp>0 and abs(m.y-p.y)<55 and
                      abs(m.x-p.x)<305 and self.platform_at(m)==at]
             if nearby:
                 # Hold target briefly: crowded mobs must not make AUTO flip sides every 33ms.
