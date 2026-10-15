@@ -199,6 +199,7 @@ class Actor:
 @dataclass
 class Guest(Actor):
     ws: object = None
+    room: str = 'forest'  # independent forest / movement_lab instances
     avatar: str = 'male_hair_01_black'
     buttons: int = 0
     last_input: float = field(default_factory=time.monotonic)
@@ -366,13 +367,13 @@ def index_players_by_x():
     # Share one indexed player roster across 20 beasts; combat remains authoritative.
     cells = defaultdict(list)
     for p in players.values():
-        if p.dead<=0:
+        if p.dead<=0 and p.room=='forest':
             cells[int(p.x // SPATIAL_CELL)].append(p)
     return cells
 
 def candidate_players_by_x(m, grid):
     if grid is None:
-        return players.values()  # direct unit calls still work without an index
+        return (p for p in players.values() if p.room=='forest')  # only forest actors may be targeted
     radius=BEAST_AGGRO+65
     first=int((m.x-radius)//SPATIAL_CELL)
     last=int((m.x+radius)//SPATIAL_CELL)
@@ -605,6 +606,7 @@ def try_qi_shield(p):
 
 def perform_action(p: Guest, action: str):
     if p.dead > 0 or p.down > 0 or p.stun > 0 or p.broken > 0: return
+    if p.room=='movement_lab' and action not in ('jump','dash','lock'): return  # no combat/projectiles in movement lab
     if action == 'jump':
         if p.ground and p.climb is None:
             p.vy, p.ground, p.climb = -540, False, None
@@ -864,7 +866,7 @@ def advance_loot():
             loot_drops.remove(drop);continue
         if t<drop['pickupAt']:continue
         for p in players.values():
-            if p.dead>0 or p.hp<=0 or len(p.inventory)>=LOOT_BAG_CAP:continue
+            if p.room!='forest' or p.dead>0 or p.hp<=0 or len(p.inventory)>=LOOT_BAG_CAP:continue
             if t<drop['privateUntil'] and p.id!=drop['ownerId']:continue
             if abs(p.x-drop['x'])>LOOT_PICKUP_X or abs(p.y-drop['y'])>LOOT_PICKUP_Y:continue
             entry={'uid':'bag-'+secrets.token_hex(8),'item_id':drop['item_id'],'obtainedAt':int(time.time()*1000)}
@@ -878,7 +880,7 @@ def advance_loot():
 
 def grant_monster_kill(s,m):
     killer=players.get(s.owner)
-    if killer is None:return
+    if killer is None or killer.room!='forest':return
     old_level=killer.level
     award,levels=prog.grant_kill_exp(killer,m.level)
     if levels:
@@ -925,7 +927,7 @@ def bonus_hit(killer, victim, raw,kind='qi_echo'):
 
 def apply_qi_on_primary_hit(shot,victim,damage):
     killer=players.get(shot.owner)
-    if not killer or not isinstance(victim,Monster):return
+    if not killer or killer.room!='forest' or not isinstance(victim,Monster):return
     if loadouts.active_qi(killer,1) and shot.kind=='attack':
         mechanics=loadouts.qi_mechanics(killer,'flute_sustain')
         if random.random()*100<mechanics['stunPct']:
@@ -1263,6 +1265,11 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     p.writer_probe_counter+=1
     if _trace_writer:_writer_aoi_start=time.perf_counter_ns()
     current=aoi_view(world,p)
+    if p.room=='movement_lab':
+        current['players']={eid:e for eid,e in current['players'].items() if players.get(eid) is not None and players[eid].room=='movement_lab'}
+        current['mobs']={};current['shots']={};current['loot']={}
+    else:
+        current['players']={eid:e for eid,e in current['players'].items() if (players.get(eid) is None or players[eid].room=='forest')}
     if _trace_writer:
         _writer_stage_samples['aoi'].append((time.perf_counter_ns()-_writer_aoi_start)/1e6)
         _writer_delta_start=time.perf_counter_ns()
@@ -1302,8 +1309,16 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
             result[kind]=changed
             missing=[key for key in before if key not in entities]
             if missing:result['removed'+kind.capitalize()]=missing
-    result['events']=[e for e in world['events'] if e.get('victim')==p.id or
-                       e.get('owner')==p.id or abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200]
+    # A positional event from another room is never allowed to bleed across rooms.
+    # Events without actor IDs belong to the original forest world only.
+    def visible_room_event(e):
+        source_id=e.get('owner') or e.get('victim')
+        source=players.get(source_id) if source_id else None
+        if source is not None:return source.room==p.room
+        return p.room=='forest'
+    result['events']=[e for e in world['events'] if visible_room_event(e) and
+                       (e.get('victim')==p.id or e.get('owner')==p.id or
+                        abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200)]
     if _trace_writer:
         _writer_stage_samples['delta'].append((time.perf_counter_ns()-_writer_delta_start)/1e6)
         _writer_private_start=time.perf_counter_ns()
@@ -1358,7 +1373,7 @@ async def snapshot_writer(p: Guest):
                 packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory)
             else:
                 # Legacy clients receive original full-world shape until upgraded.
-                old=dict(world);old['self']=private_progression(p);old['inventory']=p.inventory
+                old=dict(world);old['players']=[a for a in world['players'] if (players.get(a['id']) is None or players[a['id']].room==p.room)];old['self']=private_progression(p);old['inventory']=p.inventory
                 packet=_COMPACT_WIRE_JSON_ENCODER.encode(old)
                 current,full_tick,priv,inv=None,-1,None,None
             perf_encodes.append(time.monotonic()-encode_start)
@@ -1485,7 +1500,8 @@ async def handle_connection(ws):
             await ws.close(code=1008, reason='Origin not allowed');return
         raw = await asyncio.wait_for(ws.recv(), timeout=8)
         hello = strict_message(raw)
-        if not hello or set(hello.keys()) not in ({'t', 'avatar'},{'t','avatar','protocol'}) or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')) or hello.get('protocol','legacy') not in ('legacy','aoi-delta-v80by'):
+        valid_joins=({'t','avatar'},{'t','avatar','protocol'},{'t','avatar','room'},{'t','avatar','protocol','room'})
+        if not hello or set(hello.keys()) not in valid_joins or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')) or hello.get('protocol','legacy') not in ('legacy','aoi-delta-v80by') or hello.get('room','forest') not in ('forest','movement_lab'):
             await ws.close(code=1008, reason='Invalid guest join');return
         if len(players) >= MAX_GUESTS:
             await ws.send(json.dumps({'t': 'error', 'message': 'ห้องเต็ม ลองใหม่ภายหลัง'}));await ws.close(code=1013);return
@@ -1495,17 +1511,18 @@ async def handle_connection(ws):
         spawn_x = 175 + (len(players) % 8) * 35
         guest_level=1  # same Lv1 start as Offline; ephemeral Guest, no DB character save
         guest_hp=prog.base_hp_for_level(guest_level,hp_reference)
-        p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp,
+        p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp, room=hello.get('room','forest'),
                   avatar=hello['avatar'], ws=ws, level=guest_level)
         prog.apply_derived_resources(p,hp_reference,full=True)
-        p.protocol_delta=(hello.get('protocol')=='aoi-delta-v80by')
+        p.protocol_delta=(hello.get('protocol')=='aoi-delta-v80by' or p.room=='movement_lab')
         # Evenly distribute connection slots; no random clumping for first 10 guests.
         p.snapshot_slot=snapshot_join_sequence%10
         snapshot_join_sequence+=1
         players[guest_id] = p
         features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
-        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
+        features.append('movement-lab-room-v80cz')
+        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         event('join', p.x, p.y, victim=p.id)
         async for raw in ws:
@@ -1562,7 +1579,7 @@ async def handle_connection(ws):
                     await ws.close(code=1008,reason='Invalid AUTO toggle');break
                 if not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='AUTO toggle rate limit');break
-                p.auto_state.enabled=m['enabled']
+                p.auto_state.enabled=m['enabled'] if p.room=='forest' else False
                 p.buttons=0
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
