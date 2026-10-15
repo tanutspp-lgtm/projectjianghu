@@ -238,6 +238,11 @@ class Guest(Actor):
     qi_shield_until: float = 0
     qi_shield_cd: float = 0
     auto_state: farm_auto.State = field(default_factory=farm_auto.State)
+    manual_guard:bool=False
+    manual_guard_at:float=0.0
+    # v8.0DF: visual facing during an accepted cast, independent from walk velocity.
+    # Never use this field for physics, dash, attack permission, or damage checks.
+    cast_face: int = 0
     snapshot_outbox: asyncio.Queue = field(default_factory=lambda:asyncio.Queue(maxsize=1))
     snapshot_task: Optional[asyncio.Task] = None
     snapshot_slot: int = 0  # 0..9, 10ms-phase staggering across each 100ms broadcast cycle
@@ -482,14 +487,14 @@ def report_performance_to_render(now):
 BEAST_AGGRO=280
 BEAST_CHASE_SPEED=112
 BEAST_PATROL_SPEED=BEAST_CHASE_SPEED*0.65
-RESPAWN_WAVE_SEC=7.56
-RESPAWN_MIN_SEC=5.0
-SERVER_BORN=time.monotonic()
+# v8.0DG pending: no map-wide respawn waves, shared queues, or random staggering.
+# Every monster has its own countdown in Monster.dead, starting on the killing tick.
+# Death at T -> respawn at about T+RESPAWN_SEC (nearest simulation tick).
+# Two monsters dying in the same tick may respawn together, by design.
+RESPAWN_SEC=5.0
 
 def next_respawn_delay():
-    elapsed=time.monotonic()-SERVER_BORN
-    wave=math.ceil((elapsed+RESPAWN_MIN_SEC+1e-7)/RESPAWN_WAVE_SEC)*RESPAWN_WAVE_SEC
-    return max(RESPAWN_MIN_SEC,wave-elapsed)
+    return RESPAWN_SEC
 
 def supported(m, x=None):
     x=m.x if x is None else x
@@ -631,6 +636,17 @@ def perform_action(p: Guest, action: str):
     server_now=time.monotonic()
     if server_now-p.last_attack_at+0.000001 < ATTACKS[action][0]: return
     p.last_attack_at=server_now
+    # v8.0DF: Match Offline's nearest-monster auto-facing on manual casts.
+    # AUTO AI already owns its target/facing. Direction is computed from server
+    # monster coordinates, never from an untrusted client-supplied aim/position.
+    shot_dir=p.face
+    if not p.auto_state.enabled and p.room=='forest':
+        candidate=min((m for m in monsters.values() if m.dead<=0 and m.hp>0 and m.down<=0
+                       and abs(m.x-p.x)<900 and abs(m.y-p.y)<120),
+                      key=lambda m:abs(m.x-p.x),default=None)
+        if candidate is not None and candidate.x!=p.x:
+            shot_dir=1 if candidate.x>p.x else -1
+    p.cast_face=shot_dir
     global shot_seq
     cooldown, duration, speed, _, lifespan, pierce = ATTACKS[action]
     damage,critical=prog.roll_attack(p,action,hp_reference)
@@ -639,11 +655,11 @@ def perform_action(p: Guest, action: str):
     set_action(p, action, duration)
     shot_seq += 1
     y = p.y - 84 - (3 if action == 'aoe' else 4 if action == 'break' else 0)
-    shots.append(Shot(shot_seq, p.id, action, p.x + p.face * 52, y, p.face * speed, damage, lifespan, pierce, critical=critical, origin_x=p.x))
+    shots.append(Shot(shot_seq, p.id, action, p.x + shot_dir * 52, y, shot_dir * speed, damage, lifespan, pierce, critical=critical, origin_x=p.x))
     # Every confirmed cast has a short-lived visual trace even when the actual
     # server-owned projectile hits a mob before the next 10Hz snapshot.
     event('cast',p.x,p.y-34,kind=action,owner=p.id,shotId=str(shot_seq),
-          shotX=round(p.x+p.face*52,1),shotY=round(y,1),shotDir=p.face,
+          shotX=round(p.x+shot_dir*52,1),shotY=round(y,1),shotDir=shot_dir,
           shotSpeed=speed)
 
 
@@ -690,6 +706,25 @@ def update_guest(p: Guest, dt, tick_now):
     p.guard = bool(p.buttons & 16) and p.broken <= 0 and p.stun <= 0 and p.climb is None
     near = next((c for c in CLIMBS if abs(c[0] - p.x) < 36 and c[1] - 8 <= p.y <= c[2] + 12), None)
     axis = int(bool(p.buttons & 8)) - int(bool(p.buttons & 4))
+    # v8.0DE: Climb completion deliberately lands at rope_x+47, but normal
+    # climb acquisition only works within 36px. A human holding DOWN from the
+    # landing was stranded, while AUTO first walks back to the rope. Align at
+    # normal walking speed (never teleport) only when grounded on a continuous
+    # real platform crossing the climb; forbid bottom-floor/down reacquisition.
+    if (p.climb is None and axis > 0 and p.ground and not p.guard and p.climb_cd <= 0
+            and p.stun <= 0 and (p.action != 'dash' or p.action_at >= .26)):
+        landing = next((c for c in CLIMBS
+                        if 12 < abs(c[0] - p.x) <= 56
+                        and c[1] - 3 <= p.y < c[2] - 8
+                        and any(abs(y - p.y) < 6 and lo + 8 < min(p.x, c[0])
+                                and max(p.x, c[0]) < hi - 8 for lo, hi, y in GROUND)), None)
+        if landing is not None:
+            step = 205 * derived['moveSpeedMultiplier'] * dt
+            p.x += clamp(landing[0] - p.x, -step, step)
+            p.vx = 0
+            if abs(p.x - landing[0]) > 12:
+                return  # Held DOWN continues alignment until safe climb entry.
+            near = landing
     # v8.0CE: Holding UP on the upper platform must never re-capture
     # the ladder and start a fresh upward climb through open air.
     # Players can still intentionally press DOWN to descend from the landing.
@@ -1055,9 +1090,20 @@ def actor_frame(a, tick):
     return int(tick / 17) % 3
 
 
+def actor_visual_face(a):
+    # A caster may walk LEFT while shooting RIGHT. Report the cast facing for
+    # both self and remote sprites during the attack animation; keep a.face
+    # as the actual movement/dash orientation for server mechanics.
+    if (isinstance(a,Guest) and a.action in ATTACKS and a.action_at<a.action_duration
+            and not (a.dead>0 or a.down>0 or a.stun>0.02 or a.guard or a.climb)
+            and a.cast_face in (-1,1)):
+        return a.cast_face
+    return a.face
+
+
 def actor_json(a):
     return {'id': a.id, 'level': a.level if isinstance(a,(Guest,Monster)) else 1, 'x': round(a.x, 2), 'y': round(a.y, 2), 'vx': round(a.vx, 2), 'vy': round(a.vy, 2),
-            'face': a.face, 'hp': a.hp, 'max': a.max_hp, 'ground': a.ground, 'guard': a.guard, 'down': round(a.down, 2), 'dead': round(a.dead, 2),
+            'face': actor_visual_face(a), 'hp': a.hp, 'max': a.max_hp, 'ground': a.ground, 'guard': a.guard, 'down': round(a.down, 2), 'dead': round(a.dead, 2),
             'stun': round(a.stun, 2), 'inv': round(a.inv, 2), 'climb': bool(a.climb), 'frame': actor_frame(a, server_step), 'action': a.action,
             **({'defense':a.defense} if isinstance(a,Monster) else {'lastAppliedSeq':a.applied_input_seq})}
 
@@ -1079,7 +1125,7 @@ def private_progression(p):
             'stats':p.stats,'skillRanks':p.skill_ranks,
             'sp':round(p.sp,2),'maxSp':p.max_sp,'sta':round(p.sta,2),'maxSta':p.max_sta,
             'defense':p.defense,'derived':derived_for_snapshot(p),
-            'auto':p.auto_state.enabled,'autoTarget':(dict(p.auto_state.goal) if p.auto_state.enabled and p.auto_state.goal else None),
+            'auto':p.auto_state.enabled,'autoStay':p.auto_state.stay_alert,'autoAnchor':(dict(p.auto_state.anchor) if p.auto_state.stay_alert and p.auto_state.anchor else None),'autoTarget':(dict(p.auto_state.goal) if p.auto_state.enabled and p.auto_state.goal else None),
             'autoTargetSeconds':round(max(0,p.auto_state.goal_due-time.monotonic()),1) if p.auto_state.enabled else 0,
             'sandboxAvailable':ENABLE_GUEST_SANDBOX,'inputAck':p.applied_input_seq,'performance':perf_data.copy(),**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
 
@@ -1437,6 +1483,10 @@ async def game_loop():
                 if tick_now >= p.auto_state.next_step:
                     buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,auto_monsters)
                     p.buttons=buttons
+                    # Guard is a manual held combat action, not movement input.
+                    # It must expire on lost connections/background tabs.
+                    if p.manual_guard and tick_now-p.manual_guard_at>.55:p.manual_guard=False
+                    if p.manual_guard:p.buttons|=16
                     # Preserve 10Hz decisions and the original 100ms cadence.
                     # Advancing from the old deadline, rather than the current
                     # tick, avoids phase collapse after scheduling jitter. If the
@@ -1444,6 +1494,9 @@ async def game_loop():
                     p.auto_state.next_step=(tick_now+.1 if tick_now-p.auto_state.next_step>.1
                                             else p.auto_state.next_step+.1)
                     for action in actions:perform_action(p,action)
+                if p.manual_guard and tick_now-p.manual_guard_at>.55:p.manual_guard=False
+                if p.manual_guard:p.buttons|=16
+                else:p.buttons&=~16
                 p.last_input=tick_now
             update_guest(p,DT,tick_now)
         if profile_tick:
@@ -1519,7 +1572,7 @@ async def handle_connection(ws):
         p.snapshot_slot=snapshot_join_sequence%10
         snapshot_join_sequence+=1
         players[guest_id] = p
-        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl']
+        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
         features.append('movement-lab-room-v80cz')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
@@ -1581,6 +1634,8 @@ async def handle_connection(ws):
                     await ws.close(code=1008,reason='AUTO toggle rate limit');break
                 p.auto_state.enabled=m['enabled'] if p.room=='forest' else False
                 p.buttons=0
+                p.manual_guard=False
+                p.auto_state.stay_alert=False;p.auto_state.anchor=None
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
                     p.auto_state.goal=None;p.auto_state.goal_due=0
@@ -1588,6 +1643,24 @@ async def handle_connection(ws):
                     # 30Hz simulation ticks per 100ms decision period. Each
                     # guest still decides every 100ms; this only shifts phase.
                     p.auto_state.next_step=time.monotonic()+(p.snapshot_slot%3)*DT
+                continue
+            if m.get('t')=='auto_stay':
+                if set(m)!={'t','enabled'} or type(m.get('enabled')) is not bool:
+                    await ws.close(code=1008,reason='Invalid Stay Alert toggle');break
+                if not check_rate(p.action_times,12):
+                    await ws.close(code=1008,reason='Stay Alert toggle rate limit');break
+                requested=m['enabled']
+                platform=FARM_NAV.platform_at(p) if requested else -1
+                valid=(not requested or (p.room=='forest' and p.auto_state.enabled and
+                                        platform>=0 and p.dead<=0 and p.hp>0 and p.down<=0))
+                if valid:
+                    p.auto_state.stay_alert=requested
+                    p.auto_state.anchor=({'platform':platform,'x':float(p.x),'y':float(p.y)} if requested else None)
+                    p.auto_state.goal=dict(p.auto_state.anchor) if requested else None
+                    p.auto_state.goal_due=0;p.auto_state.leg=None
+                    p.auto_state.combat_target_id=None;p.auto_state.combat_lock_until=0
+                    p.auto_state.next_step=0.0  # React on next simulation tick.
+                await ws.send(json.dumps({'t':'auto_stay_ack','ok':valid,'enabled':p.auto_state.stay_alert}))
                 continue
             if m.get('t')!='input' or set(m)!={'t','seq','buttons','pressed'}:
                 await ws.close(code=1008, reason='Invalid input payload');break
@@ -1603,12 +1676,21 @@ async def handle_connection(ws):
             global perf_in_count
             perf_in_count += 1
             p.last_seq = seq
-            # Manual movement/attacks cancel AUTO; inert heartbeats do not.
-            if p.auto_state.enabled and (buttons or pressed):p.auto_state.enabled=False
-            if not p.auto_state.enabled:
-                p.buttons = buttons
-                p.last_input = time.monotonic()
-                for action in pressed: perform_action(p, action)
+            # v8.0DH: only explicit manual locomotion cancels AUTO. A skill
+            # press (and guard hold) is additive to the server-owned AI.
+            # Client input NEVER overrides the AI's movement or goal.
+            if p.auto_state.enabled and (buttons & (1|2|4|8)):
+                p.auto_state.enabled=False
+                p.auto_state.stay_alert=False;p.auto_state.anchor=None
+                p.manual_guard=False
+            if p.auto_state.enabled:
+                p.manual_guard=bool(buttons & 16)
+                p.manual_guard_at=time.monotonic()
+                for action in pressed:perform_action(p,action)
+            else:
+                p.buttons=buttons
+                p.last_input=time.monotonic()
+                for action in pressed:perform_action(p,action)
     except (asyncio.TimeoutError, ConnectionClosed):
         pass
     finally:

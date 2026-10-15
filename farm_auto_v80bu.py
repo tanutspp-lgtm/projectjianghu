@@ -29,6 +29,10 @@ class State:
     unreachable:int=0
     combat_target_id:str|None=None
     combat_lock_until:float=0.0
+    # v8.0DH: server-owned stationary farming anchor, never client coordinates.
+    stay_alert:bool=False
+    anchor:dict|None=None
+    last_face_turn:float=-1e9
 
 class Navigation:
     def __init__(self,platforms,climbs):
@@ -124,7 +128,11 @@ class Navigation:
 
     def choose(self,p,state,t,monsters):
         if not state.enabled:return 0,[]
-        if state.goal is None or t>=state.goal_due:
+        if state.stay_alert and state.anchor is not None:
+            # Stay Alert never rerolls a destination: chase the exact validated
+            # standing point even after knockback, dropping to a lower floor.
+            if state.goal != state.anchor:state.goal=dict(state.anchor);state.leg=None
+        elif state.goal is None or t>=state.goal_due:
             state.goal=self.pick_goal(self.platform_at(p));state.goal_due=t+DESTINATION_SECONDS
             state.leg=None;state.patrol_x=None;state.patrol_due=0
             state.route_seed=random.random()*999;state.changes+=1
@@ -132,18 +140,21 @@ class Navigation:
         at=self.platform_at(p)
         # An arrived bot commits to a fresh tile even if monsters are standing
         # on its destination. Combat still uses the ordinary legal cooldowns.
-        if at>=0 and state.goal is not None and at==state.goal['platform'] and abs(p.x-state.goal['x'])<=27:
+        if not state.stay_alert and at>=0 and state.goal is not None and at==state.goal['platform'] and abs(p.x-state.goal['x'])<=27:
             state.goal=self.pick_goal(at,avoid_platform=at,avoid_x=p.x)
             state.goal_due=t+DESTINATION_SECONDS
             state.leg=None;state.patrol_x=None;state.patrol_due=0
             state.route_seed=random.random()*999;state.changes+=1
+        # Stay bots may shoot while walking back; combat must NOT permanently
+        # prevent return to the standing anchor when mobs keep respawning.
+        stay_cast=[]
         # Prefer legitimate same-platform targets encountered along the travel route.
         if at>=0 and p.stun<=0 and p.down<=0 and not p.climb:
             # Optional server-owned broadphase, identical final eligibility checks.
             # Strict X bound is applied by the index; plain dict remains supported.
             candidates=(monsters.near(p.x,305) if hasattr(monsters,'near') else monsters.values())
             nearby=[m for m in candidates if m.dead<=0 and m.hp>0 and abs(m.y-p.y)<55 and
-                     abs(m.x-p.x)<305 and self.platform_at(m)==at]
+                     abs(m.x-p.x)<(265 if state.stay_alert else 305) and self.platform_at(m)==at]
             if nearby:
                 # Hold target briefly: crowded mobs must not make AUTO flip sides every 33ms.
                 m=next((mob for mob in nearby if mob.id==state.combat_target_id),None) if t<state.combat_lock_until else None
@@ -152,21 +163,36 @@ class Navigation:
                     state.combat_target_id=m.id
                 state.combat_lock_until=t+0.75
                 dx=m.x-p.x;distance=abs(dx)
-                if distance>265:return (2 if dx>0 else 1),[]
-                # No backwards movement in melee range: that caused a deterministic
-                # left/right ping-pong at the attack threshold, not real lag.
-                # Ignore tiny target-side oscillations while monsters overlap.
-                if abs(dx)>24:p.face=1 if dx>0 else -1
-                if t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
-                    state.last_attack=t
-                    return 0,['attack']
-                return 0,[]
-            state.combat_target_id=None
+                if state.stay_alert:
+                    # No mob chasing and no face changes while idle. Turn only
+                    # for a real cast; use target lock + a brief turn cooldown
+                    # so nearby left/right mobs cannot twitch the idle sprite.
+                    if distance<=265 and t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
+                        facing=(1 if dx>0 else -1) if abs(dx)>12 else p.face
+                        if facing==p.face or t-state.last_face_turn>=.45:
+                            if facing!=p.face:
+                                p.face=facing;state.last_face_turn=t
+                            state.last_attack=t
+                            stay_cast=['attack']
+                    # Fall through to navigation: a displaced Stay bot keeps
+                    # returning while shooting reachable monsters along the way.
+                else:
+                    if distance>265:return (2 if dx>0 else 1),[]
+                    # No backwards movement in melee range: that caused a deterministic
+                    # left/right ping-pong at the attack threshold, not real lag.
+                    if abs(dx)>24:p.face=1 if dx>0 else -1
+                    if t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
+                        state.last_attack=t
+                        return 0,['attack']
+                    return 0,[]
+            else:
+                state.combat_target_id=None
+                state.combat_lock_until=0
         goal=state.goal
-        if goal is None:return 0,[]
+        if goal is None:return 0,stay_cast
         if p.climb:
             leg=state.leg
-            if not leg:return 0,[]
+            if not leg:return 0,stay_cast
             target=self.platforms[leg['to']];c=self.climbs[leg['climb']]
             # Intermediate landing: jump sideways before passing the platform.
             intermediate=abs(target['y']-c['top'])>10 and abs(target['y']-c['bottom'])>10
@@ -180,22 +206,22 @@ class Navigation:
                 state.last_jump=t
                 side=1 if target['x2']-c['x']>=c['x']-target['x'] else -1
                 p.face=side
-                return 0,['jump']
-            return (4 if climb_up else 8),[]
-        if at<0:return 0,[]
+                return 0,['jump']+stay_cast
+            return (4 if climb_up else 8),stay_cast
+        if at<0:return 0,stay_cast
         if state.leg and state.leg['to']==at:state.leg=None
         if at==goal['platform']:
             state.leg=None
-            return self.approach(p.x,goal['x']),[]
+            return self.approach(p.x,goal['x'],margin=12 if state.stay_alert else 17),stay_cast
         if not state.leg or state.leg['from']!=at:
             state.leg=self.route_next(at,goal['platform'],state.route_seed)
             if not state.leg:
                 state.unreachable+=1
                 # Real obstacle/path failure, not a monster-density re-evaluation.
                 # Avoid futile twitching; wait for next 120s goal.
-                return 0,[]
+                return 0,stay_cast
         c=self.climbs[state.leg['climb']]
         direction=self.approach(p.x,c['x'])
-        if direction:return direction,[]
+        if direction:return direction,stay_cast
         target=self.platforms[state.leg['to']]
-        return (4 if target['y']<p.y else 8),[]
+        return (4 if target['y']<p.y else 8),stay_cast
