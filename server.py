@@ -330,6 +330,13 @@ _diag_overwritten = 0
 _diag_send_durations = deque(maxlen=1500)
 _diag_boot = secrets.token_hex(4)
 _diag_cgroup_prev = None
+# CV: bounded low-overhead tail-latency diagnostics; all durations are ms.
+# Never record identities, IPs, positions or input payloads.
+_cv_loop_spikes = deque(maxlen=128)
+_cv_writer_wait = deque(maxlen=2000)
+_cv_snapshot_age = deque(maxlen=2000)
+_cv_send_spikes = deque(maxlen=128)
+_cv_outbox_skipped = 0
 SPATIAL_CELL = 240
 
 
@@ -405,7 +412,7 @@ def report_performance_to_render(now):
     Read these with Render list_logs text='JIANGHU_DIAG' and compare with CPU metrics.
     No external IO here beyond a bounded print; no database dependency in game loop.
     """
-    global _diag_last, _diag_process_cpu, _diag_sent, _diag_overwritten, _diag_cgroup_prev
+    global _diag_last, _diag_process_cpu, _diag_sent, _diag_overwritten, _diag_cgroup_prev, _cv_outbox_skipped
     if now-_diag_last<DIAG_WINDOW_SEC:return
     window=now-_diag_last
     cpu_delta=time.process_time()-_diag_process_cpu
@@ -421,7 +428,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0CR','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0CW','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(players),'autoGuests':sum(bool(p.auto_state.enabled) for p in players.values()),
         'monsters':len(monsters),'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -444,6 +451,24 @@ def report_performance_to_render(now):
     data['profileWriterStageAvgMs']={k:round(sum(values)/len(values),3) if values else None
                                       for k,values in _writer_stage_samples.items()}
     data['profileWriterStageSamples']={k:len(values) for k,values in _writer_stage_samples.items()}
+    # Target the 180-200ms intermittent spikes: distributions and bounded worst
+    # samples can distinguish scheduling, stale snapshots and network sends.
+    waits=sorted(_cv_writer_wait)
+    ages=sorted(_cv_snapshot_age)
+    data['tailLatency']={
+        'loopSpikeCount':len(_cv_loop_spikes),
+        'loopSpikeMaxMs':round(max(_cv_loop_spikes),2) if _cv_loop_spikes else None,
+        'writerSlotWaitP95Ms':percentile(waits,.95),
+        'writerSlotWaitMaxMs':percentile(waits,1),
+        'snapshotAgeP95Ms':percentile(ages,.95),
+        'snapshotAgeMaxMs':percentile(ages,1),
+        'sendSpikeCount':len(_cv_send_spikes),
+        'sendSpikeMaxMs':round(max(_cv_send_spikes),2) if _cv_send_spikes else None,
+        'outboxSkipped':_cv_outbox_skipped,
+    }
+    _cv_outbox_skipped=0
+    _cv_loop_spikes.clear();_cv_writer_wait.clear()
+    _cv_snapshot_age.clear();_cv_send_spikes.clear()
     for values in _writer_stage_samples.values():values.clear()
     for values in _profile_samples.values():values.clear()
     # No telemetry is written to Supabase until a separate authenticated storage path exists.
@@ -1073,27 +1098,70 @@ class SharedSnapshot(dict):
     """Wire-compatible dict with a private cache shared by per-client delta encoders.
     Cache lifetime equals this one world sample; it is never serialized or global.
     """
-    __slots__ = ('entity_patch_cache','aoi_bucket_cache',)
+    __slots__ = ('entity_patch_cache','aoi_bucket_cache','created_monotonic')
 
     def __init__(self, content):
         super().__init__(content)
         self.entity_patch_cache = {}
         self.aoi_bucket_cache = {}
+        self.created_monotonic = time.monotonic()
+
+
+# v8.0CU: shared X broadphase for AUTO targets (built at most once per
+# decision tick). This is an optimization only: values() retains original order
+# so tie-breaking and 0.75s target locks remain deterministic.
+AUTO_QUERY_CELL=256
+AUTO_QUERY_MIN_MOBS=48
+class AutoMonsterCandidates:
+    __slots__=('source','cells')
+    def __init__(self, source):
+        self.source=source
+        self.cells={}
+        for index,m in enumerate(source.values()):
+            self.cells.setdefault(int(m.x//AUTO_QUERY_CELL),[]).append((index,m))
+    def near(self,x,radius=305):
+        lo=int((x-radius)//AUTO_QUERY_CELL)
+        hi=int((x+radius)//AUTO_QUERY_CELL)
+        candidates=[pair for cell in range(lo,hi+1) for pair in self.cells.get(cell,())]
+        candidates.sort(key=lambda item:item[0])
+        return [m for _,m in candidates if abs(m.x-x)<radius]
+
+# v8.0CX: bounded structural sharing across consecutive 10Hz world samples.
+# A dict with unchanged wire values reuses the exact immutable-by-convention
+# object reference. Per-client delta baselines only update after send success;
+# identity therefore safely bypasses redundant field comparisons, even if
+# other clients skipped mailbox samples. No revision numbers are sent on wire.
+_SNAPSHOT_PREVIOUS_ENTITIES = {kind: {} for kind in ('players','mobs','loot','shots')}
+
+
+def _reuse_snapshot_entities(kind, entries):
+    old = _SNAPSHOT_PREVIOUS_ENTITIES[kind]
+    next_entities = {}
+    result = []
+    for entry in entries:
+        eid = entry['id']
+        previous = old.get(eid)
+        if previous is not None and previous == entry:
+            entry = previous
+        next_entities[eid] = entry
+        result.append(entry)
+    _SNAPSHOT_PREVIOUS_ENTITIES[kind] = next_entities
+    return result
 
 
 def snapshot():
     """Shared immutable-by-convention world state; no per-guest JSON on the tick path."""
     moment=time.monotonic()
     return SharedSnapshot({'t':'snapshot','tick':server_step,
-            'players':[{**actor_json(p),'avatar':p.avatar} for p in players.values()],
-            'mobs':[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
+            'players':_reuse_snapshot_entities('players',[{**actor_json(p),'avatar':p.avatar} for p in players.values()]),
+            'mobs':_reuse_snapshot_entities('mobs',[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
                      'biteAge':round(max(0,moment-m.bite_started_at),3) if m.bite_started_at>0 else -1,
-                     'spawnId':m.slot} for m in monsters.values()],
-            'loot':[{'id':d['id'],'item_id':d['item_id'],'x':d['x'],'y':d['y'],
+                     'spawnId':m.slot} for m in monsters.values()]),
+            'loot':_reuse_snapshot_entities('loot',[{'id':d['id'],'item_id':d['item_id'],'x':d['x'],'y':d['y'],
                      'ownerId':d['ownerId'],'privateFor':round(max(0,d['privateUntil']-moment),1),
-                     'expiresIn':round(max(0,d['expiresAt']-moment),1)} for d in loot_drops],
-            'shots':[{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
-                      'dir':1 if s.vx>=0 else -1} for s in shots],
+                     'expiresIn':round(max(0,d['expiresAt']-moment),1)} for d in loot_drops]),
+            'shots':_reuse_snapshot_entities('shots',[{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
+                      'dir':1 if s.vx>=0 else -1} for s in shots]),
             'events':events[:80]})
 
 
@@ -1221,7 +1289,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
                     entry=cache.get(cache_key) if cache is not None else None
                     if entry is not None:
                         patch=entry[2]
-                    elif old == item:
+                    elif old is item or old == item:
                         # Equal full dictionaries need no per-attribute diff.
                         patch=None
                         if cache is not None and len(cache)<2048:cache[cache_key]=(old,item,patch)
@@ -1245,7 +1313,12 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         result['self']=priv
     else:
         result['self']={k:v for k,v in priv.items() if prev_private.get(k)!=v}
-    inv=[dict(e) for e in p.inventory] # isolated ownership snapshot; no alias mutations
+    # Immutable-by-copy ownership baseline: most 10Hz packets do not change
+    # inventory. Compare live data first; copy only when baseline changed.
+    if not full and prev_inventory is not None and prev_inventory==p.inventory:
+        inv=prev_inventory
+    else:
+        inv=[dict(e) for e in p.inventory] # isolated ownership snapshot
     if full or prev_inventory!=inv:
         result['inventory']=inv
     if _trace_writer:
@@ -1268,29 +1341,40 @@ async def snapshot_writer(p: Guest):
             world=await p.snapshot_outbox.get()
             period=.1;offset=p.snapshot_slot*.01
             wait=(offset-(time.monotonic()%period))%period
+            slot_start=time.monotonic()
             if wait>.001:await asyncio.sleep(wait)
+            _cv_writer_wait.append((time.monotonic()-slot_start)*1000)
             # Consume the newest world, if producer overran our send slot.
             while not p.snapshot_outbox.empty():
                 try:world=p.snapshot_outbox.get_nowait()
                 except asyncio.QueueEmpty:break
+                else:
+                    global _cv_outbox_skipped
+                    _cv_outbox_skipped+=1
+            if isinstance(world,SharedSnapshot):
+                _cv_snapshot_age.append((time.monotonic()-world.created_monotonic)*1000)
             encode_start=time.monotonic()
             if p.protocol_delta:
                 packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory)
             else:
                 # Legacy clients receive original full-world shape until upgraded.
-                old={**world,'self':private_progression(p),'inventory':p.inventory}
+                old=dict(world);old['self']=private_progression(p);old['inventory']=p.inventory
                 packet=_COMPACT_WIRE_JSON_ENCODER.encode(old)
                 current,full_tick,priv,inv=None,-1,None,None
             perf_encodes.append(time.monotonic()-encode_start)
             try:
                 send_start=time.monotonic()
-                await asyncio.wait_for(p.ws.send(packet),timeout=1.5)
+                async with asyncio.timeout(1.5):
+                    await p.ws.send(packet)
                 global _diag_sent
                 _diag_sent+=1
                 _diag_send_durations.append((time.monotonic()-send_start)*1000)
+                if _diag_send_durations[-1]>=50:_cv_send_spikes.append(_diag_send_durations[-1])
                 _writer_stage_samples['send'].append((time.monotonic()-send_start)*1000)
                 global perf_out_bytes
-                perf_out_bytes += len(packet.encode('utf-8'))
+                # The default JSONEncoder ensure_ascii=True escapes every non-ASCII
+                # codepoint, so wire UTF-8 byte length equals character count.
+                perf_out_bytes += len(packet)
                 previous,last_full_tick=current,full_tick
                 prev_private,prev_inventory=priv,inv
             except (asyncio.TimeoutError,ConnectionClosed,OSError):
@@ -1319,19 +1403,31 @@ async def game_loop():
         tick_now=time.monotonic()
         # Tick P95 excludes the snapshot_writer coroutine. Measure scheduling
         # lag separately so 30-socket bottlenecks become observable.
-        perf_loop_lags.append(min(3.0,max(0.0,tick_now-(next_tick-DT))))
+        lag=min(3.0,max(0.0,tick_now-(next_tick-DT)))
+        perf_loop_lags.append(lag)
+        if lag>=.05:_cv_loop_spikes.append(lag*1000)
         server_step+=1
         # Sampling only 1/30 ticks keeps the profiler passive on Render Free.
         profile_tick=server_step%30==0
         stage_start=time.perf_counter_ns() if profile_tick else 0
+        # Build AUTO query grid only if the map is dense AND some AUTO bot
+        # is due. No repeated index construction per player or per frame.
+        autos_due=(len(monsters)>=AUTO_QUERY_MIN_MOBS and any(
+            p.auto_state.enabled and tick_now>=p.auto_state.next_step for p in players.values()))
+        auto_monsters=(AutoMonsterCandidates(monsters) if autos_due else monsters)
         for p in list(players.values()):
             if p.auto_state.enabled:
                 # Keep authoritative physics at 30Hz; decisions at <=10Hz.
                 # Movement remains held between decisions, no browser AI.
                 if tick_now >= p.auto_state.next_step:
-                    buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,monsters)
+                    buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,auto_monsters)
                     p.buttons=buttons
-                    p.auto_state.next_step=tick_now+.1
+                    # Preserve 10Hz decisions and the original 100ms cadence.
+                    # Advancing from the old deadline, rather than the current
+                    # tick, avoids phase collapse after scheduling jitter. If the
+                    # process was suspended/throttled, skip missed decisions.
+                    p.auto_state.next_step=(tick_now+.1 if tick_now-p.auto_state.next_step>.1
+                                            else p.auto_state.next_step+.1)
                     for action in actions:perform_action(p,action)
                 p.last_input=tick_now
             update_guest(p,DT,tick_now)
@@ -1470,7 +1566,11 @@ async def handle_connection(ws):
                 p.buttons=0
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
-                    p.auto_state.goal=None;p.auto_state.goal_due=0;p.auto_state.next_step=0
+                    p.auto_state.goal=None;p.auto_state.goal_due=0
+                    # Spread simultaneously enabled AUTO guests across the three
+                    # 30Hz simulation ticks per 100ms decision period. Each
+                    # guest still decides every 100ms; this only shifts phase.
+                    p.auto_state.next_step=time.monotonic()+(p.snapshot_slot%3)*DT
                 continue
             if m.get('t')!='input' or set(m)!={'t','seq','buttons','pressed'}:
                 await ws.close(code=1008, reason='Invalid input payload');break
