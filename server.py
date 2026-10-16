@@ -258,6 +258,7 @@ class Guest(Actor):
     snapshot_outbox: asyncio.Queue = field(default_factory=lambda:asyncio.Queue(maxsize=1))
     snapshot_task: Optional[asyncio.Task] = None
     snapshot_slot: int = 0  # 0..9, 10ms-phase staggering across each 100ms broadcast cycle
+    background_phase: int = 0 # v8.0DS: stable 0..9, schedules hidden views across ten 100ms broadcasts
     applied_input_seq: int = -1  # actual command consumed by the authoritative 30Hz simulation
     protocol_delta: bool = False # legacy BX clients still require unfiltered full snapshots
     view_mode: str = 'active' # v8.0DP explicit visual subscription, never changes AI/physics
@@ -356,6 +357,8 @@ _cv_writer_wait = deque(maxlen=2000)
 _cv_snapshot_age = deque(maxlen=2000)
 _cv_send_spikes = deque(maxlen=128)
 _cv_outbox_skipped = 0
+_bg_snapshot_queued = 0 # number of Background views actually enqueued in the window
+_bg_snapshot_peak_batch = 0 # max Background views enqueued in a single 100ms broadcast
 SPATIAL_CELL = 240
 
 
@@ -432,6 +435,7 @@ def report_performance_to_render(now):
     No external IO here beyond a bounded print; no database dependency in game loop.
     """
     global _diag_last, _diag_process_cpu, _diag_sent, _diag_overwritten, _diag_cgroup_prev, _cv_outbox_skipped
+    global _bg_snapshot_queued, _bg_snapshot_peak_batch
     if now-_diag_last<DIAG_WINDOW_SEC:return
     window=now-_diag_last
     cpu_delta=time.process_time()-_diag_process_cpu
@@ -449,7 +453,7 @@ def report_performance_to_render(now):
     data={
         'v':'v8.0CW','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(players),'autoGuests':sum(bool(p.auto_state.enabled) for p in players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in players.values()),'activeGuests':sum(p.view_mode=='active' for p in players.values()),
-        'monsters':len(monsters),'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
+        'monsters':len(monsters),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
         'cgroupThrottleMsPerSec':throttled_ms_per_sec,
         'tickP95Ms':perf_data['tickP95Ms'],'tickMaxMs':perf_data['tickMaxMs'],
@@ -486,6 +490,7 @@ def report_performance_to_render(now):
         'outboxSkipped':_cv_outbox_skipped,
     }
     _cv_outbox_skipped=0
+    _bg_snapshot_queued=0;_bg_snapshot_peak_batch=0
     _cv_loop_spikes.clear();_cv_writer_wait.clear()
     _cv_snapshot_age.clear();_cv_send_spikes.clear()
     for values in _writer_stage_samples.values():values.clear()
@@ -1505,6 +1510,18 @@ async def snapshot_writer(p: Guest):
     except asyncio.CancelledError:return
 
 
+def background_snapshot_due(p: Guest, step: int) -> bool:
+    """Schedule each hidden client 1/2Hz across 10Hz broadcast slots.
+
+    Background clients have an independent 0..9 phase, fixed at connection
+    time. Thus 100 hidden clients at 1Hz make ~10 queued updates every 100ms,
+    instead of all 100 on one tick each second. The 10Hz active path and
+    30Hz authoritative game loop are unaffected.
+    """
+    phases = 10 // AUTO_BG_SNAP_HZ
+    return (step // 3) % phases == p.background_phase % phases
+
+
 def queue_latest_snapshot(p: Guest, world):
     q=p.snapshot_outbox
     if q.full():
@@ -1579,16 +1596,26 @@ async def game_loop():
             _profile_samples['projectile_loot'].append((stage_end-stage_start)/1e6)
             stage_start=stage_end
         if server_step%3==0:
-            # Client-selected visual mode only affects outbound UI snapshots;
-            # every actor is simulated at 30Hz and server AUTO decides at 10Hz.
-            # Every hidden tab (AUTO or manual/idle) uses the 1/2 Hz visual stream.
-            bg_interval=30//AUTO_BG_SNAP_HZ
-            recipients=[p for p in players.values() if p.snapshot_task is not None
-                        and not p.snapshot_task.done() and
-                        (p.view_mode!='background' or server_step%bg_interval==0)]
+            # v8.0DS: all Active viewers keep their 10Hz stream. Hidden viewers
+            # retain 1/2Hz each, but are spread across the ten 100ms broadcasts
+            # instead of all waking on the same once-per-second tick.
+            # NEVER slow 30Hz physics, 10Hz AUTO decisions or combat here.
+            recipients=[]
+            bg_queued=0
+            for p in players.values():
+                if p.snapshot_task is None or p.snapshot_task.done():
+                    continue
+                if p.view_mode == 'background':
+                    if not background_snapshot_due(p,server_step):
+                        continue
+                    bg_queued+=1
+                recipients.append(p)
             if recipients:
                 world=snapshot()
                 for p in recipients:queue_latest_snapshot(p,world)
+            global _bg_snapshot_queued, _bg_snapshot_peak_batch
+            _bg_snapshot_queued+=bg_queued
+            _bg_snapshot_peak_batch=max(_bg_snapshot_peak_batch,bg_queued)
             # Events are visual effects; no replay of stale events after tab resumes.
             events.clear()
         if profile_tick:
@@ -1639,9 +1666,14 @@ async def handle_connection(ws):
         p.protocol_delta=(hello.get('protocol')=='aoi-delta-v80by' or p.room=='movement_lab')
         # Evenly distribute connection slots; no random clumping for first 10 guests.
         p.snapshot_slot=snapshot_join_sequence%STAGGER_SLOTS
+        # Background phase is NOT the writer's 100ms send phase. This diagonal
+        # layout distributes both 1Hz updates AND each 100ms batch of writers.
+        # With 100 sequential joins: 10 Background clients per broadcast,
+        # spread across all 10 existing writer slots rather than one burst.
+        p.background_phase=((snapshot_join_sequence//10)+(snapshot_join_sequence%10))%10
         snapshot_join_sequence+=1
         players[guest_id] = p
-        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl','view-mode-v80dp','view-mode-all-v80dr']
+        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl','view-mode-v80dp','view-mode-all-v80dr','bg-stagger-v80ds']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
         features.append('movement-lab-room-v80cz')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
@@ -1816,7 +1848,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | staggered v8.0DS', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
