@@ -216,6 +216,7 @@ class Guest(Actor):
     last_seq: int = -1
     packet_times: deque = field(default_factory=deque)
     movement_packet_times: deque = field(default_factory=deque)  # DZ: isolate 20Hz client_move from legacy input limiter
+    movement_sync_times: deque = field(default_factory=deque)  # EA: forced recovery probes cannot consume action budget
     action_times: deque = field(default_factory=deque)
     level: int = 5  # server-owned guest training level, not client-controlled
     armor_enhance: int = 5  # server-owned reference +5 armor
@@ -281,6 +282,10 @@ class Guest(Actor):
     move_budget_x: float = 24.0
     move_rejects: int = 0
     move_last_correction: float = 0.0
+    # EA: after server-forced knockback/stun, the accepted position can be
+    # airborne while no client proposals arrive. One synchronisation can
+    # re-anchor the validator; normal movement remains client-proposed.
+    move_recovery_armed: bool = False
 
 
 @dataclass
@@ -867,6 +872,7 @@ def movement_change_mode(p,mode):
     p.move_budget_x=24.0
     p.move_last_at=time.monotonic()
     p.move_rejects=0
+    p.move_recovery_armed=False
     p.buttons=0
     p.last_input=p.move_last_at
     p.move_shadow=movement_capture(p) if mode=='client' else None
@@ -886,6 +892,7 @@ def movement_tick(p,dt,tick_now):
         update_guest(p,dt,tick_now)
         p.move_shadow=movement_capture(p)
         p.move_budget_x=24.0
+        p.move_recovery_armed=True
         return
     accepted=movement_capture(p)
     if p.move_shadow is None:p.move_shadow=accepted
@@ -908,6 +915,15 @@ def movement_validate(p,m,tick_now):
     p.move_seq=seq
     if p.dead>0 or p.kb_time>0 or p.stun>0 or p.down>0 or p.hp<=0:
         return 'forced-server-motion'
+    if p.move_recovery_armed:
+        # EA: first proposal after server-forced movement must start from the
+        # last ACCEPTED position, not a shadow that has already fallen to a
+        # different floor while client proposals were suspended. Exactly once
+        # per real stun/knockback; never grant arbitrary client re-anchors.
+        p.move_shadow=movement_capture(p)
+        p.move_budget_x=24.0
+        p.move_last_at=tick_now
+        p.move_recovery_armed=False
     x,y,vx,vy=m['x'],m['y'],m['vx'],m['vy']
     grounded=m['ground']; climb=m['climb']
     # Bounds and declared state are NEVER trusted as authority.
@@ -955,6 +971,7 @@ def movement_validate(p,m,tick_now):
     p.climb=eclimb if climb else None
     if vx>.5:p.face=1
     elif vx<-.5:p.face=-1
+    p.move_recovery_armed=False
     return None
 
 
@@ -1962,6 +1979,29 @@ async def handle_connection(ws):
                     await ws.send(json.dumps({'t':'movement_mode_ack','mode':p.movement_mode,'ok':False,'reason':'unavailable'}))
                 else:
                     await ws.send(json.dumps({**movement_change_mode(p,requested),'ok':True},separators=(',',':')))
+                continue
+            if m.get('t')=='movement_sync':
+                # EA: reliable control-channel response when a client is stuck
+                # waiting for its forced knockback/stun flag to clear. This is
+                # NOT a position proposal and never trusts client coordinates.
+                if set(m)!={'t','epoch'} or type(m.get('epoch')) is not int:
+                    await ws.close(code=1008,reason='Invalid movement sync');break
+                if not check_rate(p.movement_sync_times,6):
+                    await ws.close(code=1008,reason='Movement sync rate');break
+                if m['epoch']!=p.move_epoch or p.movement_mode!='client':continue
+                forced=bool(p.kb_time>0 or p.stun>0 or p.down>0 or p.dead>0 or p.hp<=0)
+                if not forced and p.move_recovery_armed:
+                    # Safe exactly-once resync AFTER a genuine forced movement.
+                    # The accepted position is already server-owned; restart
+                    # shadow from it to avoid rejecting the first valid landing.
+                    p.move_shadow=movement_capture(p)
+                    p.move_last_at=time.monotonic()
+                    p.move_budget_x=24.0
+                    p.move_recovery_armed=False
+                await ws.send(json.dumps({'t':'movement_state','epoch':p.move_epoch,
+                    'forced':forced,'x':round(p.x,3),'y':round(p.y,3),
+                    'vx':round(p.vx,3),'vy':round(p.vy,3),'ground':p.ground,
+                    'climb':bool(p.climb),'face':p.face},separators=(',',':')))
                 continue
             if m.get('t')=='client_move':
                 names={'t','epoch','seq','x','y','vx','vy','ground','climb'}
