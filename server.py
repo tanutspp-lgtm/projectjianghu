@@ -131,6 +131,13 @@ PORT = int(os.environ.get('PORT', '8765'))
 HOST = os.environ.get('HOST', '0.0.0.0')
 ORIGINS = tuple(s.strip() for s in os.environ.get('ALLOWED_ORIGINS', '').split(',') if s.strip())
 MAX_GUESTS = int(os.environ.get('MAX_GUESTS', '35'))
+# v8.0DP: all options are independent, benchmarkable and reversible.
+STAGGER_SLOTS = int(os.environ.get('STAGGER_SLOTS','10'))
+if STAGGER_SLOTS not in (10,100): raise ValueError('STAGGER_SLOTS must be 10 or 100')
+WS_COMPRESSION = os.environ.get('WS_COMPRESSION','none').lower()
+if WS_COMPRESSION not in ('none','deflate'): raise ValueError('WS_COMPRESSION must be none or deflate')
+AUTO_BG_SNAP_HZ = int(os.environ.get('AUTO_BG_SNAP_HZ','1'))
+if AUTO_BG_SNAP_HZ not in (1,2): raise ValueError('AUTO_BG_SNAP_HZ must be 1 or 2')
 # 0 = original map levels (1..5); 1..60 = Offline v8.0AO level preset for ALL beasts.
 # Deliberately not controlled by any untrusted client; set on the Render service.
 MONSTER_PRESET_LEVEL=int(os.environ.get('MONSTER_PRESET_LEVEL','5'))
@@ -253,6 +260,7 @@ class Guest(Actor):
     snapshot_slot: int = 0  # 0..9, 10ms-phase staggering across each 100ms broadcast cycle
     applied_input_seq: int = -1  # actual command consumed by the authoritative 30Hz simulation
     protocol_delta: bool = False # legacy BX clients still require unfiltered full snapshots
+    view_mode: str = 'active' # v8.0DP explicit visual subscription, never changes AI/physics
     stable_stats_key: object = None
     stable_derived_stats: object = None
     client_perf: dict = field(default_factory=dict)
@@ -440,7 +448,7 @@ def report_performance_to_render(now):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
         'v':'v8.0CW','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
-        'guests':len(players),'autoGuests':sum(bool(p.auto_state.enabled) for p in players.values()),
+        'guests':len(players),'autoGuests':sum(bool(p.auto_state.enabled) for p in players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in players.values()),'activeGuests':sum(p.view_mode=='active' for p in players.values()),
         'monsters':len(monsters),'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
         'cgroupThrottleMsPerSec':throttled_ms_per_sec,
@@ -1452,7 +1460,7 @@ async def snapshot_writer(p: Guest):
     try:
         while True:
             world=await p.snapshot_outbox.get()
-            period=.1;offset=p.snapshot_slot*.01
+            period=.1;offset=p.snapshot_slot*(period/STAGGER_SLOTS)
             wait=(offset-(time.monotonic()%period))%period
             slot_start=time.monotonic()
             if wait>.001:await asyncio.sleep(wait)
@@ -1570,13 +1578,19 @@ async def game_loop():
             stage_end=time.perf_counter_ns()
             _profile_samples['projectile_loot'].append((stage_end-stage_start)/1e6)
             stage_start=stage_end
-        if server_step%3==0 and players:
-            world=snapshot()
-            for p in list(players.values()):
-                if p.snapshot_task is not None and not p.snapshot_task.done():
-                    queue_latest_snapshot(p,world)
+        if server_step%3==0:
+            # Client-selected visual mode only affects outbound UI snapshots;
+            # every actor is simulated at 30Hz and server AUTO decides at 10Hz.
+            # Every hidden tab (AUTO or manual/idle) uses the 1/2 Hz visual stream.
+            bg_interval=30//AUTO_BG_SNAP_HZ
+            recipients=[p for p in players.values() if p.snapshot_task is not None
+                        and not p.snapshot_task.done() and
+                        (p.view_mode!='background' or server_step%bg_interval==0)]
+            if recipients:
+                world=snapshot()
+                for p in recipients:queue_latest_snapshot(p,world)
+            # Events are visual effects; no replay of stale events after tab resumes.
             events.clear()
-        elif server_step%3==0:events.clear()
         if profile_tick:
             _profile_samples['world_snapshot'].append((time.perf_counter_ns()-stage_start)/1e6)
         perf_ticks.append(time.monotonic()-tick_now)
@@ -1624,10 +1638,10 @@ async def handle_connection(ws):
         prog.apply_derived_resources(p,hp_reference,full=True)
         p.protocol_delta=(hello.get('protocol')=='aoi-delta-v80by' or p.room=='movement_lab')
         # Evenly distribute connection slots; no random clumping for first 10 guests.
-        p.snapshot_slot=snapshot_join_sequence%10
+        p.snapshot_slot=snapshot_join_sequence%STAGGER_SLOTS
         snapshot_join_sequence+=1
         players[guest_id] = p
-        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl']
+        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl','view-mode-v80dp','view-mode-all-v80dr']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
         features.append('movement-lab-room-v80cz')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
@@ -1699,6 +1713,15 @@ async def handle_connection(ws):
                     # 30Hz simulation ticks per 100ms decision period. Each
                     # guest still decides every 100ms; this only shifts phase.
                     p.auto_state.next_step=time.monotonic()+(p.snapshot_slot%3)*DT
+                continue
+            if m.get('t')=='view_mode':
+                # Do not trust background declarations for authority or player state.
+                # Visibility controls outbound visuals independently of AUTO state.
+                if set(m)!={'t','mode'} or m.get('mode') not in ('active','background'):
+                    await ws.close(code=1008,reason='Invalid view mode');break
+                if not check_rate(p.action_times,12):
+                    await ws.close(code=1008,reason='View mode rate limit');break
+                p.view_mode=m['mode']
                 continue
             if m.get('t')=='auto_stay':
                 if set(m)!={'t','enabled'} or type(m.get('enabled')) is not bool:
@@ -1784,8 +1807,16 @@ async def main():
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
     spawn_mobs()
-    async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16, ping_interval=20, ping_timeout=20, process_request=process_request, compression=None):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS}', flush=True)
+    # Default remains uncompressed for like-for-like A/B testing. Enable on
+    # Hostatom only after recording a baseline. Browser WebSocket negotiation
+    # transparently decompresses frames before application JSON decoding.
+    from websockets.extensions.permessage_deflate import ServerPerMessageDeflateFactory
+    ws_extensions=([ServerPerMessageDeflateFactory(compress_settings={'level':1,'memLevel':5})]
+                   if WS_COMPRESSION=='deflate' else None)
+    async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
+                     ping_interval=20, ping_timeout=20, process_request=process_request,
+                     compression=None, extensions=ws_extensions):
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
