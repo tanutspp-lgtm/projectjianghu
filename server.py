@@ -215,6 +215,7 @@ class Guest(Actor):
     last_input: float = field(default_factory=time.monotonic)
     last_seq: int = -1
     packet_times: deque = field(default_factory=deque)
+    movement_packet_times: deque = field(default_factory=deque)  # DZ: isolate 20Hz client_move from legacy input limiter
     action_times: deque = field(default_factory=deque)
     level: int = 5  # server-owned guest training level, not client-controlled
     armor_enhance: int = 5  # server-owned reference +5 armor
@@ -881,7 +882,7 @@ def movement_tick(p,dt,tick_now):
         return
     # While server-forced knockback/death/down is active, the normal DV
     # simulation takes over and the validator baseline follows it.
-    if p.dead>0 or p.kb_time>0 or p.down>0 or p.hp<=0:
+    if p.dead>0 or p.kb_time>0 or p.stun>0 or p.down>0 or p.hp<=0:
         update_guest(p,dt,tick_now)
         p.move_shadow=movement_capture(p)
         p.move_budget_x=24.0
@@ -905,7 +906,7 @@ def movement_validate(p,m,tick_now):
     seq=m['seq']
     if seq<=p.move_seq:return 'stale-sequence'
     p.move_seq=seq
-    if p.dead>0 or p.kb_time>0 or p.down>0 or p.hp<=0:
+    if p.dead>0 or p.kb_time>0 or p.stun>0 or p.down>0 or p.hp<=0:
         return 'forced-server-motion'
     x,y,vx,vy=m['x'],m['y'],m['vx'],m['vy']
     grounded=m['ground']; climb=m['climb']
@@ -1343,6 +1344,7 @@ def private_progression(p):
             'stats':p.stats,'skillRanks':p.skill_ranks,
             'sp':round(p.sp,2),'maxSp':p.max_sp,'sta':round(p.sta,2),'maxSta':p.max_sta,
             'defense':p.defense,'derived':derived_for_snapshot(p),
+            'movementForced':bool(p.kb_time>0 or p.stun>0 or p.down>0 or p.dead>0 or p.hp<=0),
             'auto':p.auto_state.enabled,'autoStay':p.auto_state.stay_alert,'autoAnchor':(dict(p.auto_state.anchor) if p.auto_state.stay_alert and p.auto_state.anchor else None),'autoTarget':(dict(p.auto_state.goal) if p.auto_state.enabled and p.auto_state.goal else None),
             'autoTargetSeconds':round(max(0,p.auto_state.goal_due-time.monotonic()),1) if p.auto_state.enabled else 0,
             'sandboxAvailable':ENABLE_GUEST_SANDBOX,'inputAck':p.applied_input_seq,'performance':perf_data.copy(),**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
@@ -1969,7 +1971,7 @@ async def handle_connection(ws):
                        all(type(m.get(k)) in (int,float) and math.isfinite(m[k]) for k in ('x','y','vx','vy')))
                 if not valid:
                     await ws.close(code=1008,reason='Invalid movement report');break
-                if not check_rate(p.packet_times,70):
+                if not check_rate(p.movement_packet_times,30):
                     await ws.close(code=1008,reason='Movement packet rate');break
                 if m['epoch']!=p.move_epoch:continue
                 reason=movement_validate(p,m,time.monotonic())
