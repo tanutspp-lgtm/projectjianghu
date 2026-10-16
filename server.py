@@ -211,6 +211,9 @@ class Guest(Actor):
     last_attack_at: float = -1e9
     # DJ: Keep firing the same living target until it dies or leaves legal range.
     manual_target_id: Optional[str] = None
+    # DK: Single-slot manual spell intent overrides automatic basic attacks.
+    manual_auto_skill: Optional[str] = None
+    manual_auto_until: float = 0.0
     kb_time: float = 0.0
     kb_dir: int = 0
     # Server-authoritative ephemeral Guest character, not yet account persistent.
@@ -671,6 +674,30 @@ def perform_action(p: Guest, action: str):
           shotX=round(p.x+shot_dir*52,1),shotY=round(y,1),shotDir=shot_dir,
           shotSpeed=speed)
 
+
+# Never grant extra casts or reduce cooldown. A manual spell pressed during AUTO
+# waits for the next legal cast window instead of being lost to AUTO spam.
+AUTO_MANUAL_PRIORITY_SEC = 1.25
+
+def pending_auto_manual(p: Guest, server_now: float) -> bool:
+    action = p.manual_auto_skill
+    if action is None: return False
+    if not p.auto_state.enabled or server_now > p.manual_auto_until:
+        p.manual_auto_skill = None
+        return False
+    if p.sp < prog.SKILL_SP[action]:
+        p.manual_auto_skill = None
+        return False
+    # Reserved input has priority even while stun, guard, ladder or cooldown
+    # prevents a cast. Never bypass any of the ordinary action checks.
+    if p.cool > 0 or p.climb is not None or p.guard or p.dead > 0 or p.down > 0 or p.stun > 0 or p.broken > 0:
+        return True
+    previous = p.last_attack_at
+    perform_action(p, action)
+    if p.last_attack_at != previous:
+        p.manual_auto_skill = None
+        return False
+    return True
 
 def update_guest(p: Guest, dt, tick_now):
     p.applied_input_seq=p.last_seq  # ack only after simulation consumes this input
@@ -1503,10 +1530,13 @@ async def game_loop():
         auto_monsters=(AutoMonsterCandidates(monsters) if autos_due else monsters)
         for p in list(players.values()):
             if p.auto_state.enabled:
+                # Check queued human casts EVERY simulation tick, before AUTO
+                # makes its 10Hz decision. No double cast in one cooldown.
+                human_reserved = pending_auto_manual(p, tick_now)
                 # Keep authoritative physics at 30Hz; decisions at <=10Hz.
                 # Movement remains held between decisions, no browser AI.
                 if tick_now >= p.auto_state.next_step:
-                    buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,auto_monsters)
+                    buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,auto_monsters,allow_cast=not human_reserved)
                     p.buttons=buttons
                     # Guard is a manual held combat action, not movement input.
                     # It must expire on lost connections/background tabs.
@@ -1661,6 +1691,7 @@ async def handle_connection(ws):
                 p.buttons=0
                 p.manual_guard=False
                 p.auto_state.stay_alert=False;p.auto_state.anchor=None;p.auto_state.anchor_evade_side=0
+                p.manual_auto_skill=None;p.manual_auto_until=0
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
                     p.auto_state.goal=None;p.auto_state.goal_due=0
@@ -1707,11 +1738,20 @@ async def handle_connection(ws):
             if p.auto_state.enabled and (buttons & (1|2|4|8)):
                 p.auto_state.enabled=False
                 p.auto_state.stay_alert=False;p.auto_state.anchor=None;p.auto_state.anchor_evade_side=0
+                p.manual_auto_skill=None;p.manual_auto_until=0
                 p.manual_guard=False
             if p.auto_state.enabled:
                 p.manual_guard=bool(buttons & 16)
                 p.manual_guard_at=time.monotonic()
-                for action in pressed:perform_action(p,action)
+                for action in pressed:
+                    if action in ('attack','aoe','break'):
+                        # Latest manual intent wins; bounded one-slot queue,
+                        # trusted server deadline, and unchanged skill rules.
+                        if p.sp >= prog.SKILL_SP[action]:
+                            p.manual_auto_skill=action
+                            p.manual_auto_until=time.monotonic()+AUTO_MANUAL_PRIORITY_SEC
+                    else:
+                        perform_action(p,action)
             else:
                 p.buttons=buttons
                 p.last_input=time.monotonic()
