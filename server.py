@@ -154,6 +154,9 @@ ENABLE_FAST_SELF_30HZ=os.environ.get('ENABLE_FAST_SELF_30HZ','1')=='1'
 # EH: Operator opt-in stress test. No token; URL secrecy is NOT security.
 # Keep disabled outside deliberate tests; global hard limits still apply.
 ENABLE_CHANNEL_STRESS = os.environ.get('ENABLE_CHANNEL_STRESS','0') == '1'
+# EJ: pure passive performance tracer; disabled by default. No protocol/gameplay changes.
+# Enable only during representative tests, then disable to measure baseline without tracer cost.
+ENABLE_PERFORMANCE_PROFILER = os.environ.get('JIANGHU_PROFILE','0') == '1'
 CHANNEL_STRESS_PER_CHANNEL = 200
 CHANNEL_STRESS_TOTAL = min(200, MAX_GUESTS)  # global guard; 150 bots + observer on MAX_GUESTS=201
 
@@ -530,6 +533,62 @@ _profile_samples={name:[] for name in ('player','monster','projectile_loot','wor
 _writer_stage_samples={name:deque(maxlen=1800) for name in
                        ('aoi','delta','private','json','send')}
 
+# EJ opt-in profiler. Each synchronous stage uses perf_counter_ns wall-clock
+# (single-thread event loop: a useful proxy for time monopolising the core).
+# async waits have explicit '.wait'/'await' names and MUST NOT count as CPU.
+# Totals are all observed calls; bounded rolling samples inform P95/P99 only.
+_PROFILE_MAX_SAMPLES=4096
+_profile_stages={}
+_profile_worlds={}
+
+def _profile_add(name, elapsed_ns, world_key=None):
+    if not ENABLE_PERFORMANCE_PROFILER:return
+    rec=_profile_stages.get(name)
+    if rec is None:
+        rec=[0,0,0,deque(maxlen=_PROFILE_MAX_SAMPLES)]
+        _profile_stages[name]=rec
+    elapsed_ns=max(0,int(elapsed_ns))
+    rec[0]+=elapsed_ns
+    rec[1]+=1
+    rec[2]=max(rec[2],elapsed_ns)
+    rec[3].append(elapsed_ns)
+    if world_key is not None:
+        key=str(world_key[0])+':'+world_key[1]
+        item=_profile_worlds.get(key)
+        if item is None:
+            item=[0,0]
+            _profile_worlds[key]=item
+        item[0]+=elapsed_ns;item[1]+=1
+
+def _profile_report(window, cpu_pct):
+    if not ENABLE_PERFORMANCE_PROFILER:return
+    def summary(rec):
+        total,count,maximum,samples=rec
+        ordered=sorted(samples)
+        def p(frac):
+            return round(ordered[min(len(ordered)-1,int((len(ordered)-1)*frac))]/1e6,3) if ordered else None
+        return {'n':count,'totalMs':round(total/1e6,2),
+                'msPerSec':round(total/1e6/max(.001,window),2),
+                'avgMs':round(total/max(1,count)/1e6,4),
+                'p95Ms':p(.95),'p99Ms':p(.99),
+                'maxMs':round(maximum/1e6,3)}
+    wait_names={'writer.slot_wait_intentional','writer.send_lock_wait',
+                'writer.send_await','self.send_lock_wait','self.send_await'}
+    sync_stages={k:summary(v) for k,v in sorted(_profile_stages.items(),key=lambda kv:kv[1][0],reverse=True)
+                 if k not in wait_names}
+    wait_stages={k:summary(v) for k,v in sorted(_profile_stages.items(),key=lambda kv:kv[1][0],reverse=True)
+                 if k in wait_names}
+    top=[{'world':k,'totalMs':round(v[0]/1e6,2),'ticks':v[1],
+          'players':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].players),
+          'monsters':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].monsters)}
+         for k,v in sorted(_profile_worlds.items(),key=lambda kv:kv[1][0],reverse=True)[:5]]
+    data={'v':'v8.0EJ','ts':int(time.time()),'boot':_diag_boot,
+          'windowSec':round(window,2),'cpuCorePct':cpu_pct,
+          'sampleMeaning':'all-call totals; bounded newest P95/P99 samples; nested sync stages overlap; concurrent async waits are NOT CPU',
+          'syncStages':sync_stages,'waitStages':wait_stages,'worldTop':top}
+    print('JIANGHU_PROFILE '+json.dumps(data,separators=(',',':')),flush=True)
+    _profile_stages.clear();_profile_worlds.clear()
+
 
 def report_performance_to_render(now):
     """Emit one compact, structured, anonymous JSON line every 15s.
@@ -553,7 +612,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0EH','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0EJ','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(connected_players),'autoGuests':sum(bool(p.auto_state.enabled) for p in connected_players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in connected_players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in connected_players.values()),'activeGuests':sum(p.view_mode=='active' for p in connected_players.values()),
         'monsters':sum(len(w.monsters) for w in worlds.values()),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -562,7 +621,7 @@ def report_performance_to_render(now):
         'loopP95Ms':perf_data['eventLoopLagP95Ms'],'loopMaxMs':perf_data['eventLoopLagMaxMs'],
         'encodeP95Ms':perf_data['snapshotEncodeP95Ms'],'encodeMaxMs':perf_data['snapshotEncodeMaxMs'],
         'totalGuestCap':CHANNEL_TOTAL_GUEST_CAP,'pendingJoins':_pending_joins,
-        'stressEnabled':ENABLE_CHANNEL_STRESS,
+        'stressEnabled':ENABLE_CHANNEL_STRESS,'perfProfilerEnabled':ENABLE_PERFORMANCE_PROFILER,
         'stressGuests':sum(p.stress_test for p in connected_players.values()),
         'stressByChannel':{str(ch):sum(p.stress_test for p in worlds[(ch,'forest')].players.values()) for ch in CHANNEL_IDS},
         'channels':{str(ch):{'forest':len(worlds[(ch,'forest')].players),'lab':len(worlds[(ch,'movement_lab')].players)} for ch in CHANNEL_IDS},
@@ -600,6 +659,7 @@ def report_performance_to_render(now):
         'sendSpikeMaxMs':round(max(_cv_send_spikes),2) if _cv_send_spikes else None,
         'outboxSkipped':_cv_outbox_skipped,
     }
+    _profile_report(window,data['cpuCorePct'])
     _cv_outbox_skipped=0
     _bg_snapshot_queued=0;_bg_snapshot_peak_batch=0
     _cv_loop_spikes.clear();_cv_writer_wait.clear()
@@ -1198,6 +1258,7 @@ def update_mob(m,dt,player_grid=None):
     m.broken=max(0,m.broken-dt)
     # Spatial grid reduces candidates; lane is constant for this target selection.
     # Cache only across candidate checks BEFORE movement, never across game ticks.
+    _mob_ai_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
     target_lane=own_lane(m)
     # v8.0DV: one distance calculation per candidate instead of a generator,
     # predicate distance and min-key distance. Strict '<' retains the first
@@ -1210,6 +1271,7 @@ def update_mob(m,dt,player_grid=None):
         distance=abs(candidate.x-mx)
         if distance<BEAST_AGGRO+65 and distance<nearest:
             p=candidate;nearest=distance
+    if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.target_search',time.perf_counter_ns()-_mob_ai_start)
     dx=p.x-m.x if p else 0
     dy=p.y-m.y if p else 10000
     near=bool(p and abs(dx)<BEAST_AGGRO)
@@ -1248,7 +1310,9 @@ def update_mob(m,dt,player_grid=None):
         if not supported(m,m.x+direction*26):m.vx=0
         else:m.face=direction
     m.x+=m.vx*dt
+    _prof_monster_physics_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
     physics(m,dt)
+    if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.physics',time.perf_counter_ns()-_prof_monster_physics_start)
     if abs(m.x-m.home)>380:
         m.x=m.home+380*(1 if m.x>m.home else -1)
         m.vx=0
@@ -1722,7 +1786,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     """Diff from LAST SUCCESSFULLY SENT packet, not the newest queued packet.
     Dropped mailbox packets can't corrupt the next delta's baseline.
     """
-    _trace_writer=(p.writer_probe_counter & 31)==0
+    _trace_writer=ENABLE_PERFORMANCE_PROFILER or (p.writer_probe_counter & 31)==0
     p.writer_probe_counter+=1
     if _trace_writer:_writer_aoi_start=time.perf_counter_ns()
     current=aoi_view(world,p)
@@ -1735,6 +1799,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         current['players']={eid:e for eid,e in current['players'].items() if (players.get(eid) is None or players[eid].room=='forest')}
     if _trace_writer:
         _writer_stage_samples['aoi'].append((time.perf_counter_ns()-_writer_aoi_start)/1e6)
+        if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.aoi',time.perf_counter_ns()-_writer_aoi_start)
         _writer_delta_start=time.perf_counter_ns()
     full=previous is None or world['tick']-last_full_tick>=DELTA_REFRESH_TICKS
     result={'t':'snapshot','tick':world['tick']}
@@ -1789,6 +1854,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
                         abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200)]
     if _trace_writer:
         _writer_stage_samples['delta'].append((time.perf_counter_ns()-_writer_delta_start)/1e6)
+        if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.delta',time.perf_counter_ns()-_writer_delta_start)
         _writer_private_start=time.perf_counter_ns()
     priv=private_progression(p)
     priv['inputAck']=current['players'][p.id]['lastAppliedSeq']
@@ -1806,6 +1872,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         result['inventory']=inv
     if _trace_writer:
         _writer_stage_samples['private'].append((time.perf_counter_ns()-_writer_private_start)/1e6)
+        if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.private',time.perf_counter_ns()-_writer_private_start)
         _writer_json_start=time.perf_counter_ns()
     if getattr(p,'protocol_binary',False):
         cache=world.packed_entry_cache if isinstance(world,SharedSnapshot) else None
@@ -1814,6 +1881,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         packet=_COMPACT_WIRE_JSON_ENCODER.encode(result)
     if _trace_writer:
         _writer_stage_samples['json'].append((time.perf_counter_ns()-_writer_json_start)/1e6)
+        if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.json',time.perf_counter_ns()-_writer_json_start)
     return (packet,current,
             (world['tick'] if full else last_full_tick),priv,inv)
 
@@ -1829,7 +1897,9 @@ async def snapshot_writer(p: Guest):
             period=.1;offset=p.snapshot_slot*(period/STAGGER_SLOTS)
             wait=(offset-(time.monotonic()%period))%period
             slot_start=time.monotonic()
+            _prof_slot_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
             if wait>.001:await asyncio.sleep(wait)
+            if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.slot_wait_intentional',time.perf_counter_ns()-_prof_slot_start)
             _cv_writer_wait.append((time.monotonic()-slot_start)*1000)
             # Consume the newest world, if producer overran our send slot.
             while not p.snapshot_outbox.empty():
@@ -1841,6 +1911,7 @@ async def snapshot_writer(p: Guest):
             if isinstance(world,SharedSnapshot):
                 _cv_snapshot_age.append((time.monotonic()-world.created_monotonic)*1000)
             encode_start=time.monotonic()
+            _prof_encode_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
             if p.protocol_delta:
                 packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory)
             else:
@@ -1849,11 +1920,17 @@ async def snapshot_writer(p: Guest):
                 packet=_COMPACT_WIRE_JSON_ENCODER.encode(old)
                 current,full_tick,priv,inv=None,-1,None,None
             perf_encodes.append(time.monotonic()-encode_start)
+            if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.encode_total',time.perf_counter_ns()-_prof_encode_start)
             try:
                 send_start=time.monotonic()
+                _prof_lock_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 async with p.ws_send_lock:
+                    if ENABLE_PERFORMANCE_PROFILER:
+                        _profile_add('writer.send_lock_wait',time.perf_counter_ns()-_prof_lock_start)
+                        _prof_send_start=time.perf_counter_ns()
                     async with asyncio.timeout(1.5):
                         await p.ws.send(packet)
+                    if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.send_await',time.perf_counter_ns()-_prof_send_start)
                 global _diag_sent
                 _diag_sent+=1
                 _diag_send_durations.append((time.monotonic()-send_start)*1000)
@@ -1903,7 +1980,9 @@ async def fast_self_writer(p: Guest):
     try:
         while True:
             packet=await p.fast_self_outbox.get()
+            _prof_self_lock_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
             async with p.ws_send_lock:
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('self.send_lock_wait',time.perf_counter_ns()-_prof_self_lock_start)
                 # If snapshot send held the lock, always send newest available.
                 while not p.fast_self_outbox.empty():
                     try:packet=p.fast_self_outbox.get_nowait()
@@ -1912,8 +1991,10 @@ async def fast_self_writer(p: Guest):
                         p.view_mode=='active' and ENABLE_FAST_SELF_30HZ
                         and not p.auto_state.enabled):continue
                 try:
+                    _prof_self_send_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                     async with asyncio.timeout(1.5):
                         await p.ws.send(packet)
+                    if ENABLE_PERFORMANCE_PROFILER:_profile_add('self.send_await',time.perf_counter_ns()-_prof_self_send_start)
                     global _fast_self_sent,_fast_self_bytes,perf_out_bytes
                     _fast_self_sent+=1
                     _fast_self_bytes+=len(packet)
@@ -1953,6 +2034,7 @@ async def game_loop():
     next_tick=time.monotonic()
     while True:
         next_tick+=DT
+        _prof_tick_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
         tick_now=time.monotonic()
         lag=min(3.0,max(0.0,tick_now-(next_tick-DT)))
         perf_loop_lags.append(lag)
@@ -1965,12 +2047,17 @@ async def game_loop():
             if not world_state.players:continue
             token=_world_context.set(world_state)
             try:
+                _prof_world_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
+                _prof_substage=_prof_world_start
                 stage_start=time.perf_counter_ns() if profile_tick else 0
                 # Build AUTO query grid only if the map is dense AND some AUTO bot
                 # is due. No repeated index construction per player or per frame.
                 autos_due=(len(monsters)>=AUTO_QUERY_MIN_MOBS and any(
                     p.auto_state.enabled and tick_now>=p.auto_state.next_step for p in players.values()))
                 auto_monsters=(AutoMonsterCandidates(monsters) if autos_due else monsters)
+                if ENABLE_PERFORMANCE_PROFILER:
+                    _profile_add('player.auto_setup',time.perf_counter_ns()-_prof_substage)
+                _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 for p in list(players.values()):
                     if p.auto_state.enabled:
                         # Check queued human casts EVERY simulation tick, before AUTO
@@ -1979,7 +2066,9 @@ async def game_loop():
                         # Keep authoritative physics at 30Hz; decisions at <=10Hz.
                         # Movement remains held between decisions, no browser AI.
                         if tick_now >= p.auto_state.next_step:
+                            _prof_auto_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                             buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,auto_monsters,allow_cast=not human_reserved)
+                            if ENABLE_PERFORMANCE_PROFILER:_profile_add('player.auto_choose',time.perf_counter_ns()-_prof_auto_start)
                             p.buttons=buttons
                             # Guard is a manual held combat action, not movement input.
                             # It must expire on lost connections/background tabs.
@@ -1996,23 +2085,37 @@ async def game_loop():
                         if p.manual_guard:p.buttons|=16
                         else:p.buttons&=~16
                         p.last_input=tick_now
+                    _prof_move_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                     movement_tick(p,DT,tick_now)
+                    if ENABLE_PERFORMANCE_PROFILER:_profile_add('player.movement',time.perf_counter_ns()-_prof_move_start)
                 if profile_tick:
                     stage_end=time.perf_counter_ns()
                     _profile_samples['player'].append((stage_end-stage_start)/1e6)
                     stage_start=stage_end
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('player.phase_total',time.perf_counter_ns()-_prof_substage)
+                _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 grid=index_players_by_x()
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.player_grid',time.perf_counter_ns()-_prof_substage)
+                _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 for m in monsters.values():update_mob(m,DT,grid)
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.phase_total',time.perf_counter_ns()-_prof_substage)
+                _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 if profile_tick:
                     stage_end=time.perf_counter_ns()
                     _profile_samples['monster'].append((stage_end-stage_start)/1e6)
                     stage_start=stage_end
                 update_shots(DT)
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('combat.projectiles',time.perf_counter_ns()-_prof_substage)
+                _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 advance_loot()
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('loot.advance',time.perf_counter_ns()-_prof_substage)
+                _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 # EC: capture only SERVER-CONFIRMED state, after mobs/knockback/loot.
                 # Does not change server physics, inputs, world snapshot or AOI cadence.
                 if ENABLE_FAST_SELF_30HZ:
                     for p in players.values():enqueue_fast_self(p)
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('self.enqueue_phase',time.perf_counter_ns()-_prof_substage)
+                _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 if profile_tick:
                     stage_end=time.perf_counter_ns()
                     _profile_samples['projectile_loot'].append((stage_end-stage_start)/1e6)
@@ -2032,17 +2135,25 @@ async def game_loop():
                                 continue
                             bg_queued+=1
                         recipients.append(p)
+                    if ENABLE_PERFORMANCE_PROFILER:_profile_add('snapshot.recipients',time.perf_counter_ns()-_prof_substage)
+                    _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                     if recipients:
                         world=snapshot()
+                        if ENABLE_PERFORMANCE_PROFILER:_profile_add('snapshot.build',time.perf_counter_ns()-_prof_substage)
+                        _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                         for p in recipients:queue_latest_snapshot(p,world)
+                        if ENABLE_PERFORMANCE_PROFILER:_profile_add('snapshot.enqueue',time.perf_counter_ns()-_prof_substage)
                     _bg_snapshot_queued+=bg_queued
                     _bg_snapshot_peak_batch=max(_bg_snapshot_peak_batch,bg_queued)
                     # Events are visual effects; no replay of stale events after tab resumes.
                     events.clear()
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('snapshot.phase_total',time.perf_counter_ns()-_prof_substage)
                 if profile_tick:
                     _profile_samples['world_snapshot'].append((time.perf_counter_ns()-stage_start)/1e6)
             finally:
+                if ENABLE_PERFORMANCE_PROFILER:_profile_add('world.total',time.perf_counter_ns()-_prof_world_start,(world_state.channel,world_state.room))
                 _world_context.reset(token)
+        if ENABLE_PERFORMANCE_PROFILER:_profile_add('tick.total',time.perf_counter_ns()-_prof_tick_start)
         perf_ticks.append(time.monotonic()-tick_now)
         performance_rollup(time.monotonic())
         report_performance_to_render(time.monotonic())
@@ -2552,7 +2663,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EI public CH1-3 + opted-in stress CH1-15 + lazy hibernation', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EJ public CH1-3 + opted-in stress CH1-15 + lazy hibernation', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
