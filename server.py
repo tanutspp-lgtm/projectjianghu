@@ -8,6 +8,7 @@ import json
 import math
 import os
 import secrets
+import struct
 import time
 from collections import deque, defaultdict
 from collections.abc import MutableMapping, MutableSequence
@@ -20,6 +21,31 @@ from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
 import random
 import compact_wire_v80du as packed_wire
+# EK: optional native accelerated JSON metadata serializer, fallback to exact
+# original DU encoder when orjson is not installed or cannot encode a value.
+try:
+    import orjson as _ek_orjson
+except ImportError:
+    _ek_orjson = None
+
+
+def encode_compact_snapshot_ek(packet, cache=None):
+    if _ek_orjson is None:
+        return packed_wire.encode_snapshot(packet, cache)
+    try:
+        meta = {k:v for k,v in packet.items() if k not in packed_wire.KINDS}
+        mb = _ek_orjson.dumps(meta)  # UTF-8, same decoded JSON semantics
+    except (TypeError, ValueError, OverflowError):
+        return packed_wire.encode_snapshot(packet, cache)
+    out = bytearray(packed_wire.MAGIC)
+    out.extend(struct.pack('<I', len(mb)))
+    out.extend(mb)
+    for kind in packed_wire.KINDS:
+        entries=packet.get(kind, ())
+        out.extend(packed_wire.uvar(len(entries)))
+        for entry in entries:
+            out.extend(packed_wire.entity_bytes(kind, entry, cache))
+    return bytes(out)
 import combat_progression_v80bs as prog
 import sandbox_loadouts_v80bt as loadouts
 import monster_hp_def_v80bu as monster_balance
@@ -313,6 +339,7 @@ class Guest(Actor):
     fast_self_outbox: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=1))
     fast_self_task: Optional[asyncio.Task] = None
     ws_send_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    event_cursor: int = 0  # EK: only advance after a successful packet send
 
 
 @dataclass
@@ -381,6 +408,9 @@ class WorldState:
     shots: list = field(default_factory=list)
     loot_drops: list = field(default_factory=list)
     events: list = field(default_factory=list)
+    # EK: bounded world-level event journal persists across overwritten world samples.
+    event_journal: deque = field(default_factory=lambda: deque(maxlen=2048))
+    event_seq: int = 0
     snapshot_previous: dict = field(default_factory=lambda: {kind: {} for kind in ('players','mobs','loot','shots')})
     initialized: bool = False
     # EF: tiny sleeping capsule. Runtime monsters/shots/events/snapshot caches
@@ -582,7 +612,7 @@ def _profile_report(window, cpu_pct):
           'players':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].players),
           'monsters':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].monsters)}
          for k,v in sorted(_profile_worlds.items(),key=lambda kv:kv[1][0],reverse=True)[:5]]
-    data={'v':'v8.0EJ','ts':int(time.time()),'boot':_diag_boot,
+    data={'v':'v8.0EK','ts':int(time.time()),'boot':_diag_boot,
           'windowSec':round(window,2),'cpuCorePct':cpu_pct,
           'sampleMeaning':'all-call totals; bounded newest P95/P99 samples; nested sync stages overlap; concurrent async waits are NOT CPU',
           'syncStages':sync_stages,'waitStages':wait_stages,'worldTop':top}
@@ -612,7 +642,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0EJ','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0EK','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(connected_players),'autoGuests':sum(bool(p.auto_state.enabled) for p in connected_players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in connected_players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in connected_players.values()),'activeGuests':sum(p.view_mode=='active' for p in connected_players.values()),
         'monsters':sum(len(w.monsters) for w in worlds.values()),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -744,6 +774,7 @@ def hibernate_world(world):
     world.shots.clear()
     world.loot_drops.clear()
     world.events.clear()
+    world.event_journal.clear()
     for cache in world.snapshot_previous.values():
         cache.clear()
     world.initialized = False
@@ -780,6 +811,7 @@ def wake_world(world):
         world.sleeping_mobs.clear()
         world.sleeping_loot.clear()
         world.events.clear()
+        world.event_journal.clear()
         for cache in world.snapshot_previous.values():
             cache.clear()
         world.initialized = True
@@ -789,8 +821,19 @@ def wake_world(world):
         _world_context.reset(token)
 
 
+# EK: events are not dropped when a newer snapshot replaces a queued frame.
+# IDs are server-owned, bounded per world and never interpreted for game authority.
+def record_world_event(world, payload):
+    world.event_seq += 1
+    payload['eid'] = f'{world.channel}:{world.room}:{world.event_seq}'
+    # Size budget is computed once per event and reused by every recipient.
+    event_wire_size = len(_COMPACT_WIRE_JSON_ENCODER.encode(payload))
+    world.event_journal.append((world.event_seq, time.monotonic(), payload, event_wire_size))
+    world.events.append(payload)
+
+
 def event(event_type, x, y, **kwargs):
-    events.append({'t': event_type, 'x': round(x, 1), 'y': round(y, 1), **kwargs})
+    record_world_event(current_world(), {'t': event_type, 'x': round(x, 1), 'y': round(y, 1), **kwargs})
 
 
 def set_action(actor, a, dur):
@@ -1614,7 +1657,7 @@ class SharedSnapshot(dict):
     """Wire-compatible dict with a private cache shared by per-client delta encoders.
     Cache lifetime equals this one world sample; it is never serialized or global.
     """
-    __slots__ = ('entity_patch_cache','aoi_bucket_cache','packed_entry_cache','created_monotonic','all_forest_players')
+    __slots__ = ('entity_patch_cache','aoi_bucket_cache','packed_entry_cache','created_monotonic','all_forest_players','event_highwater')
 
     def __init__(self, content):
         super().__init__(content)
@@ -1624,6 +1667,7 @@ class SharedSnapshot(dict):
         self.created_monotonic = time.monotonic()
         # Default FALSE for manually assembled snapshots / test fixtures.
         self.all_forest_players = False
+        self.event_highwater = 0
 
 
 # v8.0CU: shared X broadphase for AUTO targets (built at most once per
@@ -1689,6 +1733,7 @@ def snapshot():
                       'dir':1 if s.vx>=0 else -1} for s in shots]),
             'events':events[:80]})
     world.all_forest_players=forest_only
+    world.event_highwater=current_world().event_seq
     return world
 
 
@@ -1782,7 +1827,7 @@ def aoi_view(world,p):
             'loot':_aoi_entities(world,'loot',p,cx,radius)}
 
 
-def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inventory=None):
+def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inventory=None,events_override=None):
     """Diff from LAST SUCCESSFULLY SENT packet, not the newest queued packet.
     Dropped mailbox packets can't corrupt the next delta's baseline.
     """
@@ -1849,7 +1894,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         source=players.get(source_id) if source_id else None
         if source is not None:return source.room==p.room
         return p.room=='forest'
-    result['events']=[e for e in world['events'] if visible_room_event(e) and
+    result['events']=[e for e in (events_override if events_override is not None else world['events']) if visible_room_event(e) and
                        (e.get('victim')==p.id or e.get('owner')==p.id or
                         abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200)]
     if _trace_writer:
@@ -1876,7 +1921,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         _writer_json_start=time.perf_counter_ns()
     if getattr(p,'protocol_binary',False):
         cache=world.packed_entry_cache if isinstance(world,SharedSnapshot) else None
-        packet=packed_wire.encode_snapshot(result,cache)
+        packet=encode_compact_snapshot_ek(result,cache)
     else:
         packet=_COMPACT_WIRE_JSON_ENCODER.encode(result)
     if _trace_writer:
@@ -1884,6 +1929,52 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.json',time.perf_counter_ns()-_writer_json_start)
     return (packet,current,
             (world['tick'] if full else last_full_tick),priv,inv)
+
+
+# EK: collect at most one bounded chunk from the world journal, preserving
+# causal server order even when the one-slot snapshot mailbox discards frames.
+# Event cursor is per socket and updated ONLY after successful send.
+# A bounded amount of visual history may catch up after overwritten snapshots.
+# NEVER let a burst of accumulated hits multiply outgoing bandwidth unboundedly.
+EVENT_REPLAY_TTL = 4.0
+EVENT_MAX_PER_PACKET = 32
+EVENT_MAX_BYTES_PER_PACKET = 2048
+
+
+def event_visible_to_guest(e, p):
+    # Exact same room and AOI rules as previous v8.0EJ snapshot path.
+    source_id = e.get('owner') or e.get('victim')
+    source = players.get(source_id) if source_id else None
+    if (source.room == p.room if source is not None else p.room == 'forest') is False:
+        return False
+    return (e.get('victim') == p.id or e.get('owner') == p.id or
+            abs(float(e.get('x', p.x)) - p.x) <= AOI_RADIUS + 200)
+
+
+def pending_world_events(p, highwater):
+    journal = p.world_ref.event_journal
+    if not journal or highwater <= p.event_cursor:
+        return [], p.event_cursor
+    now = time.monotonic()
+    payload = []
+    cursor = p.event_cursor
+    bytes_used = 0
+    for seq, created, item, event_bytes in journal:
+        if seq <= cursor: continue
+        if seq > highwater: break
+        # Invisible/expired events do not consume recipient budget.
+        if now-created>EVENT_REPLAY_TTL or not event_visible_to_guest(item, p):
+            cursor = seq
+            continue
+        if len(payload) >= EVENT_MAX_PER_PACKET or (payload and bytes_used + event_bytes > EVENT_MAX_BYTES_PER_PACKET):
+            break  # preserve causal order; next successful packet drains remainder
+        payload.append(item)
+        cursor = seq
+        bytes_used += event_bytes
+    # Evicted records are no longer available. This never replays old history.
+    if not payload and cursor < highwater and (not journal or journal[-1][0] <= highwater):
+        cursor = highwater
+    return payload, cursor
 
 
 async def snapshot_writer(p: Guest):
@@ -1910,13 +2001,15 @@ async def snapshot_writer(p: Guest):
                     _cv_outbox_skipped+=1
             if isinstance(world,SharedSnapshot):
                 _cv_snapshot_age.append((time.monotonic()-world.created_monotonic)*1000)
+            event_highwater=(world.event_highwater if isinstance(world,SharedSnapshot) else p.world_ref.event_seq)
+            pending_events,event_cursor=pending_world_events(p,event_highwater)
             encode_start=time.monotonic()
             _prof_encode_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
             if p.protocol_delta:
-                packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory)
+                packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory,pending_events)
             else:
                 # Legacy clients receive original full-world shape until upgraded.
-                old=dict(world);old['players']=[a for a in world['players'] if (players.get(a['id']) is None or players[a['id']].room==p.room)];old['self']=private_progression(p);old['inventory']=p.inventory
+                old=dict(world);old['players']=[a for a in world['players'] if (players.get(a['id']) is None or players[a['id']].room==p.room)];old['self']=private_progression(p);old['inventory']=p.inventory;old['events']=pending_events
                 packet=_COMPACT_WIRE_JSON_ENCODER.encode(old)
                 current,full_tick,priv,inv=None,-1,None,None
             perf_encodes.append(time.monotonic()-encode_start)
@@ -1941,6 +2034,7 @@ async def snapshot_writer(p: Guest):
                 # codepoint, so wire UTF-8 byte length equals character count.
                 perf_out_bytes += len(packet)
                 previous,last_full_tick=current,full_tick
+                p.event_cursor=event_cursor
                 prev_private,prev_inventory=priv,inv
             except (asyncio.TimeoutError,ConnectionClosed,OSError):
                 try:await p.ws.close(code=1011,reason='Snapshot send timeout')
@@ -2120,7 +2214,8 @@ async def game_loop():
                     stage_end=time.perf_counter_ns()
                     _profile_samples['projectile_loot'].append((stage_end-stage_start)/1e6)
                     stage_start=stage_end
-                if server_step%3==0:
+                if server_step%3==(world_state.channel-1)%3:
+                    # v8.0EK: world-level 10Hz spread over 30Hz ticks.
                     # v8.0DS: all Active viewers keep their 10Hz stream. Hidden viewers
                     # retain 1/2Hz each, but are spread across the ten 100ms broadcasts
                     # instead of all waking on the same once-per-second tick.
@@ -2211,12 +2306,13 @@ async def switch_channel(p, target):
     # Atomic slot claim before ANY await: two simultaneous transfers can never
     # both pass the 10-player hard cap. Current actor is moved, never copied.
     old.shots[:]=[shot for shot in old.shots if shot.owner!=p.id]
-    old.events.append({'t':'leave','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
+    record_world_event(old, {'t':'leave','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
     old.players.pop(p.id,None)
     # Last-player departure releases runtime arrays immediately; preserve only
     # bounded sleeping capsule and respawn deadlines. No await within transfer.
     hibernate_world(old)
     new_world.players[p.id]=p
+    p.event_cursor=new_world.event_seq  # never replay a prior channel's events
     p.channel=target;p.world_ref=new_world
     _world_context.set(new_world)
     wake_world(new_world)
@@ -2232,7 +2328,7 @@ async def switch_channel(p, target):
     p.auto_state.anchor=None;p.auto_state.goal=None
     p.manual_target_id=None;p.manual_auto_skill=None;p.manual_guard=False
     p.channel_switch_at=now
-    new_world.events.append({'t':'join','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
+    record_world_event(new_world, {'t':'join','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
     p.fast_self_epoch+=1;p.fast_self_last=None
     while not p.fast_self_outbox.empty():
         try:p.fast_self_outbox.get_nowait()
@@ -2329,6 +2425,7 @@ async def handle_connection(ws):
         # spread across all 10 existing writer slots rather than one burst.
         p.background_phase=((snapshot_join_sequence//10)+(snapshot_join_sequence%10))%10
         snapshot_join_sequence+=1
+        p.event_cursor = world_ref.event_seq  # do not replay pre-join events
         players[guest_id] = p
         connected_players[guest_id] = p
         features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl','view-mode-v80dp','view-mode-all-v80dr','bg-stagger-v80ds','aoi-binary-v80du']
@@ -2340,6 +2437,7 @@ async def handle_connection(ws):
         features.append('lazy-map-hibernation-v80ef')
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
+        features.append('event-journal-v80ek')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         if ENABLE_FAST_SELF_30HZ:
@@ -2663,7 +2761,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EJ public CH1-3 + opted-in stress CH1-15 + lazy hibernation', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EK public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
