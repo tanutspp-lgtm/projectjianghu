@@ -17,6 +17,7 @@ from typing import Optional
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
 import random
+import compact_wire_v80du as packed_wire
 import combat_progression_v80bs as prog
 import sandbox_loadouts_v80bt as loadouts
 import monster_hp_def_v80bu as monster_balance
@@ -261,6 +262,7 @@ class Guest(Actor):
     background_phase: int = 0 # v8.0DS: stable 0..9, schedules hidden views across ten 100ms broadcasts
     applied_input_seq: int = -1  # actual command consumed by the authoritative 30Hz simulation
     protocol_delta: bool = False # legacy BX clients still require unfiltered full snapshots
+    protocol_binary: bool = False # v8.0DU opt-in; independent from delta cadence
     view_mode: str = 'active' # v8.0DP explicit visual subscription, never changes AI/physics
     stable_stats_key: object = None
     stable_derived_stats: object = None
@@ -1211,11 +1213,12 @@ class SharedSnapshot(dict):
     """Wire-compatible dict with a private cache shared by per-client delta encoders.
     Cache lifetime equals this one world sample; it is never serialized or global.
     """
-    __slots__ = ('entity_patch_cache','aoi_bucket_cache','created_monotonic')
+    __slots__ = ('entity_patch_cache','aoi_bucket_cache','packed_entry_cache','created_monotonic')
 
     def __init__(self, content):
         super().__init__(content)
         self.entity_patch_cache = {}
+        self.packed_entry_cache = {}
         self.aoi_bucket_cache = {}
         self.created_monotonic = time.monotonic()
 
@@ -1450,7 +1453,11 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     if _trace_writer:
         _writer_stage_samples['private'].append((time.perf_counter_ns()-_writer_private_start)/1e6)
         _writer_json_start=time.perf_counter_ns()
-    packet=_COMPACT_WIRE_JSON_ENCODER.encode(result)
+    if getattr(p,'protocol_binary',False):
+        cache=world.packed_entry_cache if isinstance(world,SharedSnapshot) else None
+        packet=packed_wire.encode_snapshot(result,cache)
+    else:
+        packet=_COMPACT_WIRE_JSON_ENCODER.encode(result)
     if _trace_writer:
         _writer_stage_samples['json'].append((time.perf_counter_ns()-_writer_json_start)/1e6)
     return (packet,current,
@@ -1650,7 +1657,7 @@ async def handle_connection(ws):
         raw = await asyncio.wait_for(ws.recv(), timeout=8)
         hello = strict_message(raw)
         valid_joins=({'t','avatar'},{'t','avatar','protocol'},{'t','avatar','room'},{'t','avatar','protocol','room'})
-        if not hello or set(hello.keys()) not in valid_joins or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')) or hello.get('protocol','legacy') not in ('legacy','aoi-delta-v80by') or hello.get('room','forest') not in ('forest','movement_lab'):
+        if not hello or set(hello.keys()) not in valid_joins or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')) or hello.get('protocol','legacy') not in ('legacy','aoi-delta-v80by','aoi-binary-v80du') or hello.get('room','forest') not in ('forest','movement_lab'):
             await ws.close(code=1008, reason='Invalid guest join');return
         if len(players) >= MAX_GUESTS:
             await ws.send(json.dumps({'t': 'error', 'message': 'ห้องเต็ม ลองใหม่ภายหลัง'}));await ws.close(code=1013);return
@@ -1663,7 +1670,8 @@ async def handle_connection(ws):
         p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp, room=hello.get('room','forest'),
                   avatar=hello['avatar'], ws=ws, level=guest_level)
         prog.apply_derived_resources(p,hp_reference,full=True)
-        p.protocol_delta=(hello.get('protocol')=='aoi-delta-v80by' or p.room=='movement_lab')
+        p.protocol_delta=(hello.get('protocol') in ('aoi-delta-v80by','aoi-binary-v80du') or p.room=='movement_lab')
+        p.protocol_binary=hello.get('protocol')=='aoi-binary-v80du'
         # Evenly distribute connection slots; no random clumping for first 10 guests.
         p.snapshot_slot=snapshot_join_sequence%STAGGER_SLOTS
         # Background phase is NOT the writer's 100ms send phase. This diagonal
@@ -1673,7 +1681,7 @@ async def handle_connection(ws):
         p.background_phase=((snapshot_join_sequence//10)+(snapshot_join_sequence%10))%10
         snapshot_join_sequence+=1
         players[guest_id] = p
-        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl','view-mode-v80dp','view-mode-all-v80dr','bg-stagger-v80ds']
+        features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl','view-mode-v80dp','view-mode-all-v80dr','bg-stagger-v80ds','aoi-binary-v80du']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
         features.append('movement-lab-room-v80cz')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
@@ -1848,7 +1856,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | staggered v8.0DS', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | staggered v8.0DU', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
