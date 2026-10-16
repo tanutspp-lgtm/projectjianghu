@@ -716,8 +716,14 @@ def pending_auto_manual(p: Guest, server_now: float) -> bool:
 
 def update_guest(p: Guest, dt, tick_now):
     p.applied_input_seq=p.last_seq  # ack only after simulation consumes this input
-    for v in ('cool', 'inv', 'stun', 'down', 'broken', 'climb_cd'):
-        setattr(p, v, max(0, getattr(p, v) - dt))
+    # v8.0DV: preserve exact timer order, clamp and 30Hz duration while
+    # avoiding six dynamic getattr/setattr operations per Guest per tick.
+    p.cool=max(0,p.cool-dt)
+    p.inv=max(0,p.inv-dt)
+    p.stun=max(0,p.stun-dt)
+    p.down=max(0,p.down-dt)
+    p.broken=max(0,p.broken-dt)
+    p.climb_cd=max(0,p.climb_cd-dt)
     p.action_at += dt
     derived=derived_for_snapshot(p)
     if p.qi_shield and (tick_now>=p.qi_shield_until or not loadouts.active_qi(p,0)):p.qi_shield=0
@@ -884,9 +890,17 @@ def update_mob(m,dt,player_grid=None):
     # Spatial grid reduces candidates; lane is constant for this target selection.
     # Cache only across candidate checks BEFORE movement, never across game ticks.
     target_lane=own_lane(m)
-    p=min((p for p in candidate_players_by_x(m,player_grid)
-           if reachable_player(m,p,target_lane) and abs(p.x-m.x)<BEAST_AGGRO+65),
-          key=lambda p:abs(p.x-m.x),default=None)
+    # v8.0DV: one distance calculation per candidate instead of a generator,
+    # predicate distance and min-key distance. Strict '<' retains the first
+    # actor in stable insertion order on equal distances (original min rule).
+    p=None
+    nearest=float('inf')
+    mx=m.x
+    for candidate in candidate_players_by_x(m,player_grid):
+        if not reachable_player(m,candidate,target_lane):continue
+        distance=abs(candidate.x-mx)
+        if distance<BEAST_AGGRO+65 and distance<nearest:
+            p=candidate;nearest=distance
     dx=p.x-m.x if p else 0
     dy=p.y-m.y if p else 10000
     near=bool(p and abs(dx)<BEAST_AGGRO)
@@ -967,9 +981,17 @@ def advance_loot():
         if t>=drop['expiresAt']:
             loot_drops.remove(drop);continue
         if t<drop['pickupAt']:continue
-        for p in players.values():
+        # v8.0DV: While the 60-second ownership lock is active there can be
+        # exactly ONE eligible guest. Direct-ID lookup replaces O(all guests)
+        # scanning per drop per 30Hz tick; same checks and loot/event order.
+        # Once public, retain players.values() insertion order verbatim.
+        if t<drop['privateUntil']:
+            owner=players.get(drop['ownerId'])
+            candidates=(owner,) if owner is not None else ()
+        else:
+            candidates=players.values()
+        for p in candidates:
             if p.room!='forest' or p.dead>0 or p.hp<=0 or len(p.inventory)>=LOOT_BAG_CAP:continue
-            if t<drop['privateUntil'] and p.id!=drop['ownerId']:continue
             if abs(p.x-drop['x'])>LOOT_PICKUP_X or abs(p.y-drop['y'])>LOOT_PICKUP_Y:continue
             entry={'uid':'bag-'+secrets.token_hex(8),'item_id':drop['item_id'],'obtainedAt':int(time.time()*1000)}
             p.inventory.append(entry)
@@ -1178,8 +1200,13 @@ def actor_json(a):
 def derived_for_snapshot(p):
     # Dirty-signature cache: recompute expensive gear/qi/derived totals only
     # after server-owned level/stat/qi/equipment state changes, not every 100ms.
+    # v8.0DV: most production players have no QA qi ranks. Skip allocating
+    # sorted generator/tuples on every 30Hz tick for the empty case; retain
+    # the original canonical signature for nonempty ranks and all changes.
+    qi_sig=(tuple(sorted((k,tuple(sorted(v.items()))) for k,v in p.qi_ranks.items()))
+            if p.qi_ranks else ())
     sig=(p.level,p.test_level,tuple(p.stats[k] for k in prog.STAT_KEYS),
-         tuple(p.qi_equipped),tuple(sorted((k,tuple(sorted(v.items()))) for k,v in p.qi_ranks.items())),
+         tuple(p.qi_equipped),qi_sig,
          p.gear_level,p.gear_def_row,p.gear_atk_row,p.gear_enhancement)
     if sig!=p.stable_stats_key:
         p.stable_stats_key=sig
@@ -1213,7 +1240,7 @@ class SharedSnapshot(dict):
     """Wire-compatible dict with a private cache shared by per-client delta encoders.
     Cache lifetime equals this one world sample; it is never serialized or global.
     """
-    __slots__ = ('entity_patch_cache','aoi_bucket_cache','packed_entry_cache','created_monotonic')
+    __slots__ = ('entity_patch_cache','aoi_bucket_cache','packed_entry_cache','created_monotonic','all_forest_players')
 
     def __init__(self, content):
         super().__init__(content)
@@ -1221,6 +1248,8 @@ class SharedSnapshot(dict):
         self.packed_entry_cache = {}
         self.aoi_bucket_cache = {}
         self.created_monotonic = time.monotonic()
+        # Default FALSE for manually assembled snapshots / test fixtures.
+        self.all_forest_players = False
 
 
 # v8.0CU: shared X broadphase for AUTO targets (built at most once per
@@ -1268,7 +1297,11 @@ def _reuse_snapshot_entities(kind, entries):
 def snapshot():
     """Shared immutable-by-convention world state; no per-guest JSON on the tick path."""
     moment=time.monotonic()
-    return SharedSnapshot({'t':'snapshot','tick':server_step,
+    # A joined player's room cannot change during a socket session. When all
+    # actors are forest guests there is no foreign room to filter in 100 per-
+    # client AOI views. Existing in-flight snapshots stay safe on disconnect.
+    forest_only=all(p.room=='forest' for p in players.values())
+    world=SharedSnapshot({'t':'snapshot','tick':server_step,
             'players':_reuse_snapshot_entities('players',[{**actor_json(p),'avatar':p.avatar} for p in players.values()]),
             'mobs':_reuse_snapshot_entities('mobs',[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
                      'biteAge':round(max(0,moment-m.bite_started_at),3) if m.bite_started_at>0 else -1,
@@ -1279,6 +1312,8 @@ def snapshot():
             'shots':_reuse_snapshot_entities('shots',[{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
                       'dir':1 if s.vx>=0 else -1} for s in shots]),
             'events':events[:80]})
+    world.all_forest_players=forest_only
+    return world
 
 
 # Share a positional coarse index within ONE immutable SharedSnapshot only.
@@ -1382,13 +1417,18 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     if p.room=='movement_lab':
         current['players']={eid:e for eid,e in current['players'].items() if players.get(eid) is not None and players[eid].room=='movement_lab'}
         current['mobs']={};current['shots']={};current['loot']={}
-    else:
+    elif not (isinstance(world,SharedSnapshot) and world.all_forest_players):
+        # v8.0DV: keep original live room filter for mixed-room worlds;
+        # avoid rebuilding a large identical dict for forest-only worlds.
         current['players']={eid:e for eid,e in current['players'].items() if (players.get(eid) is None or players[eid].room=='forest')}
     if _trace_writer:
         _writer_stage_samples['aoi'].append((time.perf_counter_ns()-_writer_aoi_start)/1e6)
         _writer_delta_start=time.perf_counter_ns()
     full=previous is None or world['tick']-last_full_tick>=DELTA_REFRESH_TICKS
     result={'t':'snapshot','tick':world['tick']}
+    # Per-sample shared cache; no recalculation of lookup or isinstance inside
+    # each per-kind/per-entity iteration. Cache pins old/new dict references.
+    cache=world.entity_patch_cache if isinstance(world,SharedSnapshot) else None
     if full:
         result['full']=True
         for kind in current:result[kind]=list(current[kind].values())
@@ -1405,13 +1445,15 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
                     # Reuse their patch within this shared world sample, but key by
                     # both actual object identities: each client may have a different
                     # last-successfully-SENT baseline after mailbox drops.
-                    cache=world.entity_patch_cache if isinstance(world,SharedSnapshot) else None
+                    if old is item:
+                        # Structural sharing proves equality even for clients
+                        # whose previous successful send was several ticks ago.
+                        continue
                     cache_key=(id(old),id(item)) if cache is not None else None
                     entry=cache.get(cache_key) if cache is not None else None
                     if entry is not None:
                         patch=entry[2]
-                    elif old is item or old == item:
-                        # Equal full dictionaries need no per-attribute diff.
+                    elif old == item:
                         patch=None
                         if cache is not None and len(cache)<2048:cache[cache_key]=(old,item,patch)
                     else:
@@ -1856,7 +1898,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | staggered v8.0DU', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {MAX_GUESTS} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | staggered v8.0DV', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
