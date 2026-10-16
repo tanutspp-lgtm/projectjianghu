@@ -223,6 +223,7 @@ class Guest(Actor):
     channel: int = 1
     stress_test: bool = False
     world_ref: object = None
+    stress_status_at: float = 0.0  # EI: throttle stress occupancy probes
     channel_switch_at: float = 0.0
     channel_switch_times: deque = field(default_factory=deque)
     avatar: str = 'male_hair_01_black'
@@ -2063,6 +2064,10 @@ def check_rate(q, rate, window=1):
     return len(q) <= rate
 
 
+def stress_occupancy(room='forest'):
+    # EI: a read-only view, no allocation or world wake. Count ALL occupants.
+    return [{'id':ch,'players':len(worlds[(ch,room)].players)} for ch in CHANNEL_IDS]
+
 def channel_status(room='forest'):
     return [{'id':ch,'players':len(worlds[(ch,room)].players),
              'cap':MAP_HARD_CAPS[room]} for ch in PUBLIC_CHANNEL_IDS]
@@ -2152,12 +2157,16 @@ async def handle_connection(ws):
         stress_shape = bool(hello and 'stressTest' in hello)
         if stress_shape:
             valid_joins += tuple(set(fields)|{'stressTest'} for fields in valid_joins)
+            valid_joins += tuple(set(fields)|{'stressTest','stressCap'} for fields in valid_joins)
         if not hello or set(hello.keys()) not in valid_joins or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')) or hello.get('protocol','legacy') not in ('legacy','aoi-delta-v80by','aoi-binary-v80du') or hello.get('room','forest') not in ('forest','movement_lab') or type(hello.get('channel',1)) is not int or hello.get('channel',1) not in CHANNEL_IDS:
             print('JIANGHU_JOIN_REJECT invalid_schema fields=', sorted(hello.keys()) if isinstance(hello,dict) else 'not-dict', 'channel=',hello.get('channel') if isinstance(hello,dict) else None, flush=True)
             await ws.close(code=1008, reason='Invalid guest join');return
         stress_test = False
+        if stress_shape and 'stressCap' in hello and (type(hello['stressCap']) is not int or not 1<=hello['stressCap']<=200):
+            await ws.close(code=1008,reason='Invalid stress target');return
         if stress_shape:
             if hello.get('stressTest') is not True or not ENABLE_CHANNEL_STRESS:
+                print('JIANGHU_STRESS_JOIN_REJECT disabled_or_bad_flag ch=',hello.get('channel'),flush=True)
                 await ws.close(code=1008,reason='Stress mode disabled');return
             stress_test = True
         room=hello.get('room','forest')
@@ -2172,7 +2181,13 @@ async def handle_connection(ws):
             stress_total=sum(p.stress_test for p in connected_players.values())
             stress_here=sum(p.stress_test for p in world_ref.players.values())
             if stress_total>=CHANNEL_STRESS_TOTAL or stress_here>=CHANNEL_STRESS_PER_CHANNEL:
+                print('JIANGHU_STRESS_JOIN_REJECT quota ch=',channel,'total=',stress_total,'here=',stress_here,flush=True)
                 await ws.send(json.dumps({'t':'error','message':'Stress quota full'}));await ws.close(code=1013);return
+            # EI: authoritative per-channel TOTAL target includes humans and other testers.
+            # Concurrent guests may not pass even if they read an earlier occupancy.
+            if 'stressCap' in hello and len(world_ref.players)>=hello['stressCap']:
+                await ws.send(json.dumps({'t':'error','message':'Stress channel target reached'}))
+                await ws.close(code=1013,reason='Stress channel target reached');return
         else:
             normal_total=sum(not p.stress_test for p in connected_players.values())
             # The public hard caps remain in force; stress guests take world slots too.
@@ -2213,7 +2228,8 @@ async def handle_connection(ws):
         features.append('fixed-channels-v80ee')
         features.append('lazy-map-hibernation-v80ef')
         if stress_test: features.append('open-channel-stress-v80eh')
-        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
+        if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
+        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         if ENABLE_FAST_SELF_30HZ:
             p.fast_self_task=asyncio.create_task(fast_self_writer(p),name='fastself-'+guest_id)
@@ -2244,6 +2260,19 @@ async def handle_connection(ws):
                         p.client_perf={k:round(float(m[k]),2) for k in fields}
                         p.client_perf['pingMs']=None if ping is None else round(float(ping),2)
                         p.client_perf_at=time.monotonic()
+                continue
+            if m.get('t')=='stress_status':
+                if set(m)!={'t'}:
+                    await ws.close(code=1008,reason='Invalid stress status');break
+                if not ENABLE_CHANNEL_STRESS:
+                    await ws.send(json.dumps({'t':'stress_status','enabled':False,'reason':'disabled'}));continue
+                now=time.monotonic()
+                if now-p.stress_status_at<.8:continue
+                p.stress_status_at=now
+                await ws.send(json.dumps({'t':'stress_status','enabled':True,
+                   'channels':stress_occupancy(p.room),
+                   'serverGuests':len(connected_players),
+                   'maxGuests':MAX_GUESTS,'stressMax':CHANNEL_STRESS_TOTAL},separators=(',',':')))
                 continue
             if m.get('t')=='channel_list':
                 if set(m)!={'t'}:
@@ -2472,6 +2501,10 @@ async def handle_connection(ws):
                         p.move_shadow=tuple(updated)
     except (asyncio.TimeoutError, ConnectionClosed):
         pass
+    except Exception as exc:
+        print('JIANGHU_CONNECTION_EXCEPTION ch=',getattr(admitted_world,'channel',None),
+              'guest=',guest_id,'type=',type(exc).__name__,'detail=',str(exc)[:200],flush=True)
+        raise
     finally:
         if pending_held:_pending_joins -= 1
         if guest_id and players.get(guest_id) and players[guest_id].ws is ws:
@@ -2519,7 +2552,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EH public CH1-3 + opted-in stress CH1-15 + lazy hibernation', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EI public CH1-3 + opted-in stress CH1-15 + lazy hibernation', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
