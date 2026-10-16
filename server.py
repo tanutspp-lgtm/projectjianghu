@@ -8,7 +8,6 @@ import json
 import math
 import os
 import secrets
-import hmac
 import time
 from collections import deque, defaultdict
 from collections.abc import MutableMapping, MutableSequence
@@ -152,12 +151,9 @@ ENABLE_GUEST_SANDBOX=os.environ.get('ENABLE_GUEST_SANDBOX','0')=='1'
 ENABLE_CLIENT_MOVEMENT_AB=os.environ.get('ENABLE_CLIENT_MOVEMENT_AB','0')=='1'
 # EC: server-first only; independent of experimental client movement.
 ENABLE_FAST_SELF_30HZ=os.environ.get('ENABLE_FAST_SELF_30HZ','1')=='1'
-# EG: privileged, opt-in load testing; NEVER infer authorization from URL/Origin.
-# A private secret is supplied through the test UI, not embedded in static assets.
+# EH: Operator opt-in stress test. No token; URL secrecy is NOT security.
+# Keep disabled outside deliberate tests; global hard limits still apply.
 ENABLE_CHANNEL_STRESS = os.environ.get('ENABLE_CHANNEL_STRESS','0') == '1'
-CHANNEL_STRESS_TOKEN = os.environ.get('CHANNEL_STRESS_TOKEN','')
-if ENABLE_CHANNEL_STRESS and len(CHANNEL_STRESS_TOKEN) < 32:
-    raise ValueError('CHANNEL_STRESS_TOKEN must contain at least 32 characters when stress mode is enabled')
 CHANNEL_STRESS_PER_CHANNEL = 200
 CHANNEL_STRESS_TOTAL = min(200, MAX_GUESTS)  # global guard; 150 bots + observer on MAX_GUESTS=201
 
@@ -556,7 +552,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0EG','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0EH','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(connected_players),'autoGuests':sum(bool(p.auto_state.enabled) for p in connected_players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in connected_players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in connected_players.values()),'activeGuests':sum(p.view_mode=='active' for p in connected_players.values()),
         'monsters':sum(len(w.monsters) for w in worlds.values()),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -2150,20 +2146,19 @@ async def handle_connection(ws):
         valid_joins=({'t','avatar'},{'t','avatar','protocol'},{'t','avatar','room'},
                      {'t','avatar','protocol','room'}, {'t','avatar','protocol','room','channel'},
                      {'t','avatar','channel'}, {'t','avatar','protocol','channel'}, {'t','avatar','room','channel'})
-        # Stress joins are an explicitly separate privileged protocol. Regular
-        # guest schemas and caps remain unchanged, including when stress mode ON.
-        privileged_shape = bool(hello and 'stressToken' in hello)
-        if privileged_shape:
-            valid_joins += tuple(set(fields)|{'stressToken'} for fields in valid_joins)
+        # Stress mode is marked explicitly, opt-in by the operator and bounded
+        # by hard caps. This is NOT authentication; do not enable on public
+        # servers except for a short supervised load test.
+        stress_shape = bool(hello and 'stressTest' in hello)
+        if stress_shape:
+            valid_joins += tuple(set(fields)|{'stressTest'} for fields in valid_joins)
         if not hello or set(hello.keys()) not in valid_joins or hello.get('t') != 'join' or not valid_avatar(hello.get('avatar')) or hello.get('protocol','legacy') not in ('legacy','aoi-delta-v80by','aoi-binary-v80du') or hello.get('room','forest') not in ('forest','movement_lab') or type(hello.get('channel',1)) is not int or hello.get('channel',1) not in CHANNEL_IDS:
+            print('JIANGHU_JOIN_REJECT invalid_schema fields=', sorted(hello.keys()) if isinstance(hello,dict) else 'not-dict', 'channel=',hello.get('channel') if isinstance(hello,dict) else None, flush=True)
             await ws.close(code=1008, reason='Invalid guest join');return
         stress_test = False
-        if privileged_shape:
-            supplied = hello.get('stressToken')
-            if (not ENABLE_CHANNEL_STRESS or type(supplied) is not str or
-                    not 32 <= len(supplied) <= 256 or
-                    not hmac.compare_digest(supplied,CHANNEL_STRESS_TOKEN)):
-                await ws.close(code=1008,reason='Unauthorized stress test');return
+        if stress_shape:
+            if hello.get('stressTest') is not True or not ENABLE_CHANNEL_STRESS:
+                await ws.close(code=1008,reason='Stress mode disabled');return
             stress_test = True
         room=hello.get('room','forest')
         channel=hello.get('channel',1)
@@ -2217,7 +2212,7 @@ async def handle_connection(ws):
         if ENABLE_FAST_SELF_30HZ:features.append('server-fast-self-30hz-v80ec')
         features.append('fixed-channels-v80ee')
         features.append('lazy-map-hibernation-v80ef')
-        if stress_test: features.append('privileged-channel-stress-v80eg')
+        if stress_test: features.append('open-channel-stress-v80eh')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         if ENABLE_FAST_SELF_30HZ:
@@ -2524,7 +2519,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EG public CH1-3 + privileged stress CH1-15 + lazy hibernation', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EH public CH1-3 + opted-in stress CH1-15 + lazy hibernation', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
