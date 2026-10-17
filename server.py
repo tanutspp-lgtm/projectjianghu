@@ -187,6 +187,15 @@ ENABLE_PERFORMANCE_PROFILER = os.environ.get('JIANGHU_PROFILE','0') == '1'
 # EL: phase each socket AFTER its world sample, never delay a missed wall-clock slot by 100ms.
 # Rollback without source changes: JIANGHU_EL_SNAPSHOT_SCHED=0.
 ENABLE_EL_SNAPSHOT_SCHED = os.environ.get('JIANGHU_EL_SNAPSHOT_SCHED','0') == '1'
+# EO experiment: cap global-slot wait only when explicitly enabled.
+# Default OFF (0) preserves EN timing; enable 60ms for controlled live A/B.
+try:
+    EO_WRITER_WAIT_CAP_MS = float(os.environ.get('JIANGHU_EO_WRITER_WAIT_CAP_MS','0'))
+except (TypeError,ValueError):
+    EO_WRITER_WAIT_CAP_MS = 0.0
+if not 0.0 < EO_WRITER_WAIT_CAP_MS <= 90.0:
+    EO_WRITER_WAIT_CAP_MS = 0.0
+
 # EM: keep known-bad EL scheduling disabled by default. Explicit =1 still allows A/B.
 # Revision shortcut avoids O(inventory size) equality work every recipient sample.
 # Increment revision on EVERY inventory mutation. Rollback: JIANGHU_EM_INVENTORY_REV=0.
@@ -649,7 +658,7 @@ def _profile_report(window, cpu_pct):
           'players':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].players),
           'monsters':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].monsters)}
          for k,v in sorted(_profile_worlds.items(),key=lambda kv:kv[1][0],reverse=True)[:5]]
-    data={'v':'v8.0EN','ts':int(time.time()),'boot':_diag_boot,
+    data={'v':'v8.0EO','ts':int(time.time()),'boot':_diag_boot,
           'windowSec':round(window,2),'cpuCorePct':cpu_pct,
           'sampleMeaning':'all-call totals; bounded newest P95/P99 samples; nested sync stages overlap; concurrent async waits are NOT CPU',
           'syncStages':sync_stages,'waitStages':wait_stages,'worldTop':top}
@@ -681,7 +690,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0EN','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0EO','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(connected_players),'autoGuests':sum(bool(p.auto_state.enabled) for p in connected_players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in connected_players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in connected_players.values()),'activeGuests':sum(p.view_mode=='active' for p in connected_players.values()),
         'monsters':sum(len(w.monsters) for w in worlds.values()),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -692,6 +701,7 @@ def report_performance_to_render(now):
         'totalGuestCap':CHANNEL_TOTAL_GUEST_CAP,'pendingJoins':_pending_joins,
         'stressEnabled':ENABLE_CHANNEL_STRESS,'perfProfilerEnabled':ENABLE_PERFORMANCE_PROFILER,
         'elSnapshotSchedulerEnabled':ENABLE_EL_SNAPSHOT_SCHED,
+        'eoWriterWaitCapMs':0 if ENABLE_EL_SNAPSHOT_SCHED else EO_WRITER_WAIT_CAP_MS,
         'emInventoryRevisionEnabled':ENABLE_EM_INVENTORY_REV,
         'enEventScanEnabled':ENABLE_EN_EVENT_SCAN,
         'rssKiB':em_process_memory(),'gcCounts':list(gc.get_count()),
@@ -2112,6 +2122,8 @@ async def snapshot_writer(p: Guest):
                 # Exact EK fallback for A/B and immediate rollback.
                 period=.1;offset=p.snapshot_slot*(period/STAGGER_SLOTS)
                 wait=(offset-(slot_start%period))%period
+                if EO_WRITER_WAIT_CAP_MS and wait > EO_WRITER_WAIT_CAP_MS / 1000.0:
+                    wait = EO_WRITER_WAIT_CAP_MS / 1000.0
             if wait>.001:await asyncio.sleep(wait)
             if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.slot_wait_intentional',time.perf_counter_ns()-_prof_slot_start)
             _cv_writer_wait.append((time.monotonic()-slot_start)*1000)
@@ -2922,7 +2934,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EN public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EO public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
