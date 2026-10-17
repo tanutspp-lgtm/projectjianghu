@@ -218,6 +218,25 @@ _EXPECTED_CLIMBS=((510,235,550),(1170,390,550),(1590,235,550))
 if CLIMBS != _EXPECTED_CLIMBS:
     raise RuntimeError(f'Unsafe map climbs: {CLIMBS}; expected {_EXPECTED_CLIMBS}')
 FARM_NAV=farm_auto.Navigation(GROUND,CLIMBS)
+# BAMBOO REAL WORLDS: room-based, same 2060px server-owned coordinate envelope.
+# No bamboo mob/loot templates until the owner supplies cropped sprites and manifest.
+BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม', 'platforms': [[0, 2060, 550], [170, 850, 390], [1020, 1770, 390], [410, 1070, 235], [1210, 1970, 235]], 'climbs': [[510, 235, 550, 'rope'], [1170, 390, 550, 'ladder'], [1590, 235, 550, 'rope']]}, 'bamboo_1': {'name': 'ทางเข้าดงไผ่', 'platforms': [[0, 2060, 550], [300, 710, 423], [890, 1280, 425], [1440, 1950, 425], [650, 1080, 300], [1340, 1770, 300]], 'climbs': [[850, 300, 550, 'rope'], [1550, 300, 550, 'ladder']]}, 'bamboo_2': {'name': 'ทางเลียบดงไผ่', 'platforms': [[0, 2060, 550], [240, 660, 430], [840, 1240, 430], [1430, 1950, 430], [470, 890, 305], [1170, 1610, 305]], 'climbs': [[640, 305, 550, 'ladder'], [1410, 305, 550, 'rope']]}, 'bamboo_3': {'name': 'ดงไผ่ริมสวนท้อ', 'platforms': [[0, 2060, 550], [230, 680, 427], [890, 1350, 425], [1490, 2000, 430], [460, 840, 300], [1130, 1550, 300], [1610, 2000, 180]], 'climbs': [[650, 300, 550, 'rope'], [1320, 300, 550, 'ladder'], [1810, 180, 430, 'rope']]}, 'bamboo_4': {'name': 'ลานฝึกหุบไผ่', 'platforms': [[0, 2060, 550], [260, 715, 425], [850, 1300, 430], [1460, 1970, 425], [490, 905, 305], [1070, 1510, 305], [900, 1270, 180]], 'climbs': [[670, 305, 550, 'ladder'], [1170, 180, 550, 'rope'], [1710, 425, 550, 'ladder']]}}
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4')
+# Precomputed immutable geometry avoids allocating arrays every 30Hz tick.
+BAMBOO_GROUNDS = {mid: tuple((a,b,y) for a,b,y in data['platforms']) for mid,data in BAMBOO_MAPS.items()}
+BAMBOO_CLIMBS = {mid: tuple((c[0],c[1],c[2]) for c in data['climbs']) for mid,data in BAMBOO_MAPS.items()}
+def active_ground():
+    return BAMBOO_GROUNDS.get(current_world().room, GROUND)
+def active_climbs():
+    return BAMBOO_CLIMBS.get(current_world().room, CLIMBS)
+
+def map_payload(map_id):
+    data=BAMBOO_MAPS[map_id]
+    return {'map':map_id,'mapName':data['name'],
+            'mapPlatforms':[{'x':a,'x2':b,'y':y} for a,b,y in data['platforms']],
+            'mapClimbs':[{'x':x,'top':t,'bottom':b,'type':typ} for x,t,b,typ in data['climbs']],
+            'mapWidth':WORLD_W}
+
 ALLOWED_BUTTONS = (1 | 2 | 4 | 8 | 16)
 ATTACKS = {'attack': (0.34, 0.32, 520, 165, 1.45, 1), 'aoe': (0.62, 0.48, 365, 135, 1.15, 99), 'break': (0.52, 0.37, 560, 45, 1.1, 2)}
 ACTION_NAMES = {'jump', 'dash', 'attack', 'aoe', 'break', 'lock'}
@@ -233,7 +252,7 @@ def clamp(v, lo, hi): return max(lo, min(hi, v))
 
 
 def can_stand(x, y, prev):
-    for lo, hi, top in GROUND:
+    for lo, hi, top in active_ground():
         if lo + 8 < x < hi - 8 and prev <= top + 7 and y >= top:
             return top
     return None
@@ -271,6 +290,7 @@ class Guest(Actor):
     ws: object = None
     room: str = 'forest'  # independent forest / movement_lab instances
     channel: int = 1
+    map_switch_at: float = 0.0
     stress_test: bool = False
     world_ref: object = None
     stress_status_at: float = 0.0  # EI: throttle stress occupancy probes
@@ -419,7 +439,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70}  # City is a future map, not joinable yet.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10}  # City is a future map, not joinable yet.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -447,7 +467,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab')}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -793,10 +813,10 @@ def next_respawn_delay():
 
 def supported(m, x=None):
     x=m.x if x is None else x
-    return any(abs(m.y-y)<12 and lo+20<x<hi-20 for lo,hi,y in GROUND)
+    return any(abs(m.y-y)<12 and lo+20<x<hi-20 for lo,hi,y in active_ground())
 
 def own_lane(m):
-    return next(((lo,hi,y) for lo,hi,y in GROUND if abs(m.y-y)<12 and lo+12<m.x<hi-12),None)
+    return next(((lo,hi,y) for lo,hi,y in active_ground() if abs(m.y-y)<12 and lo+12<m.x<hi-12),None)
 
 # v8.0CQ: query one lane per mob-target selection, not once per candidate player.
 _LANE_NOT_GIVEN=object()
@@ -992,7 +1012,7 @@ def try_qi_shield(p):
 
 def perform_action(p: Guest, action: str):
     if p.dead > 0 or p.down > 0 or p.stun > 0 or p.broken > 0: return
-    if p.room=='movement_lab' and action not in ('jump','dash','lock'): return  # no combat/projectiles in movement lab
+    if (p.room=='movement_lab' or p.room.startswith('bamboo_')) and action not in ('jump','dash','lock'): return  # no combat/projectiles in movement lab
     if action == 'jump':
         if p.ground and p.climb is None:
             p.vy, p.ground, p.climb = -540, False, None
@@ -1122,7 +1142,7 @@ def update_guest(p: Guest, dt, tick_now):
         physics(p, dt)
         return
     p.guard = bool(p.buttons & 16) and p.broken <= 0 and p.stun <= 0 and p.climb is None
-    near = next((c for c in CLIMBS if abs(c[0] - p.x) < 36 and c[1] - 8 <= p.y <= c[2] + 12), None)
+    near = next((c for c in active_climbs() if abs(c[0] - p.x) < 36 and c[1] - 8 <= p.y <= c[2] + 12), None)
     axis = int(bool(p.buttons & 8)) - int(bool(p.buttons & 4))
     # v8.0DE: Climb completion deliberately lands at rope_x+47, but normal
     # climb acquisition only works within 36px. A human holding DOWN from the
@@ -1131,11 +1151,11 @@ def update_guest(p: Guest, dt, tick_now):
     # real platform crossing the climb; forbid bottom-floor/down reacquisition.
     if (p.climb is None and axis > 0 and p.ground and not p.guard and p.climb_cd <= 0
             and p.stun <= 0 and (p.action != 'dash' or p.action_at >= .26)):
-        landing = next((c for c in CLIMBS
+        landing = next((c for c in active_climbs()
                         if 12 < abs(c[0] - p.x) <= 56
                         and c[1] - 3 <= p.y < c[2] - 8
                         and any(abs(y - p.y) < 6 and lo + 8 < min(p.x, c[0])
-                                and max(p.x, c[0]) < hi - 8 for lo, hi, y in GROUND)), None)
+                                and max(p.x, c[0]) < hi - 8 for lo, hi, y in active_ground())), None)
         if landing is not None:
             step = 205 * derived['moveSpeedMultiplier'] * dt
             p.x += clamp(landing[0] - p.x, -step, step)
@@ -1158,7 +1178,7 @@ def update_guest(p: Guest, dt, tick_now):
     sideways = int(bool(p.buttons & 2)) - int(bool(p.buttons & 1))
     if p.climb is not None and sideways and axis == 0 and p.stun <= 0 and not p.guard:
         cx, top, bottom = p.climb
-        landing = min((fy for lo, hi, fy in GROUND
+        landing = min((fy for lo, hi, fy in active_ground()
                        if lo + 28 < cx < hi - 28 and top + 20 < fy < bottom - 20
                        and abs(p.y - fy) <= 23),
                       key=lambda fy: abs(p.y - fy), default=None)
@@ -1302,11 +1322,11 @@ def movement_validate(p,m,tick_now):
         cx,top,bottom=eclimb
         if abs(x-cx)>2 or not top-1<=y<=bottom+1:return 'climb-geometry'
     elif grounded:
-        supported=any(lo+8<x<hi-8 and abs(y-top)<=2 for lo,hi,top in GROUND)
+        supported=any(lo+8<x<hi-8 and abs(y-top)<=2 for lo,hi,top in active_ground())
         if not supported:return 'invalid-ground'
     # Crossing a one-way solid from above to below (descending) is not legal.
     if y>p.y+2 and vy>=0 and not climb:
-        for lo,hi,top in GROUND:
+        for lo,hi,top in active_ground():
             if lo+8<min(x,p.x) and max(x,p.x)<hi-8 and p.y<=top+2<y-2:
                 return 'platform-through'
     if abs(y-p.y)>105 and not climb:return 'vertical-teleport'
@@ -1455,7 +1475,7 @@ def spawn_loot_for(killer,m):
     if not candidates:return None
     template=random.choice(candidates)
     x=m.x+random.uniform(-8,8)
-    valid=[y for lo,hi,y in GROUND if lo+12<x<hi-12 and y>=m.y-22]
+    valid=[y for lo,hi,y in active_ground() if lo+12<x<hi-12 and y>=m.y-22]
     ground_y=min(valid) if valid else 550
     now=time.monotonic()
     drop={'id':'loot-'+secrets.token_hex(8),'item_id':template['item_id'],'x':round(x,1),'y':ground_y,
@@ -1911,13 +1931,13 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     p.writer_probe_counter+=1
     if _trace_writer:_writer_aoi_start=time.perf_counter_ns()
     current=aoi_view(world,p)
-    if p.room=='movement_lab':
-        current['players']={eid:e for eid,e in current['players'].items() if players.get(eid) is not None and players[eid].room=='movement_lab'}
+    if p.room=='movement_lab' or p.room.startswith('bamboo_'):
+        current['players']={eid:e for eid,e in current['players'].items() if players.get(eid) is not None and players[eid].room==p.room}
         current['mobs']={};current['shots']={};current['loot']={}
     elif not (isinstance(world,SharedSnapshot) and world.all_forest_players):
         # v8.0DV: keep original live room filter for mixed-room worlds;
         # avoid rebuilding a large identical dict for forest-only worlds.
-        current['players']={eid:e for eid,e in current['players'].items() if (players.get(eid) is None or players[eid].room=='forest')}
+        current['players']={eid:e for eid,e in current['players'].items() if (players.get(eid) is None or players[eid].room==p.room)}
     if _trace_writer:
         _writer_stage_samples['aoi'].append((time.perf_counter_ns()-_writer_aoi_start)/1e6)
         if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.aoi',time.perf_counter_ns()-_writer_aoi_start)
@@ -2492,6 +2512,69 @@ async def switch_channel(p, target):
     return {'t':'channel_ack','ok':True,'channel':target,'channels':channel_status(p.room),
             'x':p.x,'y':p.y,'fastSelfEpoch':p.fast_self_epoch,'moveEpoch':p.move_epoch}
 
+async def switch_map(p, target, via='selector'):
+    # Server owns both worlds; no client positions/physics accepted.
+    now=time.monotonic()
+    if target not in PUBLIC_MAP_IDS or p.room not in PUBLIC_MAP_IDS:
+        return {'t':'map_ack','ok':False,'reason':'invalid_map','map':p.room}
+    if target==p.room:
+        return {'t':'map_ack','ok':True,'same':True,**map_payload(p.room)}
+    source_index=PUBLIC_MAP_IDS.index(p.room)
+    target_index=PUBLIC_MAP_IDS.index(target)
+    if via=='portal':
+        if abs(target_index-source_index)!=1:
+            return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
+        if target_index>source_index and p.x<WORLD_W-125:
+            return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
+        if target_index<source_index and p.x>125:
+            return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
+    elif via!='selector':
+        return {'t':'map_ack','ok':False,'reason':'invalid_via','map':p.room}
+    target_world=worlds[(p.channel,target)]
+    if len(target_world.players)>=MAP_HARD_CAPS[target]:
+        return {'t':'map_ack','ok':False,'reason':'map_full','map':p.room}
+    if now-p.map_switch_at<1.4:
+        return {'t':'map_ack','ok':False,'reason':'cooldown','map':p.room}
+    if p.auto_state.enabled:
+        return {'t':'map_ack','ok':False,'reason':'auto_active','map':p.room}
+    if p.dead>0 or p.hp<=0 or p.stun>0 or p.down>0 or p.climb or not p.ground or p.action in ('attack','aoe','break','dash'):
+        return {'t':'map_ack','ok':False,'reason':'must_stand_idle','map':p.room}
+    if now-p.last_attack_at<3 or now-p.last_damage_at<3:
+        return {'t':'map_ack','ok':False,'reason':'in_combat','map':p.room}
+    origin=p.world_ref
+    origin.shots[:]=[shot for shot in origin.shots if shot.owner!=p.id]
+    record_world_event(origin, {'t':'leave','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
+    origin.players.pop(p.id,None)
+    hibernate_world(origin)
+    target_world.players[p.id]=p
+    p.room=target;p.world_ref=target_world
+    p.event_cursor=target_world.event_seq
+    _world_context.set(target_world)
+    wake_world(target_world)
+    old_writer=p.snapshot_task
+    if old_writer:old_writer.cancel()
+    p.snapshot_task=None
+    p.buttons=0;p.vx=0;p.vy=0;p.ground=True;p.climb=None;p.guard=False
+    # Right-hand portal arrival emerges near left of next map; vice versa.
+    p.x=(WORLD_W-175 if via=='portal' and target_index<source_index else 175)
+    p.y=550
+    p.auto_state.enabled=False;p.auto_state.stay_alert=False
+    p.auto_state.anchor=None;p.auto_state.goal=None
+    p.manual_target_id=None;p.manual_auto_skill=None;p.manual_guard=False
+    p.map_switch_at=now
+    p.fast_self_epoch+=1;p.fast_self_last=None
+    while not p.fast_self_outbox.empty():
+        try:p.fast_self_outbox.get_nowait()
+        except asyncio.QueueEmpty:break
+    while not p.snapshot_outbox.empty():
+        try:p.snapshot_outbox.get_nowait()
+        except asyncio.QueueEmpty:break
+    movement_change_mode(p,'server')
+    record_world_event(target_world, {'t':'join','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
+    return {'t':'map_ack','ok':True,**map_payload(target), 'x':p.x,'y':p.y,
+            'fastSelfEpoch':p.fast_self_epoch,'moveEpoch':p.move_epoch,
+            'channels':channel_status(p.room)}
+
 async def handle_connection(ws):
     guest_id = None
     admitted_world = None
@@ -2586,12 +2669,13 @@ async def handle_connection(ws):
         if ENABLE_FAST_SELF_30HZ:features.append('server-fast-self-30hz-v80ec')
         features.append('fixed-channels-v80ee')
         features.append('lazy-map-hibernation-v80ef')
+        features.append('bamboo-map-worlds-v1')
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
-        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
+        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq',**map_payload('forest'),'room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         if ENABLE_FAST_SELF_30HZ:
             p.fast_self_task=asyncio.create_task(fast_self_writer(p),name='fastself-'+guest_id)
@@ -2635,6 +2719,23 @@ async def handle_connection(ws):
                    'channels':stress_occupancy(p.room),
                    'serverGuests':len(connected_players),
                    'maxGuests':MAX_GUESTS,'stressMax':CHANNEL_STRESS_TOTAL},separators=(',',':')))
+                continue
+            if m.get('t')=='map_change':
+                if set(m)!={'t','map','via'} or m.get('map') not in PUBLIC_MAP_IDS or m.get('via') not in ('portal','selector'):
+                    await ws.close(code=1008,reason='Invalid map change');break
+                if not check_rate(p.channel_switch_times,12,30):
+                    await ws.send(json.dumps({'t':'map_ack','ok':False,'reason':'rate_limited','map':p.room}))
+                    continue
+                prior_snapshot_task=p.snapshot_task
+                answer=await switch_map(p,m['map'],m['via'])
+                if answer.get('ok') and not answer.get('same'):
+                    if prior_snapshot_task:
+                        try:await prior_snapshot_task
+                        except asyncio.CancelledError:pass
+                async with p.ws_send_lock:
+                    await ws.send(json.dumps(answer,separators=(',',':')))
+                if answer.get('ok') and not answer.get('same'):
+                    p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+p.id)
                 continue
             if m.get('t')=='channel_list':
                 if set(m)!={'t'}:
