@@ -183,6 +183,9 @@ ENABLE_CHANNEL_STRESS = os.environ.get('ENABLE_CHANNEL_STRESS','0') == '1'
 # EJ: pure passive performance tracer; disabled by default. No protocol/gameplay changes.
 # Enable only during representative tests, then disable to measure baseline without tracer cost.
 ENABLE_PERFORMANCE_PROFILER = os.environ.get('JIANGHU_PROFILE','0') == '1'
+# EL: phase each socket AFTER its world sample, never delay a missed wall-clock slot by 100ms.
+# Rollback without source changes: JIANGHU_EL_SNAPSHOT_SCHED=0.
+ENABLE_EL_SNAPSHOT_SCHED = os.environ.get('JIANGHU_EL_SNAPSHOT_SCHED','1') == '1'
 CHANNEL_STRESS_PER_CHANNEL = 200
 CHANNEL_STRESS_TOTAL = min(200, MAX_GUESTS)  # global guard; 150 bots + observer on MAX_GUESTS=201
 
@@ -308,7 +311,8 @@ class Guest(Actor):
     cast_face: int = 0
     snapshot_outbox: asyncio.Queue = field(default_factory=lambda:asyncio.Queue(maxsize=1))
     snapshot_task: Optional[asyncio.Task] = None
-    snapshot_slot: int = 0  # 0..9, 10ms-phase staggering across each 100ms broadcast cycle
+    snapshot_slot: int = 0  # 0..9, optional EL 2.5ms offset after world sample
+    snapshot_last_sent_at: float = 0.0  # EL diagnostic only: server-side active-client cadence
     background_phase: int = 0 # v8.0DS: stable 0..9, schedules hidden views across ten 100ms broadcasts
     applied_input_seq: int = -1  # actual command consumed by the authoritative 30Hz simulation
     protocol_delta: bool = False # legacy BX clients still require unfiltered full snapshots
@@ -487,6 +491,7 @@ _diag_cgroup_prev = None
 _cv_loop_spikes = deque(maxlen=128)
 _cv_writer_wait = deque(maxlen=2000)
 _cv_snapshot_age = deque(maxlen=2000)
+_cv_active_snapshot_gap = deque(maxlen=2000)  # EL: successful active writer sends only
 _cv_send_spikes = deque(maxlen=128)
 _cv_outbox_skipped = 0
 _bg_snapshot_queued = 0 # number of Background views actually enqueued in the window
@@ -642,7 +647,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0EK','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0EL','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(connected_players),'autoGuests':sum(bool(p.auto_state.enabled) for p in connected_players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in connected_players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in connected_players.values()),'activeGuests':sum(p.view_mode=='active' for p in connected_players.values()),
         'monsters':sum(len(w.monsters) for w in worlds.values()),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -652,6 +657,7 @@ def report_performance_to_render(now):
         'encodeP95Ms':perf_data['snapshotEncodeP95Ms'],'encodeMaxMs':perf_data['snapshotEncodeMaxMs'],
         'totalGuestCap':CHANNEL_TOTAL_GUEST_CAP,'pendingJoins':_pending_joins,
         'stressEnabled':ENABLE_CHANNEL_STRESS,'perfProfilerEnabled':ENABLE_PERFORMANCE_PROFILER,
+        'elSnapshotSchedulerEnabled':ENABLE_EL_SNAPSHOT_SCHED,
         'stressGuests':sum(p.stress_test for p in connected_players.values()),
         'stressByChannel':{str(ch):sum(p.stress_test for p in worlds[(ch,'forest')].players.values()) for ch in CHANNEL_IDS},
         'channels':{str(ch):{'forest':len(worlds[(ch,'forest')].players),'lab':len(worlds[(ch,'movement_lab')].players)} for ch in CHANNEL_IDS},
@@ -678,6 +684,7 @@ def report_performance_to_render(now):
     # samples can distinguish scheduling, stale snapshots and network sends.
     waits=sorted(_cv_writer_wait)
     ages=sorted(_cv_snapshot_age)
+    active_send_gaps=sorted(_cv_active_snapshot_gap)
     data['tailLatency']={
         'loopSpikeCount':len(_cv_loop_spikes),
         'loopSpikeMaxMs':round(max(_cv_loop_spikes),2) if _cv_loop_spikes else None,
@@ -685,6 +692,9 @@ def report_performance_to_render(now):
         'writerSlotWaitMaxMs':percentile(waits,1),
         'snapshotAgeP95Ms':percentile(ages,.95),
         'snapshotAgeMaxMs':percentile(ages,1),
+        'activeSnapshotSendGapP95Ms':percentile(active_send_gaps,.95),
+        'activeSnapshotSendGapP99Ms':percentile(active_send_gaps,.99),
+        'activeSnapshotSendGapMaxMs':percentile(active_send_gaps,1),
         'sendSpikeCount':len(_cv_send_spikes),
         'sendSpikeMaxMs':round(max(_cv_send_spikes),2) if _cv_send_spikes else None,
         'outboxSkipped':_cv_outbox_skipped,
@@ -693,7 +703,7 @@ def report_performance_to_render(now):
     _cv_outbox_skipped=0
     _bg_snapshot_queued=0;_bg_snapshot_peak_batch=0
     _cv_loop_spikes.clear();_cv_writer_wait.clear()
-    _cv_snapshot_age.clear();_cv_send_spikes.clear()
+    _cv_snapshot_age.clear();_cv_send_spikes.clear();_cv_active_snapshot_gap.clear()
     for values in _writer_stage_samples.values():values.clear()
     for values in _profile_samples.values():values.clear()
     # No telemetry is written to Supabase until a separate authenticated storage path exists.
@@ -1894,9 +1904,16 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         source=players.get(source_id) if source_id else None
         if source is not None:return source.room==p.room
         return p.room=='forest'
-    result['events']=[e for e in (events_override if events_override is not None else world['events']) if visible_room_event(e) and
-                       (e.get('victim')==p.id or e.get('owner')==p.id or
-                        abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200)]
+    # EL: pending_world_events() already applies the exact room and AOI
+    # predicate. Its bounded result is socket-local, and this function is
+    # synchronous; repeating visibility checks wastes work without adding
+    # protection. Retain the legacy filtering when no override is supplied.
+    if events_override is not None:
+        result['events']=events_override
+    else:
+        result['events']=[e for e in world['events'] if visible_room_event(e) and
+                          (e.get('victim')==p.id or e.get('owner')==p.id or
+                           abs(float(e.get('x',p.x))-p.x)<=AOI_RADIUS+200)]
     if _trace_writer:
         _writer_stage_samples['delta'].append((time.perf_counter_ns()-_writer_delta_start)/1e6)
         if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.delta',time.perf_counter_ns()-_writer_delta_start)
@@ -1985,10 +2002,20 @@ async def snapshot_writer(p: Guest):
     try:
         while True:
             world=await p.snapshot_outbox.get()
-            period=.1;offset=p.snapshot_slot*(period/STAGGER_SLOTS)
-            wait=(offset-(time.monotonic()%period))%period
             slot_start=time.monotonic()
             _prof_slot_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
+            if ENABLE_EL_SNAPSHOT_SCHED and isinstance(world, SharedSnapshot):
+                # EK produces each world every 100ms but offsets worlds across
+                # three 30Hz ticks. Waiting for a global modulo-100ms socket
+                # slot can miss the just-created sample and add ~100ms latency.
+                # Instead stagger sockets across 22.5ms AFTER this world sample.
+                # Overdue samples are immediately eligible (no wrap-around).
+                stagger = (p.snapshot_slot % STAGGER_SLOTS) * .0025
+                wait = max(0.0, world.created_monotonic + stagger - slot_start)
+            else:
+                # Exact EK fallback for A/B and immediate rollback.
+                period=.1;offset=p.snapshot_slot*(period/STAGGER_SLOTS)
+                wait=(offset-(slot_start%period))%period
             if wait>.001:await asyncio.sleep(wait)
             if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.slot_wait_intentional',time.perf_counter_ns()-_prof_slot_start)
             _cv_writer_wait.append((time.monotonic()-slot_start)*1000)
@@ -2036,6 +2063,15 @@ async def snapshot_writer(p: Guest):
                 previous,last_full_tick=current,full_tick
                 p.event_cursor=event_cursor
                 prev_private,prev_inventory=priv,inv
+                if p.view_mode=='active':
+                    sent_now=time.monotonic()
+                    if p.snapshot_last_sent_at:
+                        # This is REAL observed send cadence inside the server.
+                        # Do not combine with hidden/background 1Hz traffic.
+                        _cv_active_snapshot_gap.append((sent_now-p.snapshot_last_sent_at)*1000)
+                    p.snapshot_last_sent_at=sent_now
+                else:
+                    p.snapshot_last_sent_at=0.0
             except (asyncio.TimeoutError,ConnectionClosed,OSError):
                 try:await p.ws.close(code=1011,reason='Snapshot send timeout')
                 except Exception:pass
@@ -2438,6 +2474,7 @@ async def handle_connection(ws):
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
+        if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         if ENABLE_FAST_SELF_30HZ:
@@ -2761,7 +2798,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EK public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EL public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
