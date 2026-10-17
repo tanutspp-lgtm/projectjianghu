@@ -191,6 +191,10 @@ ENABLE_EL_SNAPSHOT_SCHED = os.environ.get('JIANGHU_EL_SNAPSHOT_SCHED','0') == '1
 # Revision shortcut avoids O(inventory size) equality work every recipient sample.
 # Increment revision on EVERY inventory mutation. Rollback: JIANGHU_EM_INVENTORY_REV=0.
 ENABLE_EM_INVENTORY_REV = os.environ.get('JIANGHU_EM_INVENTORY_REV','1') == '1'
+# EN: event journal hot path. Original scans every old record, for every recipient.
+# Reverse-scan only records newer than this recipient's acknowledged cursor.
+# Opt-out: JIANGHU_EN_EVENT_SCAN=0 (no client deploy required).
+ENABLE_EN_EVENT_SCAN = os.environ.get('JIANGHU_EN_EVENT_SCAN','1') == '1' 
 CHANNEL_STRESS_PER_CHANNEL = 200
 CHANNEL_STRESS_TOTAL = min(200, MAX_GUESTS)  # global guard; 150 bots + observer on MAX_GUESTS=201
 
@@ -645,7 +649,7 @@ def _profile_report(window, cpu_pct):
           'players':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].players),
           'monsters':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].monsters)}
          for k,v in sorted(_profile_worlds.items(),key=lambda kv:kv[1][0],reverse=True)[:5]]
-    data={'v':'v8.0EM','ts':int(time.time()),'boot':_diag_boot,
+    data={'v':'v8.0EN','ts':int(time.time()),'boot':_diag_boot,
           'windowSec':round(window,2),'cpuCorePct':cpu_pct,
           'sampleMeaning':'all-call totals; bounded newest P95/P99 samples; nested sync stages overlap; concurrent async waits are NOT CPU',
           'syncStages':sync_stages,'waitStages':wait_stages,'worldTop':top}
@@ -677,7 +681,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0EM','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0EN','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(connected_players),'autoGuests':sum(bool(p.auto_state.enabled) for p in connected_players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in connected_players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in connected_players.values()),'activeGuests':sum(p.view_mode=='active' for p in connected_players.values()),
         'monsters':sum(len(w.monsters) for w in worlds.values()),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -689,6 +693,7 @@ def report_performance_to_render(now):
         'stressEnabled':ENABLE_CHANNEL_STRESS,'perfProfilerEnabled':ENABLE_PERFORMANCE_PROFILER,
         'elSnapshotSchedulerEnabled':ENABLE_EL_SNAPSHOT_SCHED,
         'emInventoryRevisionEnabled':ENABLE_EM_INVENTORY_REV,
+        'enEventScanEnabled':ENABLE_EN_EVENT_SCAN,
         'rssKiB':em_process_memory(),'gcCounts':list(gc.get_count()),
         'gcCollections':[x['collections'] for x in gc.get_stats()],
         'stressAutoEnabled':sum(p.stress_test and p.auto_state.enabled for p in connected_players.values()),
@@ -2050,7 +2055,24 @@ def pending_world_events(p, highwater):
     payload = []
     cursor = p.event_cursor
     bytes_used = 0
-    for seq, created, item, event_bytes in journal:
+    if ENABLE_EN_EVENT_SCAN:
+        # event_seq is strictly monotonic within a world's deque, including
+        # after hibernation (the deque is cleared, but seq is not reset).
+        # Iterate from newest to oldest and stop at LAST SUCCESSFUL send.
+        # Reversing the short candidate list restores original causal order.
+        # Crucially, this avoids scanning up to 2048 old events PER SOCKET at
+        # every 10Hz writer cycle once the bounded journal fills up.
+        newer=[]
+        for entry in reversed(journal):
+            if entry[0] > highwater:
+                continue
+            if entry[0] <= cursor:
+                break
+            newer.append(entry)
+        candidate_records=reversed(newer)
+    else:
+        candidate_records=journal
+    for seq, created, item, event_bytes in candidate_records:
         if seq <= cursor: continue
         if seq > highwater: break
         # Invisible/expired events do not consume recipient budget.
@@ -2900,7 +2922,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EM public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EN public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
