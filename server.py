@@ -3,6 +3,7 @@ Browser inputs are UNTRUSTED. Position, damage, HP, monsters, cooldowns are serv
 Runs on Python 3.11+ with websockets>=15.
 """
 import asyncio
+import gc
 from pathlib import Path
 import json
 import math
@@ -185,7 +186,11 @@ ENABLE_CHANNEL_STRESS = os.environ.get('ENABLE_CHANNEL_STRESS','0') == '1'
 ENABLE_PERFORMANCE_PROFILER = os.environ.get('JIANGHU_PROFILE','0') == '1'
 # EL: phase each socket AFTER its world sample, never delay a missed wall-clock slot by 100ms.
 # Rollback without source changes: JIANGHU_EL_SNAPSHOT_SCHED=0.
-ENABLE_EL_SNAPSHOT_SCHED = os.environ.get('JIANGHU_EL_SNAPSHOT_SCHED','1') == '1'
+ENABLE_EL_SNAPSHOT_SCHED = os.environ.get('JIANGHU_EL_SNAPSHOT_SCHED','0') == '1'
+# EM: keep known-bad EL scheduling disabled by default. Explicit =1 still allows A/B.
+# Revision shortcut avoids O(inventory size) equality work every recipient sample.
+# Increment revision on EVERY inventory mutation. Rollback: JIANGHU_EM_INVENTORY_REV=0.
+ENABLE_EM_INVENTORY_REV = os.environ.get('JIANGHU_EM_INVENTORY_REV','1') == '1'
 CHANNEL_STRESS_PER_CHANNEL = 200
 CHANNEL_STRESS_TOTAL = min(200, MAX_GUESTS)  # global guard; 150 bots + observer on MAX_GUESTS=201
 
@@ -290,6 +295,10 @@ class Guest(Actor):
     max_sta: float = 100.0
     defense: int = 0
     inventory: list = field(default_factory=list)
+    inventory_revision: int = 0
+    writer_inventory_revision: int = -1
+    auto_command_seq: int = 0
+    auto_revision: int = 0
     last_crit: bool = False
     # Guest QA-only: server owns all loadout selections. No Supabase character mutation.
     test_level: Optional[int] = None
@@ -499,8 +508,27 @@ _bg_snapshot_peak_batch = 0 # max Background views enqueued in a single 100ms br
 _fast_self_sent = 0
 _fast_self_skipped = 0
 _fast_self_bytes = 0
+_em_auto_ack_sent = 0
+_em_auto_canceled = 0
+_em_fast_self_auto_violations = 0
+_em_fast_self_stress_violations = 0
+_em_inv_fast_reuse = 0
+_em_inv_full_compare = 0
+_em_inv_copy = 0
+_em_writer_samples = {'packetBytes':0,'samples':0,'privateBytes':0,'privateChangedKeys':0,
+                      'entities':0,'inventorySize':0,'events':0}
 SPATIAL_CELL = 240
 
+
+def em_process_memory():
+    # /proc self is Linux-specific; never blocks game and is queried only per 15s.
+    try:
+        for row in Path('/proc/self/status').read_text().splitlines():
+            if row.startswith('VmRSS:'):
+                return int(row.split()[1])  # KiB
+    except (OSError, IndexError, ValueError):
+        pass
+    return None
 
 def read_cgroup_cpu():
     """Best-effort cgroup-v2 CPU limit/throttling counters, once per 15s.
@@ -617,7 +645,7 @@ def _profile_report(window, cpu_pct):
           'players':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].players),
           'monsters':len(worlds[tuple([int(k.split(':',1)[0]),k.split(':',1)[1]])].monsters)}
          for k,v in sorted(_profile_worlds.items(),key=lambda kv:kv[1][0],reverse=True)[:5]]
-    data={'v':'v8.0EK','ts':int(time.time()),'boot':_diag_boot,
+    data={'v':'v8.0EM','ts':int(time.time()),'boot':_diag_boot,
           'windowSec':round(window,2),'cpuCorePct':cpu_pct,
           'sampleMeaning':'all-call totals; bounded newest P95/P99 samples; nested sync stages overlap; concurrent async waits are NOT CPU',
           'syncStages':sync_stages,'waitStages':wait_stages,'worldTop':top}
@@ -632,6 +660,8 @@ def report_performance_to_render(now):
     """
     global _diag_last, _diag_process_cpu, _diag_sent, _diag_overwritten, _diag_cgroup_prev, _cv_outbox_skipped
     global _bg_snapshot_queued, _bg_snapshot_peak_batch, _fast_self_sent, _fast_self_skipped, _fast_self_bytes
+    global _em_auto_ack_sent, _em_auto_canceled, _em_fast_self_auto_violations, _em_fast_self_stress_violations
+    global _em_inv_fast_reuse, _em_inv_full_compare, _em_inv_copy
     if now-_diag_last<DIAG_WINDOW_SEC:return
     window=now-_diag_last
     cpu_delta=time.process_time()-_diag_process_cpu
@@ -647,7 +677,7 @@ def report_performance_to_render(now):
     def percentile(a, ratio):
         return round(a[min(len(a)-1,int((len(a)-1)*ratio))],2) if a else None
     data={
-        'v':'v8.0EL','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
+        'v':'v8.0EM','boot':_diag_boot,'ts':int(time.time()),'windowSec':round(window,1),
         'guests':len(connected_players),'autoGuests':sum(bool(p.auto_state.enabled) for p in connected_players.values()),'backgroundAutoGuests':sum(p.view_mode=='background' and p.auto_state.enabled for p in connected_players.values()),'backgroundGuests':sum(p.view_mode=='background' for p in connected_players.values()),'activeGuests':sum(p.view_mode=='active' for p in connected_players.values()),
         'monsters':sum(len(w.monsters) for w in worlds.values()),'backgroundSnapshotQueued':_bg_snapshot_queued,'backgroundBatchPeak':_bg_snapshot_peak_batch,'cpuCorePct':round(100*cpu_delta/max(.001,window),1),
         'cpuQuotaCores':quota,'cgroupThrottledPeriods':throttled_periods,
@@ -658,6 +688,14 @@ def report_performance_to_render(now):
         'totalGuestCap':CHANNEL_TOTAL_GUEST_CAP,'pendingJoins':_pending_joins,
         'stressEnabled':ENABLE_CHANNEL_STRESS,'perfProfilerEnabled':ENABLE_PERFORMANCE_PROFILER,
         'elSnapshotSchedulerEnabled':ENABLE_EL_SNAPSHOT_SCHED,
+        'emInventoryRevisionEnabled':ENABLE_EM_INVENTORY_REV,
+        'rssKiB':em_process_memory(),'gcCounts':list(gc.get_count()),
+        'gcCollections':[x['collections'] for x in gc.get_stats()],
+        'stressAutoEnabled':sum(p.stress_test and p.auto_state.enabled for p in connected_players.values()),
+        'stressAutoOff':sum(p.stress_test and not p.auto_state.enabled for p in connected_players.values()),
+        'fastSelfAutoViolations':_em_fast_self_auto_violations,
+        'fastSelfStressViolations':_em_fast_self_stress_violations,
+        'autoAckSent':_em_auto_ack_sent,'autoManualCancels':_em_auto_canceled,
         'stressGuests':sum(p.stress_test for p in connected_players.values()),
         'stressByChannel':{str(ch):sum(p.stress_test for p in worlds[(ch,'forest')].players.values()) for ch in CHANNEL_IDS},
         'channels':{str(ch):{'forest':len(worlds[(ch,'forest')].players),'lab':len(worlds[(ch,'movement_lab')].players)} for ch in CHANNEL_IDS},
@@ -699,6 +737,14 @@ def report_performance_to_render(now):
         'sendSpikeMaxMs':round(max(_cv_send_spikes),2) if _cv_send_spikes else None,
         'outboxSkipped':_cv_outbox_skipped,
     }
+    data['emWriter']={
+        'inventoryRevisionReuses':_em_inv_fast_reuse,
+        'inventoryFullComparisons':_em_inv_full_compare,
+        'inventoryCopies':_em_inv_copy,
+        'sampleCount':_em_writer_samples['samples'],
+        **{key+'Avg':round(_em_writer_samples[key]/max(1,_em_writer_samples['samples']),2)
+           for key in ('packetBytes','privateBytes','privateChangedKeys','entities','inventorySize','events')},
+    }
     _profile_report(window,data['cpuCorePct'])
     _cv_outbox_skipped=0
     _bg_snapshot_queued=0;_bg_snapshot_peak_batch=0
@@ -710,6 +756,10 @@ def report_performance_to_render(now):
     print('JIANGHU_DIAG '+json.dumps(data,separators=(',',':')),flush=True)
     _diag_sent=0;_diag_overwritten=0;_diag_send_durations.clear()
     _fast_self_sent=0;_fast_self_skipped=0;_fast_self_bytes=0
+    _em_auto_ack_sent=0;_em_auto_canceled=0
+    _em_fast_self_auto_violations=0;_em_fast_self_stress_violations=0
+    _em_inv_fast_reuse=0;_em_inv_full_compare=0;_em_inv_copy=0
+    for key in _em_writer_samples:_em_writer_samples[key]=0
 
 
 # NOTE: The OFFLINE JavaScript spawner remains the source of truth for this test-map
@@ -1421,6 +1471,7 @@ def advance_loot():
             if abs(p.x-drop['x'])>LOOT_PICKUP_X or abs(p.y-drop['y'])>LOOT_PICKUP_Y:continue
             entry={'uid':'bag-'+secrets.token_hex(8),'item_id':drop['item_id'],'obtainedAt':int(time.time()*1000)}
             p.inventory.append(entry)
+            p.inventory_revision += 1
             event('loot_pickup',drop['x'],drop['y'],victim=p.id,item_id=drop['item_id'])
             # Updated bag is sent only to the owner, never copied into public snapshots.
             # The socket event is queued outside the synchronous world update.
@@ -1646,7 +1697,7 @@ def private_progression(p):
             'sp':round(p.sp,2),'maxSp':p.max_sp,'sta':round(p.sta,2),'maxSta':p.max_sta,
             'defense':p.defense,'derived':derived_for_snapshot(p),
             'movementForced':bool(p.kb_time>0 or p.stun>0 or p.down>0 or p.dead>0 or p.hp<=0),
-            'auto':p.auto_state.enabled,'autoStay':p.auto_state.stay_alert,'autoAnchor':(dict(p.auto_state.anchor) if p.auto_state.stay_alert and p.auto_state.anchor else None),'autoTarget':(dict(p.auto_state.goal) if p.auto_state.enabled and p.auto_state.goal else None),
+            'auto':p.auto_state.enabled,'autoRevision':p.auto_revision,'autoStay':p.auto_state.stay_alert,'autoAnchor':(dict(p.auto_state.anchor) if p.auto_state.stay_alert and p.auto_state.anchor else None),'autoTarget':(dict(p.auto_state.goal) if p.auto_state.enabled and p.auto_state.goal else None),
             'autoTargetSeconds':round(max(0,p.auto_state.goal_due-time.monotonic()),1) if p.auto_state.enabled else 0,
             'sandboxAvailable':ENABLE_GUEST_SANDBOX,'inputAck':p.applied_input_seq,'performance':perf_data.copy(),**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
 
@@ -1926,11 +1977,26 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         result['self']={k:v for k,v in priv.items() if prev_private.get(k)!=v}
     # Immutable-by-copy ownership baseline: most 10Hz packets do not change
     # inventory. Compare live data first; copy only when baseline changed.
-    if not full and prev_inventory is not None and prev_inventory==p.inventory:
+    global _em_inv_fast_reuse, _em_inv_full_compare, _em_inv_copy
+    # Safe only because the current Guest inventory is mutated in exactly one
+    # authoritative pickup path, which increments inventory_revision.
+    reuse_revision=(ENABLE_EM_INVENTORY_REV and not full and prev_inventory is not None
+                    and p.writer_inventory_revision==p.inventory_revision
+                    and len(prev_inventory)==len(p.inventory))
+    if reuse_revision:
+        _em_inv_fast_reuse+=1
         inv=prev_inventory
+    elif not full and prev_inventory is not None:
+        _em_inv_full_compare+=1
+        if prev_inventory==p.inventory:
+            inv=prev_inventory
+        else:
+            inv=[dict(e) for e in p.inventory]
+            _em_inv_copy+=1
     else:
-        inv=[dict(e) for e in p.inventory] # isolated ownership snapshot
-    if full or prev_inventory!=inv:
+        inv=[dict(e) for e in p.inventory]
+        _em_inv_copy+=1
+    if full or inv is not prev_inventory:
         result['inventory']=inv
     if _trace_writer:
         _writer_stage_samples['private'].append((time.perf_counter_ns()-_writer_private_start)/1e6)
@@ -1944,6 +2010,14 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     if _trace_writer:
         _writer_stage_samples['json'].append((time.perf_counter_ns()-_writer_json_start)/1e6)
         if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.json',time.perf_counter_ns()-_writer_json_start)
+    if ENABLE_PERFORMANCE_PROFILER and (p.writer_probe_counter & 31)==1:
+        _em_writer_samples['samples']+=1
+        _em_writer_samples['packetBytes']+=len(packet)
+        _em_writer_samples['privateBytes']+=len(_COMPACT_WIRE_JSON_ENCODER.encode(result.get('self',{})))
+        _em_writer_samples['privateChangedKeys']+=len(result.get('self',{}))
+        _em_writer_samples['entities']+=sum(len(result.get(k,())) for k in packed_wire.KINDS)
+        _em_writer_samples['inventorySize']+=len(p.inventory)
+        _em_writer_samples['events']+=len(result.get('events',()))
     return (packet,current,
             (world['tick'] if full else last_full_tick),priv,inv)
 
@@ -2031,6 +2105,9 @@ async def snapshot_writer(p: Guest):
             event_highwater=(world.event_highwater if isinstance(world,SharedSnapshot) else p.world_ref.event_seq)
             pending_events,event_cursor=pending_world_events(p,event_highwater)
             encode_start=time.monotonic()
+            # Snapshot the revision BEFORE any socket await. Loot may arrive
+            # while send is suspended; only acknowledge the version encoded.
+            encoded_inventory_revision=p.inventory_revision
             _prof_encode_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
             if p.protocol_delta:
                 packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory,pending_events)
@@ -2063,6 +2140,7 @@ async def snapshot_writer(p: Guest):
                 previous,last_full_tick=current,full_tick
                 p.event_cursor=event_cursor
                 prev_private,prev_inventory=priv,inv
+                p.writer_inventory_revision=encoded_inventory_revision
                 if p.view_mode=='active':
                     sent_now=time.monotonic()
                     if p.snapshot_last_sent_at:
@@ -2127,6 +2205,9 @@ async def fast_self_writer(p: Guest):
                     if ENABLE_PERFORMANCE_PROFILER:_profile_add('self.send_await',time.perf_counter_ns()-_prof_self_send_start)
                     global _fast_self_sent,_fast_self_bytes,perf_out_bytes
                     _fast_self_sent+=1
+                    global _em_fast_self_auto_violations,_em_fast_self_stress_violations
+                    if p.auto_state.enabled:_em_fast_self_auto_violations+=1
+                    if p.stress_test:_em_fast_self_stress_violations+=1
                     _fast_self_bytes+=len(packet)
                     perf_out_bytes+=len(packet)
                 except (asyncio.TimeoutError,ConnectionClosed,OSError):
@@ -2380,7 +2461,7 @@ async def switch_channel(p, target):
 async def handle_connection(ws):
     guest_id = None
     admitted_world = None
-    global snapshot_join_sequence, _pending_joins
+    global snapshot_join_sequence, _pending_joins, _em_auto_canceled
     if _pending_joins >= MAX_PENDING_JOINS:
         await ws.close(code=1013,reason='Server admission busy');return
     _pending_joins += 1
@@ -2474,6 +2555,7 @@ async def handle_connection(ws):
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
+        features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
         await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq','room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'mapClimbs':[{'x':x,'top':t,'bottom':b} for x,t,b in CLIMBS],'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
@@ -2570,12 +2652,20 @@ async def handle_connection(ws):
                 await ws.send(json.dumps({'t':'sandbox_ack','ok':ok,'kind':m['t']}))
                 continue
             if m.get('t')=='auto':
-                if set(m)!={'t','enabled'} or type(m.get('enabled')) is not bool:
+                if set(m) not in ({'t','enabled'},{'t','enabled','seq'}) or type(m.get('enabled')) is not bool or ('seq' in m and (type(m['seq']) is not int or m['seq']<1 or m['seq']>2**53)):
                     await ws.close(code=1008,reason='Invalid AUTO toggle');break
                 if not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='AUTO toggle rate limit');break
+                # Reliable WS order + sequence number make duplicate retries idempotent.
+                if 'seq' in m and m['seq']<=p.auto_command_seq:
+                    async with p.ws_send_lock:
+                        await ws.send(json.dumps({'t':'auto_ack','seq':m['seq'],
+                            'enabled':p.auto_state.enabled,'revision':p.auto_revision,'ok':True},separators=(',',':')))
+                    continue
+                if 'seq' in m:p.auto_command_seq=m['seq']
                 previous_auto=p.auto_state.enabled
                 p.auto_state.enabled=m['enabled'] if p.room=='forest' else False
+                if previous_auto!=p.auto_state.enabled:p.auto_revision+=1
                 if previous_auto!=p.auto_state.enabled:
                     p.fast_self_last=None
                     while not p.fast_self_outbox.empty():
@@ -2587,6 +2677,13 @@ async def handle_connection(ws):
                 p.manual_guard=False
                 p.auto_state.stay_alert=False;p.auto_state.anchor=None;p.auto_state.anchor_evade_side=0
                 p.manual_auto_skill=None;p.manual_auto_until=0
+                if 'seq' in m:
+                    global _em_auto_ack_sent
+                    async with p.ws_send_lock:
+                        await ws.send(json.dumps({'t':'auto_ack','seq':m['seq'],
+                            'enabled':p.auto_state.enabled,'revision':p.auto_revision,
+                            'ok':p.room=='forest' or not m['enabled']},separators=(',',':')))
+                    _em_auto_ack_sent+=1
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
                     p.auto_state.goal=None;p.auto_state.goal_due=0
@@ -2714,6 +2811,11 @@ async def handle_connection(ws):
             # Client input NEVER overrides the AI's movement or goal.
             if p.auto_state.enabled and (buttons & (1|2|4|8)):
                 p.auto_state.enabled=False
+                p.auto_revision+=1
+                _em_auto_canceled+=1
+                async with p.ws_send_lock:
+                    await ws.send(json.dumps({'t':'auto_ack','seq':None,'enabled':False,
+                        'revision':p.auto_revision,'ok':True,'reason':'manual_movement'},separators=(',',':')))
                 p.fast_self_last=None  # resume fast self on first manual movement
                 p.auto_state.stay_alert=False;p.auto_state.anchor=None;p.auto_state.anchor_evade_side=0
                 p.manual_auto_skill=None;p.manual_auto_until=0
@@ -2798,7 +2900,7 @@ async def main():
     async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
-        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EL public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
+        print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EM public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
         await game_loop()
 
 if __name__ == '__main__':
