@@ -296,6 +296,8 @@ class Guest(Actor):
     stress_status_at: float = 0.0  # EI: throttle stress occupancy probes
     channel_switch_at: float = 0.0
     channel_switch_times: deque = field(default_factory=deque)
+    # Map selector requests have their OWN budget; refreshing/changing channels cannot consume it.
+    map_request_times: deque = field(default_factory=deque)
     avatar: str = 'male_hair_01_black'
     buttons: int = 0
     last_input: float = field(default_factory=time.monotonic)
@@ -2537,10 +2539,11 @@ async def switch_map(p, target, via='selector'):
         return {'t':'map_ack','ok':False,'reason':'cooldown','map':p.room}
     if p.auto_state.enabled:
         return {'t':'map_ack','ok':False,'reason':'auto_active','map':p.room}
-    if p.dead>0 or p.hp<=0 or p.stun>0 or p.down>0 or p.climb or not p.ground or p.action in ('attack','aoe','break','dash'):
-        return {'t':'map_ack','ok':False,'reason':'must_stand_idle','map':p.room}
-    if now-p.last_attack_at<3 or now-p.last_damage_at<3:
-        return {'t':'map_ack','ok':False,'reason':'in_combat','map':p.room}
+    # Map selector is an escape/travel mechanism: allow it while climbing a rope,
+    # on a ladder, in midair, during an attack/dash, or immediately after damage.
+    # Only genuinely incapacitated or dead characters are rejected.
+    if p.dead>0 or p.hp<=0 or p.stun>0 or p.down>0:
+        return {'t':'map_ack','ok':False,'reason':'busy','map':p.room}
     origin=p.world_ref
     origin.shots[:]=[shot for shot in origin.shots if shot.owner!=p.id]
     record_world_event(origin, {'t':'leave','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
@@ -2555,6 +2558,7 @@ async def switch_map(p, target, via='selector'):
     if old_writer:old_writer.cancel()
     p.snapshot_task=None
     p.buttons=0;p.vx=0;p.vy=0;p.ground=True;p.climb=None;p.guard=False
+    p.action='idle';p.action_at=0;p.action_duration=0  # stop mid-cast/air/climb animation on arrival
     # Right-hand portal arrival emerges near left of next map; vice versa.
     p.x=(WORLD_W-175 if via=='portal' and target_index<source_index else 175)
     p.y=550
@@ -2723,7 +2727,10 @@ async def handle_connection(ws):
             if m.get('t')=='map_change':
                 if set(m)!={'t','map','via'} or m.get('map') not in PUBLIC_MAP_IDS or m.get('via') not in ('portal','selector'):
                     await ws.close(code=1008,reason='Invalid map change');break
-                if not check_rate(p.channel_switch_times,12,30):
+                # Dedicated map-request limiter, independent of channel list/change.
+                # 30 requests / 30 seconds is abuse protection; successful map travel
+                # also retains its existing 1.4 s server-side cooldown.
+                if not check_rate(p.map_request_times,30,30):
                     await ws.send(json.dumps({'t':'map_ack','ok':False,'reason':'rate_limited','map':p.room}))
                     continue
                 prior_snapshot_task=p.snapshot_task
