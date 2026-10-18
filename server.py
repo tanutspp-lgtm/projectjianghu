@@ -220,21 +220,75 @@ if CLIMBS != _EXPECTED_CLIMBS:
 FARM_NAV=farm_auto.Navigation(GROUND,CLIMBS)
 # BAMBOO REAL WORLDS: room-based, same 2060px server-owned coordinate envelope.
 # No bamboo mob/loot templates until the owner supplies cropped sprites and manifest.
-BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม', 'platforms': [[0, 2060, 550], [170, 850, 390], [1020, 1770, 390], [410, 1070, 235], [1210, 1970, 235]], 'climbs': [[510, 235, 550, 'rope'], [1170, 390, 550, 'ladder'], [1590, 235, 550, 'rope']]}, 'bamboo_1': {'name': 'ทางเข้าดงไผ่', 'platforms': [[0, 2060, 550], [300, 710, 423], [890, 1280, 425], [1440, 1950, 425], [650, 1080, 300], [1340, 1770, 300]], 'climbs': [[850, 300, 550, 'rope'], [1550, 300, 550, 'ladder']]}, 'bamboo_2': {'name': 'ทางเลียบดงไผ่', 'platforms': [[0, 2060, 550], [240, 660, 430], [840, 1240, 430], [1430, 1950, 430], [470, 890, 305], [1170, 1610, 305]], 'climbs': [[640, 305, 550, 'ladder'], [1410, 305, 550, 'rope']]}, 'bamboo_3': {'name': 'ดงไผ่ริมสวนท้อ', 'platforms': [[0, 2060, 550], [230, 680, 427], [890, 1350, 425], [1490, 2000, 430], [460, 840, 300], [1130, 1550, 300], [1610, 2000, 180]], 'climbs': [[650, 300, 550, 'rope'], [1320, 300, 550, 'ladder'], [1810, 180, 430, 'rope']]}, 'bamboo_4': {'name': 'ลานฝึกหุบไผ่', 'platforms': [[0, 2060, 550], [260, 715, 425], [850, 1300, 430], [1460, 1970, 425], [490, 905, 305], [1070, 1510, 305], [900, 1270, 180]], 'climbs': [[670, 305, 550, 'ladder'], [1170, 180, 550, 'rope'], [1710, 425, 550, 'ladder']]}}
+BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
+            'platforms': [[0, 2060, 550], [170, 850, 390], [1020, 1770, 390], [410, 1070, 235], [1210, 1970, 235]],
+            'climbs': [[510, 235, 550, 'rope'], [1170, 390, 550, 'ladder'], [1590, 235, 550, 'rope']]},
+ 'bamboo_1': {'name': 'ทางเข้าดงไผ่',
+              'platforms': [[0, 2060, 550],
+                            [300, 710, 423],
+                            [890, 1280, 425],
+                            [1440, 1950, 425],
+                            [650, 1080, 300],
+                            [1340, 1770, 300]],
+              'climbs': [[850, 300, 550, 'rope'],
+                         [1550, 300, 550, 'ladder'],
+                         [470, 423, 550, 'ladder'],
+                         [1090, 425, 550, 'ladder'],
+                         [1775, 425, 550, 'ladder']]},
+ 'bamboo_2': {'name': 'ทางเลียบดงไผ่',
+              'platforms': [[0, 2060, 550],
+                            [240, 660, 430],
+                            [840, 1240, 430],
+                            [1430, 1950, 430],
+                            [470, 890, 305],
+                            [1170, 1610, 305]],
+              'climbs': [[640, 305, 550, 'ladder'],
+                         [1410, 305, 550, 'rope'],
+                         [415, 430, 550, 'ladder'],
+                         [1040, 430, 550, 'ladder'],
+                         [1735, 430, 550, 'ladder']]},
+ 'bamboo_3': {'name': 'ดงไผ่ริมสวนท้อ',
+              'platforms': [[0, 2060, 550],
+                            [230, 680, 427],
+                            [890, 1350, 425],
+                            [1490, 2000, 430],
+                            [460, 840, 300],
+                            [1130, 1550, 300],
+                            [1610, 2000, 180]],
+              'climbs': [[650, 300, 550, 'rope'],
+                         [1320, 300, 550, 'ladder'],
+                         [1810, 180, 430, 'rope'],
+                         [420, 427, 550, 'ladder'],
+                         [1080, 425, 550, 'ladder'],
+                         [1650, 430, 550, 'ladder']]},
+ 'bamboo_4': {'name': 'ลานฝึกหุบไผ่',
+              'platforms': [[0, 2060, 550],
+                            [260, 715, 425],
+                            [850, 1300, 430],
+                            [1460, 1970, 425],
+                            [490, 905, 305],
+                            [1070, 1510, 305],
+                            [900, 1270, 180]],
+              'climbs': [[670, 305, 550, 'ladder'],
+                         [1170, 180, 550, 'rope'],
+                         [1710, 425, 550, 'ladder'],
+                         [425, 425, 550, 'ladder'],
+                         [1025, 430, 550, 'ladder'],
+                         [1620, 425, 550, 'ladder']]}}
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4')
-# Bamboo newbie monsters: 20 per map per channel, deterministic server-owned slots.
-# Map 1/2: spirit=13, rabbit=7 (~2:1); Map 3/4: 7/7/6 (~1:1:1).
+# Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
+# Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
-    'bamboo_1': {'bamboo_spirit':13,'bamboo_rabbit':7},
-    'bamboo_2': {'bamboo_spirit':13,'bamboo_rabbit':7},
-    'bamboo_3': {'bamboo_spirit':7,'bamboo_rabbit':7,'brush_squirrel':6},
-    'bamboo_4': {'bamboo_spirit':7,'bamboo_rabbit':7,'brush_squirrel':6},
+    'bamboo_1': {'bamboo_spirit':9,'bamboo_rabbit':5},
+    'bamboo_2': {'bamboo_spirit':9,'bamboo_rabbit':5},
+    'bamboo_3': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
+    'bamboo_4': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
 }
 BAMBOO_MONSTER_NAMES = {'bamboo_spirit':'หน่อเซียน','bamboo_rabbit':'กระต่ายหูไผ่','brush_squirrel':'กระรอกหางพู่กัน'}
 def bamboo_spawn_slots(room):
     quota=BAMBOO_MONSTER_QUOTAS[room]
     kinds=[]
-    while len(kinds)<20:
+    while len(kinds)<sum(quota.values()):
         for kind in quota:
             if kinds.count(kind)<quota[kind]: kinds.append(kind)
     lanes=BAMBOO_MAPS[room]['platforms']
@@ -242,12 +296,12 @@ def bamboo_spawn_slots(room):
     for i,kind in enumerate(kinds):
         idx=i%len(lanes)
         lane=lanes[idx]
-        lane_count=len(range(idx,20,len(lanes)))
+        lane_count=len(range(idx,len(kinds),len(lanes)))
         position=i//len(lanes)
         lo,hi,y=lane
         x=lo+65+(hi-lo-130)*(position+1)/(lane_count+1)
         entries.append({'id':f'{room}:mob:{i+1:02}', 'kind':kind,'x':round(x,1),'y':float(y)})
-    assert len(entries)==20 and {k:sum(e['kind']==k for e in entries) for k in quota}==quota
+    assert len(entries)==sum(quota.values()) and {k:sum(e['kind']==k for e in entries) for k in quota}==quota
     return tuple(entries)
 BAMBOO_MONSTER_SLOTS = {name:bamboo_spawn_slots(name) for name in BAMBOO_MONSTER_QUOTAS}
 
@@ -447,6 +501,9 @@ class Monster(Actor):
     spawn_at: float = 0.0
     mark_stacks: dict = field(default_factory=dict)
     defense: int = 0
+    # Newbie bamboo mobs are peaceful until struck by an actual player attack.
+    retaliate_target: str = ''
+    retaliate_until: float = 0.0
 
 
 @dataclass
@@ -884,7 +941,8 @@ def spawn_mobs():
             x=x,y=y,hp=max_hp,max_hp=max_hp,defense=defense,home=x,spawn_y=y,hum=False,
             level=level,zone_mode='common',species=species,
             slot=mid,pouncer=slot.get('pouncer',False),bite_ready_at=time.monotonic()+.65,
-            patrol_dir=-1 if index%2 else 1,patrol_until=0,spawn_at=time.monotonic())
+            patrol_dir=-1 if index%2 else 1,patrol_phase='idle',
+            patrol_until=time.monotonic()+2+random.random()*2,spawn_at=time.monotonic())
 
 
 def hibernate_world(world):
@@ -1058,7 +1116,7 @@ def try_qi_shield(p):
 
 def perform_action(p: Guest, action: str):
     if p.dead > 0 or p.down > 0 or p.stun > 0 or p.broken > 0: return
-    if (p.room=='movement_lab' or p.room.startswith('bamboo_')) and action not in ('jump','dash','lock'): return  # no combat/projectiles in movement lab
+    if p.room=='movement_lab' and action not in ('jump','dash','lock'): return  # training-only movement lab has no combat
     if action == 'jump':
         if p.ground and p.climb is None:
             p.vy, p.ground, p.climb = -540, False, None
@@ -1087,7 +1145,7 @@ def perform_action(p: Guest, action: str):
     # AUTO AI already owns its target/facing. Direction is computed from server
     # monster coordinates, never from an untrusted client-supplied aim/position.
     shot_dir=p.face
-    if not p.auto_state.enabled and p.room=='forest':
+    if not p.auto_state.enabled and p.room in PUBLIC_MAP_IDS:
         # DJ: Re-select ONLY after death or truly invalid position. Never
         # retarget mid-combat just because the other mob takes one step closer.
         def legal_aim(m):
@@ -1406,7 +1464,7 @@ def mob_patrol(m, t):
             direction=-direction
             goal=clamp(m.x+direction*BEAST_PATROL_SPEED*duration,lo,hi)
         if abs(goal-m.x)<3:
-            m.patrol_phase='idle';m.patrol_until=t+.18+random.random()*.23
+            m.patrol_phase='idle';m.patrol_until=t+2+random.random()*2
             return 0
         m.patrol_dir=direction
         m.patrol_goal_x=goal
@@ -1414,11 +1472,11 @@ def mob_patrol(m, t):
         m.patrol_phase='walk'
     direction=m.patrol_dir
     if t>=m.patrol_until or (m.x>=m.patrol_goal_x if direction>0 else m.x<=m.patrol_goal_x):
-        m.patrol_phase='idle';m.patrol_until=t+.35+random.random()*.55
+        m.patrol_phase='idle';m.patrol_until=t+2+random.random()*2
         return 0
     if not supported(m,m.x+direction*26):
         m.patrol_dir=-direction
-        m.patrol_phase='idle';m.patrol_until=t+.18+random.random()*.23
+        m.patrol_phase='idle';m.patrol_until=t+2+random.random()*2
         return 0
     return direction*BEAST_PATROL_SPEED
 
@@ -1500,7 +1558,8 @@ def update_mob(m,dt,player_grid=None):
             m.ground=True;m.guard=False
             m.bite_started_at=-1e9;m.bite_hit_done=False
             m.bite_ready_at=t+.45
-            m.aggro_until=0;m.patrol_phase='choose';m.patrol_until=0;m.last_combat=False;m.mark_stacks.clear()
+            m.aggro_until=0;m.retaliate_target='';m.retaliate_until=0;
+            m.patrol_phase='idle';m.patrol_until=t+2+random.random()*2;m.last_combat=False;m.mark_stacks.clear()
             m.spawn_at=t
         return
     m.stun=max(0,m.stun-dt)
@@ -1521,6 +1580,16 @@ def update_mob(m,dt,player_grid=None):
         distance=abs(candidate.x-mx)
         if distance<BEAST_AGGRO+65 and distance<nearest:
             p=candidate;nearest=distance
+    if m.species in BAMBOO_MONSTER_NAMES:
+        if t>=m.retaliate_until:
+            m.retaliate_target=''
+        if not m.retaliate_target or p is None or p.id!=m.retaliate_target:
+            # A struck bamboo mob must not choose a different innocent bystander.
+            p=next((candidate for candidate in candidate_players_by_x(m,player_grid)
+                    if candidate.id==m.retaliate_target and
+                    reachable_player(m,candidate,target_lane)),None) if m.retaliate_target else None
+        if p is not None and abs(p.x-m.x)>=BEAST_AGGRO+65:
+            p=None
     if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.target_search',time.perf_counter_ns()-_mob_ai_start)
     if m.species=='brush_squirrel':
         return update_squirrel(m,dt,p,t)
@@ -1555,7 +1624,7 @@ def update_mob(m,dt,player_grid=None):
             m.vx=direction*BEAST_CHASE_SPEED if supported(m,m.x+direction*28) else 0
     else:
         if m.last_combat:
-            m.last_combat=False;m.patrol_phase='choose'
+            m.last_combat=False;m.patrol_phase='idle';m.patrol_until=t+2+random.random()*2
         m.vx=mob_patrol(m,t)
     if m.vx:
         direction=1 if m.vx>0 else -1
@@ -1652,6 +1721,11 @@ def grant_monster_kill(s,m):
 
 
 def hit_by_shot(s,victim,damage,is_mob):
+    if is_mob and isinstance(victim,Monster) and victim.species in BAMBOO_MONSTER_NAMES:
+        attacker=players.get(s.owner)
+        if attacker is not None and attacker.room==current_world().room:
+            victim.retaliate_target=attacker.id
+            victim.retaliate_until=time.monotonic()+12.0
     previous_alive=victim.hp>0 and victim.dead<=0
     actual=mitigate(damage,victim.defense) if is_mob else damage
     hurt(victim,actual,s.x,s.y,s.kind,critical=s.critical)
@@ -1663,6 +1737,8 @@ def bonus_hit(killer, victim, raw,kind='qi_echo'):
     """Qi bonus is a real server-side damage event; never trust client hits."""
     if victim.dead>0 or victim.hp<=0:return 0
     value=mitigate(prog.jsround(raw),victim.defense)  # same DEF/(250+DEF) as Offline
+    if victim.species in BAMBOO_MONSTER_NAMES:
+        victim.retaliate_target=killer.id;victim.retaliate_until=time.monotonic()+12.0
     victim.hp=max(0,victim.hp-value)
     victim.stun=max(victim.stun,.2)
     victim.vx=0
@@ -1677,7 +1753,7 @@ def bonus_hit(killer, victim, raw,kind='qi_echo'):
 
 def apply_qi_on_primary_hit(shot,victim,damage):
     killer=players.get(shot.owner)
-    if not killer or killer.room!='forest' or not isinstance(victim,Monster):return
+    if not killer or killer.room!=current_world().room or not isinstance(victim,Monster):return
     if loadouts.active_qi(killer,1) and shot.kind=='attack':
         mechanics=loadouts.qi_mechanics(killer,'flute_sustain')
         if random.random()*100<mechanics['stunPct']:
@@ -2112,7 +2188,8 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         source_id=e.get('owner') or e.get('victim')
         source=players.get(source_id) if source_id else None
         if source is not None:return source.room==p.room
-        return p.room=='forest'
+        # Events come from this already room-isolated world; monster IDs are not guests.
+        return p.world_ref.room==p.room
     # EL: pending_world_events() already applies the exact room and AOI
     # predicate. Its bounded result is socket-local, and this function is
     # synchronous; repeating visibility checks wastes work without adding
@@ -2194,7 +2271,7 @@ def event_visible_to_guest(e, p):
     # Exact same room and AOI rules as previous v8.0EJ snapshot path.
     source_id = e.get('owner') or e.get('victim')
     source = players.get(source_id) if source_id else None
-    if (source.room == p.room if source is not None else p.room == 'forest') is False:
+    if (source.room == p.room if source is not None else p.world_ref.room == p.room) is False:
         return False
     return (e.get('victim') == p.id or e.get('owner') == p.id or
             abs(float(e.get('x', p.x)) - p.x) <= AOI_RADIUS + 200)
