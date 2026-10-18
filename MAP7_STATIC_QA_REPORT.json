@@ -1,0 +1,72 @@
+{
+  "mapId": "suburb_gate_1",
+  "topology": {
+    "width": 2060,
+    "platforms": [
+      [
+        0,
+        2060,
+        550
+      ]
+    ],
+    "climbs": []
+  },
+  "monsters": 0,
+  "normalAttackAndSkills": "preserved server perform_action; no target required",
+  "tileSource": "existing assets/bamboo/ground_r1_c1..c4 + rock_face_mirror_00..11",
+  "assetInputs": [
+    "sky.png",
+    "clouds.png",
+    "far.png",
+    "mid.png",
+    "near.png"
+  ],
+  "imageSizes": [
+    [
+      1774,
+      887
+    ],
+    [
+      1774,
+      887
+    ],
+    [
+      1774,
+      887
+    ],
+    [
+      1774,
+      887
+    ],
+    [
+      1774,
+      887
+    ]
+  ],
+  "alpha": [
+    [
+      255,
+      255
+    ],
+    [
+      0,
+      255
+    ],
+    [
+      0,
+      255
+    ],
+    [
+      0,
+      255
+    ],
+    [
+      0,
+      255
+    ]
+  ],
+  "staticJSSyntax": "pass",
+  "serverPythonCompile": "pass",
+  "runtimeBrowserQA": "not run; navigation blocked by runtime administrator",
+  "iPadOnlineQA": "not run; owner to verify after deploy"
+}

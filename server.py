@@ -280,8 +280,12 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
                # staggered prefab floating islands only in the world center.
                # Each rope connects adjacent platform heights, no continuous rope.
                'platforms': [[0, 2060, 550], [725, 1380, 355], [825, 1355, 135], [865, 1215, -85]],
-               'climbs': [[830, 355, 550, 'rope'], [1190, 135, 355, 'rope'], [965, -85, 135, 'rope']]}}
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1')
+               'climbs': [[830, 355, 550, 'rope'], [1190, 135, 355, 'rope'], [965, -85, 135, 'rope']]},
+ 'suburb_gate_1': {'name':'ชุมชนหน้าประตูเมือง',
+                   # Map 7: peaceful town boundary, main floor only, no floating platforms.
+                   'platforms': [[0, 2060, 550]],
+                   'climbs': []}}
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -320,7 +324,7 @@ BAMBOO_CLIMBS = {mid: tuple((c[0],c[1],c[2]) for c in data['climbs']) for mid,da
 # Cache once per map (immutable geometry); no per-bot/per-tick graph rebuild.
 WORLD_FARM_NAV = {'forest': FARM_NAV, **{
     map_id: farm_auto.Navigation(BAMBOO_GROUNDS[map_id], BAMBOO_CLIMBS[map_id])
-    for map_id in BAMBOO_MONSTER_QUOTAS
+    for map_id in BAMBOO_MAPS if map_id != 'forest'
 }}
 def farm_nav_for(room):
     return WORLD_FARM_NAV.get(room, FARM_NAV)
@@ -544,7 +548,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10}  # City is a future map, not joinable yet.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10}  # City is a future map, not joinable yet.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -573,7 +577,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1')}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -2891,6 +2895,7 @@ async def handle_connection(ws):
         features.append('fixed-channels-v80ee')
         features.append('lazy-map-hibernation-v80ef')
         features.append('bamboo-map-worlds-v1')
+        features.append('suburb-gate-7worlds-v1')
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
