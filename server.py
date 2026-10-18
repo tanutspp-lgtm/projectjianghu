@@ -276,11 +276,11 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
                          [1025, 430, 550, 'ladder'],
                          [1620, 425, 550, 'ladder']]},
  'outskirts_1': {'name': 'ทางออกดงไผ่ · ชานเมือง',
-               # Sparse layout V3: ground + 4 spacious floating prefabs.
-               # Every upper surface links to ground through its own climb
-               # or a climb to another reachable platform.
-               'platforms': [[0, 2060, 550], [230, 770, 420], [895, 1435, 420], [1530, 1960, 420], [700, 1170, 275]],
-               'climbs': [[470, 420, 550, 'ladder'], [1100, 420, 550, 'ladder'], [1720, 420, 550, 'ladder'], [980, 275, 420, 'rope']]}}
+               # V5: quiet forest exit and quiet town entrance. Three vertically
+               # staggered prefab floating islands only in the world center.
+               # Each rope connects adjacent platform heights, no continuous rope.
+               'platforms': [[0, 2060, 550], [725, 1380, 355], [825, 1355, 135], [865, 1215, -85]],
+               'climbs': [[830, 355, 550, 'rope'], [1190, 135, 355, 'rope'], [965, -85, 135, 'rope']]}}
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.

@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-10-19",
+  "scope": "only outskirts_1 geometry and prefab mapping",
+  "base": {
+    "front": "JIANGHU_v8_0EP1_6MAP_OUTSKIRTS_NEW_BG_V4_4PLATFORM_NETLIFY.zip",
+    "back": "JIANGHU_v8_0EO_6MAP_OUTSKIRTS_4PLATFORM_SERVER_PATCH.zip"
+  },
+  "map": "outskirts_1",
+  "world_width": 2060,
+  "ground_plus_floating": 4,
+  "floating_only": 3,
+  "ropes": 3,
+  "platforms": [
+    [
+      0,
+      2060,
+      550
+    ],
+    [
+      725,
+      1380,
+      355
+    ],
+    [
+      825,
+      1355,
+      135
+    ],
+    [
+      865,
+      1215,
+      -85
+    ]
+  ],
+  "climbs": [
+    [
+      830,
+      355,
+      550,
+      "rope"
+    ],
+    [
+      1190,
+      135,
+      355,
+      "rope"
+    ],
+    [
+      965,
+      -85,
+      135,
+      "rope"
+    ]
+  ],
+  "rope_graph": "PASS: one-to-one adjacent platform tiers; connected 4 of 4",
+  "left_right_clear": [
+    725,
+    680
+  ],
+  "vertical_gaps": [
+    195,
+    220,
+    220
+  ],
+  "syntax": "PASS: Python py_compile and inline JavaScript node --check",
+  "other_maps": "PASS: server AST map definitions are byte-for-byte data equivalent for 5 older maps",
+  "bg": "PASS: BG V4 files unchanged; PNG sprite exists and alpha RGBA",
+  "live_ipad": "NOT YET TESTED",
+  "live_auto": "NOT YET TESTED"
+}
