@@ -1081,7 +1081,7 @@ def physics(actor, dt):
             hurt(actor, 100, actor.x, actor.y - 70, 'fall')
 
 
-def hurt(victim, damage, x, y, kind,critical=False):
+def hurt(victim, damage, x, y, kind,critical=False,owner=None):
     if victim.dead > 0 or victim.inv > 0: return
     if isinstance(victim, Guest) and victim.guard and victim.broken <= 0:
         event('block', victim.x, victim.y - 82, victim=victim.id)
@@ -1115,7 +1115,8 @@ def hurt(victim, damage, x, y, kind,critical=False):
             victim.climb=None
             victim.climb_cd=max(.5,victim.climb_cd)
     if isinstance(victim,Guest):victim.last_damage_at=time.monotonic()
-    event('hit', victim.x, victim.y - 78, victim=victim.id, damage=damage, kind=kind,critical=critical)
+    event('hit', victim.x, victim.y - 78, victim=victim.id, damage=damage, kind=kind,critical=critical,
+          **({'owner':owner} if owner is not None else {}))
     if victim.hp <= 0 and victim.dead <= 0:
         victim.dead = next_respawn_delay() if isinstance(victim, Monster) else 2.5
         victim.guard = False
@@ -1745,7 +1746,7 @@ def hit_by_shot(s,victim,damage,is_mob):
             victim.retaliate_until=time.monotonic()+12.0
     previous_alive=victim.hp>0 and victim.dead<=0
     actual=mitigate(damage,victim.defense) if is_mob else damage
-    hurt(victim,actual,s.x,s.y,s.kind,critical=s.critical)
+    hurt(victim,actual,s.x,s.y,s.kind,critical=s.critical,owner=s.owner)
     if previous_alive and is_mob and victim.hp<=0:grant_monster_kill(s,victim)
     return actual
 
@@ -1760,7 +1761,7 @@ def bonus_hit(killer, victim, raw,kind='qi_echo'):
     victim.stun=max(victim.stun,.2)
     victim.vx=0
     victim.bite_started_at=-1e9
-    event('hit',victim.x,victim.y-78,victim=victim.id,damage=value,kind=kind)
+    event('hit',victim.x,victim.y-78,victim=victim.id,damage=value,kind=kind,owner=killer.id)
     if victim.hp<=0:
         victim.dead=next_respawn_delay();victim.guard=False
         event('defeat',victim.x,victim.y-80,victim=victim.id)
