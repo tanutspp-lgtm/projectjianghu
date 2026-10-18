@@ -2048,9 +2048,15 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
     p.writer_probe_counter+=1
     if _trace_writer:_writer_aoi_start=time.perf_counter_ns()
     current=aoi_view(world,p)
-    if p.room=='movement_lab' or p.room.startswith('bamboo_'):
+    if p.room=='movement_lab':
+        # The movement laboratory has no combat entities by design.
         current['players']={eid:e for eid,e in current['players'].items() if players.get(eid) is not None and players[eid].room==p.room}
         current['mobs']={};current['shots']={};current['loot']={}
+    elif p.room.startswith('bamboo_'):
+        # LIVE bamboo maps: do NOT clear the server-owned mobs, peach shots or loot.
+        # The old shared movement_lab filter accidentally made them invisible while
+        # leaving authoritative collisions/damage active in world simulation.
+        current['players']={eid:e for eid,e in current['players'].items() if players.get(eid) is not None and players[eid].room==p.room}
     elif not (isinstance(world,SharedSnapshot) and world.all_forest_players):
         # v8.0DV: keep original live room filter for mixed-room worlds;
         # avoid rebuilding a large identical dict for forest-only worlds.
