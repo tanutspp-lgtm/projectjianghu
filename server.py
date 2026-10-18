@@ -274,8 +274,11 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
                          [1710, 425, 550, 'ladder'],
                          [425, 425, 550, 'ladder'],
                          [1025, 430, 550, 'ladder'],
-                         [1620, 425, 550, 'ladder']]}}
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4')
+                         [1620, 425, 550, 'ladder']]},
+ 'outskirts_1': {'name': 'ทางออกดงไผ่ · ชานเมือง',
+               'platforms': [[0, 2060, 550], [170, 530, 420], [650, 990, 420], [1080, 1410, 420], [1530, 1900, 420], [300, 700, 300], [830, 1240, 300], [1400, 1850, 300], [900, 1240, 175]],
+               'climbs': [[350, 420, 550, 'ladder'], [810, 420, 550, 'rope'], [1240, 420, 550, 'ladder'], [1700, 420, 550, 'ladder'], [520, 300, 550, 'rope'], [1040, 175, 550, 'rope'], [1610, 300, 550, 'ladder']]}}
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -283,6 +286,7 @@ BAMBOO_MONSTER_QUOTAS = {
     'bamboo_2': {'bamboo_spirit':9,'bamboo_rabbit':5},
     'bamboo_3': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
     'bamboo_4': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
+    'outskirts_1': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
 }
 BAMBOO_MONSTER_NAMES = {'bamboo_spirit':'หน่อเซียน','bamboo_rabbit':'กระต่ายหูไผ่','brush_squirrel':'กระรอกหางพู่กัน'}
 def bamboo_spawn_slots(room):
@@ -308,6 +312,16 @@ BAMBOO_MONSTER_SLOTS = {name:bamboo_spawn_slots(name) for name in BAMBOO_MONSTER
 # Precomputed immutable geometry avoids allocating arrays every 30Hz tick.
 BAMBOO_GROUNDS = {mid: tuple((a,b,y) for a,b,y in data['platforms']) for mid,data in BAMBOO_MAPS.items()}
 BAMBOO_CLIMBS = {mid: tuple((c[0],c[1],c[2]) for c in data['climbs']) for mid,data in BAMBOO_MAPS.items()}
+# Each map has different platforms and climbs. AUTO navigation is server-owned
+# and must use the CURRENT player's world, never the original forest route graph.
+# Cache once per map (immutable geometry); no per-bot/per-tick graph rebuild.
+WORLD_FARM_NAV = {'forest': FARM_NAV, **{
+    map_id: farm_auto.Navigation(BAMBOO_GROUNDS[map_id], BAMBOO_CLIMBS[map_id])
+    for map_id in BAMBOO_MONSTER_QUOTAS
+}}
+def farm_nav_for(room):
+    return WORLD_FARM_NAV.get(room, FARM_NAV)
+
 def active_ground():
     return BAMBOO_GROUNDS.get(current_world().room, GROUND)
 def active_climbs():
@@ -527,7 +541,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10}  # City is a future map, not joinable yet.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10}  # City is a future map, not joinable yet.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -556,7 +570,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4')}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -2532,7 +2546,7 @@ async def game_loop():
                         # Movement remains held between decisions, no browser AI.
                         if tick_now >= p.auto_state.next_step:
                             _prof_auto_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
-                            buttons,actions=FARM_NAV.choose(p,p.auto_state,tick_now,auto_monsters,allow_cast=not human_reserved)
+                            buttons,actions=farm_nav_for(p.room).choose(p,p.auto_state,tick_now,auto_monsters,allow_cast=not human_reserved)
                             if ENABLE_PERFORMANCE_PROFILER:_profile_add('player.auto_choose',time.perf_counter_ns()-_prof_auto_start)
                             p.buttons=buttons
                             # Guard is a manual held combat action, not movement input.
@@ -3005,7 +3019,7 @@ async def handle_connection(ws):
                     continue
                 if 'seq' in m:p.auto_command_seq=m['seq']
                 previous_auto=p.auto_state.enabled
-                p.auto_state.enabled=m['enabled'] if p.room=='forest' else False
+                p.auto_state.enabled=m['enabled'] if p.room in PUBLIC_MAP_IDS else False
                 if previous_auto!=p.auto_state.enabled:p.auto_revision+=1
                 if previous_auto!=p.auto_state.enabled:
                     p.fast_self_last=None
@@ -3023,7 +3037,7 @@ async def handle_connection(ws):
                     async with p.ws_send_lock:
                         await ws.send(json.dumps({'t':'auto_ack','seq':m['seq'],
                             'enabled':p.auto_state.enabled,'revision':p.auto_revision,
-                            'ok':p.room=='forest' or not m['enabled']},separators=(',',':')))
+                            'ok':p.room in PUBLIC_MAP_IDS or not m['enabled']},separators=(',',':')))
                     _em_auto_ack_sent+=1
                 if p.auto_state.enabled:
                     # Fresh independently randomized destination at the next game tick.
@@ -3048,8 +3062,8 @@ async def handle_connection(ws):
                 if not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='Stay Alert toggle rate limit');break
                 requested=m['enabled']
-                platform=FARM_NAV.platform_at(p) if requested else -1
-                valid=(not requested or (p.room=='forest' and p.auto_state.enabled and
+                platform=farm_nav_for(p.room).platform_at(p) if requested else -1
+                valid=(not requested or (p.room in PUBLIC_MAP_IDS and p.auto_state.enabled and
                                         platform>=0 and p.dead<=0 and p.hp>0 and p.down<=0))
                 if valid:
                     p.auto_state.stay_alert=requested
