@@ -222,6 +222,35 @@ FARM_NAV=farm_auto.Navigation(GROUND,CLIMBS)
 # No bamboo mob/loot templates until the owner supplies cropped sprites and manifest.
 BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม', 'platforms': [[0, 2060, 550], [170, 850, 390], [1020, 1770, 390], [410, 1070, 235], [1210, 1970, 235]], 'climbs': [[510, 235, 550, 'rope'], [1170, 390, 550, 'ladder'], [1590, 235, 550, 'rope']]}, 'bamboo_1': {'name': 'ทางเข้าดงไผ่', 'platforms': [[0, 2060, 550], [300, 710, 423], [890, 1280, 425], [1440, 1950, 425], [650, 1080, 300], [1340, 1770, 300]], 'climbs': [[850, 300, 550, 'rope'], [1550, 300, 550, 'ladder']]}, 'bamboo_2': {'name': 'ทางเลียบดงไผ่', 'platforms': [[0, 2060, 550], [240, 660, 430], [840, 1240, 430], [1430, 1950, 430], [470, 890, 305], [1170, 1610, 305]], 'climbs': [[640, 305, 550, 'ladder'], [1410, 305, 550, 'rope']]}, 'bamboo_3': {'name': 'ดงไผ่ริมสวนท้อ', 'platforms': [[0, 2060, 550], [230, 680, 427], [890, 1350, 425], [1490, 2000, 430], [460, 840, 300], [1130, 1550, 300], [1610, 2000, 180]], 'climbs': [[650, 300, 550, 'rope'], [1320, 300, 550, 'ladder'], [1810, 180, 430, 'rope']]}, 'bamboo_4': {'name': 'ลานฝึกหุบไผ่', 'platforms': [[0, 2060, 550], [260, 715, 425], [850, 1300, 430], [1460, 1970, 425], [490, 905, 305], [1070, 1510, 305], [900, 1270, 180]], 'climbs': [[670, 305, 550, 'ladder'], [1170, 180, 550, 'rope'], [1710, 425, 550, 'ladder']]}}
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4')
+# Bamboo newbie monsters: 20 per map per channel, deterministic server-owned slots.
+# Map 1/2: spirit=13, rabbit=7 (~2:1); Map 3/4: 7/7/6 (~1:1:1).
+BAMBOO_MONSTER_QUOTAS = {
+    'bamboo_1': {'bamboo_spirit':13,'bamboo_rabbit':7},
+    'bamboo_2': {'bamboo_spirit':13,'bamboo_rabbit':7},
+    'bamboo_3': {'bamboo_spirit':7,'bamboo_rabbit':7,'brush_squirrel':6},
+    'bamboo_4': {'bamboo_spirit':7,'bamboo_rabbit':7,'brush_squirrel':6},
+}
+BAMBOO_MONSTER_NAMES = {'bamboo_spirit':'หน่อเซียน','bamboo_rabbit':'กระต่ายหูไผ่','brush_squirrel':'กระรอกหางพู่กัน'}
+def bamboo_spawn_slots(room):
+    quota=BAMBOO_MONSTER_QUOTAS[room]
+    kinds=[]
+    while len(kinds)<20:
+        for kind in quota:
+            if kinds.count(kind)<quota[kind]: kinds.append(kind)
+    lanes=BAMBOO_MAPS[room]['platforms']
+    entries=[]
+    for i,kind in enumerate(kinds):
+        idx=i%len(lanes)
+        lane=lanes[idx]
+        lane_count=len(range(idx,20,len(lanes)))
+        position=i//len(lanes)
+        lo,hi,y=lane
+        x=lo+65+(hi-lo-130)*(position+1)/(lane_count+1)
+        entries.append({'id':f'{room}:mob:{i+1:02}', 'kind':kind,'x':round(x,1),'y':float(y)})
+    assert len(entries)==20 and {k:sum(e['kind']==k for e in entries) for k in quota}==quota
+    return tuple(entries)
+BAMBOO_MONSTER_SLOTS = {name:bamboo_spawn_slots(name) for name in BAMBOO_MONSTER_QUOTAS}
+
 # Precomputed immutable geometry avoids allocating arrays every 30Hz tick.
 BAMBOO_GROUNDS = {mid: tuple((a,b,y) for a,b,y in data['platforms']) for mid,data in BAMBOO_MAPS.items()}
 BAMBOO_CLIMBS = {mid: tuple((c[0],c[1],c[2]) for c in data['climbs']) for mid,data in BAMBOO_MAPS.items()}
@@ -454,6 +483,7 @@ class WorldState:
     players: dict = field(default_factory=dict)
     monsters: dict = field(default_factory=dict)
     shots: list = field(default_factory=list)
+    peaches: list = field(default_factory=list)  # server-owned squirrel peach shots, map/channel isolated
     loot_drops: list = field(default_factory=list)
     events: list = field(default_factory=list)
     # EK: bounded world-level event journal persists across overwritten world samples.
@@ -591,13 +621,13 @@ def index_players_by_x():
     # Share one indexed player roster across 20 beasts; combat remains authoritative.
     cells = defaultdict(list)
     for p in players.values():
-        if p.dead<=0 and p.room=='forest':
+        if p.dead<=0 and p.room==current_world().room:
             cells[int(p.x // SPATIAL_CELL)].append(p)
     return cells
 
 def candidate_players_by_x(m, grid):
     if grid is None:
-        return (p for p in players.values() if p.room=='forest')  # only forest actors may be targeted
+        return (p for p in players.values() if p.room==current_world().room)  # only same map/channel may be targeted
     radius=BEAST_AGGRO+65
     first=int((m.x-radius)//SPATIAL_CELL)
     last=int((m.x+radius)//SPATIAL_CELL)
@@ -830,17 +860,30 @@ def reachable_player(m,p,lane=_LANE_NOT_GIVEN):
 
 def spawn_mobs():
     monsters.clear()
-    for index,slot in enumerate(MAP_DATA['slots']):
+    room=current_world().room
+    if room=='forest':
+        slots=MAP_DATA['slots']  # original mountain roster, untouched
+    elif room in BAMBOO_MONSTER_SLOTS:
+        slots=BAMBOO_MONSTER_SLOTS[room]
+    else:
+        return
+    for index,slot in enumerate(slots):
         species=slot['kind']
-        assert species in ('boar','wolf')
         x,y=float(slot['x']),float(slot['y'])
         mid=slot['id']
-        level=MONSTER_PRESET_LEVEL or min(5,1+index%5)
+        if room=='forest':
+            assert species in ('boar','wolf')
+            level=MONSTER_PRESET_LEVEL or min(5,1+index%5)
+            name='หมูป่า' if species=='boar' else 'หมาป่า'
+        else:
+            assert species in BAMBOO_MONSTER_NAMES
+            level=MONSTER_PRESET_LEVEL or min(5,1+(PUBLIC_MAP_IDS.index(room)-1)+index%3)
+            name=BAMBOO_MONSTER_NAMES[species]
         max_hp,defense=monster_balance.preset(level,False)
-        monsters[mid]=Monster(id=mid,name='หมูป่า' if species=='boar' else 'หมาป่า',
+        monsters[mid]=Monster(id=mid,name=name,
             x=x,y=y,hp=max_hp,max_hp=max_hp,defense=defense,home=x,spawn_y=y,hum=False,
             level=level,zone_mode='common',species=species,
-            slot=mid,pouncer=slot.get('pouncer',False),bite_ready_at=time.monotonic()+.45,
+            slot=mid,pouncer=slot.get('pouncer',False),bite_ready_at=time.monotonic()+.65,
             patrol_dir=-1 if index%2 else 1,patrol_until=0,spawn_at=time.monotonic())
 
 
@@ -869,6 +912,7 @@ def hibernate_world(world):
     world.sleeping_loot = [d.copy() for d in world.loot_drops if d['expiresAt'] > now]
     world.monsters.clear()
     world.shots.clear()
+    world.peaches.clear()
     world.loot_drops.clear()
     world.events.clear()
     world.event_journal.clear()
@@ -891,7 +935,7 @@ def wake_world(world):
     token = _world_context.set(world)
     try:
         now = time.monotonic()
-        if world.room == 'forest':
+        if world.room == 'forest' or world.room in BAMBOO_MONSTER_SLOTS:
             spawn_mobs()
             for mid, state in world.sleeping_mobs.items():
                 m = world.monsters.get(mid)
@@ -1379,6 +1423,72 @@ def mob_patrol(m, t):
     return direction*BEAST_PATROL_SPEED
 
 
+def update_squirrel(m,dt,p,t):
+    # Physical peach with a visible wind-up, no magic or client authority.
+    # No leap/biting behavior: squirrel attacks at range only.
+    stunned=m.down>0 or m.stun>0 or m.broken>0
+    if stunned:
+        m.vx=0;m.bite_started_at=-1e9;m.bite_hit_done=False
+    elif m.bite_started_at>0:
+        age=t-m.bite_started_at
+        m.vx=0
+        if age>=.27 and not m.bite_hit_done:
+            m.bite_hit_done=True
+            lo,hi=monster_attack_range(m.level,m.zone_mode,False)
+            damage=max(1,prog.jsround((lo+hi)*.39))  # ranged early-map tuning; victim DEF still applies
+            current_world().peaches.append({'id':f'peach:{m.id}:{server_step}',
+                'x':m.x+m.bite_dir*22,'y':m.y-57.0,'vx':m.bite_dir*255.0,
+                'life':1.55,'damage':damage})
+        if age>=.52:
+            m.bite_started_at=-1e9;m.bite_hit_done=False
+    elif p and 38<abs(p.x-m.x)<340 and abs(p.y-m.y)<35 and t>=m.bite_ready_at:
+        m.bite_started_at=t;m.bite_hit_done=False
+        m.bite_dir=1 if p.x>m.x else -1
+        m.face=m.bite_dir;m.vx=0
+        m.bite_ready_at=t+2.5
+    elif p and abs(p.x-m.x)<340:
+        # Stand and face the player while waiting to throw; don't walk into them.
+        m.vx=0;m.face=1 if p.x>m.x else -1
+    else:
+        m.vx=mob_patrol(m,t)
+    if m.vx:
+        direction=1 if m.vx>0 else -1
+        if not supported(m,m.x+direction*26):m.vx=0
+        else:m.face=direction
+    m.x+=m.vx*dt
+    physics(m,dt)
+    if abs(m.x-m.home)>380:
+        m.x=m.home+380*(1 if m.x>m.home else -1);m.vx=0
+
+
+def update_peach_shots(dt):
+    # Server-only projectile collision; shared snapshot is display-only.
+    world=current_world()
+    alive=[]
+    for peach in world.peaches:
+        px=peach['x']
+        nx=px+peach['vx']*dt
+        peach['life']-=dt
+        if peach['life']<=0 or not 0<=nx<=WORLD_W:continue
+        hit=False
+        for player in players.values():
+            if player.dead>0 or player.hp<=0 or player.climb is not None:continue
+            if abs((player.y-57)-peach['y'])>37:continue
+            if min(px,nx)-21<=player.x<=max(px,nx)+21:
+                if player.inv<=0:
+                    dodge=derived_for_snapshot(player)['dodgeVsMonsters']
+                    if random.random()*100<dodge:event('miss',player.x,player.y-80,victim=player.id)
+                    else:hurt(player,mitigate(peach['damage'],player.defense),px,peach['y'],'monster')
+                hit=True
+                break
+        if hit:
+            event('peach_impact',nx,peach['y'])
+        else:
+            peach['x']=nx
+            alive.append(peach)
+    world.peaches=alive
+
+
 def update_mob(m,dt,player_grid=None):
     t=time.monotonic()
     if m.dead>0:
@@ -1412,6 +1522,8 @@ def update_mob(m,dt,player_grid=None):
         if distance<BEAST_AGGRO+65 and distance<nearest:
             p=candidate;nearest=distance
     if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.target_search',time.perf_counter_ns()-_mob_ai_start)
+    if m.species=='brush_squirrel':
+        return update_squirrel(m,dt,p,t)
     dx=p.x-m.x if p else 0
     dy=p.y-m.y if p else 10000
     near=bool(p and abs(dx)<BEAST_AGGRO)
@@ -1423,7 +1535,7 @@ def update_mob(m,dt,player_grid=None):
         m.bite_hit_done=False
     if m.bite_started_at>0 and t-m.bite_started_at>=.42:
         m.bite_started_at=-1e9;m.bite_hit_done=False
-    if not stopped and m.bite_started_at<0 and engage and m.ground and t>=m.bite_ready_at and abs(dx)<72 and abs(dy)<62:
+    if not stopped and m.bite_started_at<0 and engage and m.ground and t>=m.bite_ready_at and abs(dx)<(46 if m.species in BAMBOO_MONSTER_NAMES else 72) and abs(dy)<62:
         m.bite_started_at=t;m.bite_hit_done=False
         m.bite_dir=1 if dx>=0 else -1
         m.bite_ready_at=t+1.05
@@ -1459,7 +1571,7 @@ def update_mob(m,dt,player_grid=None):
     # Bites have an animation wind-up, with real contact damage only after impact.
     if m.bite_started_at>0 and not m.bite_hit_done and t-m.bite_started_at>=.19:
         m.bite_hit_done=True
-        if p and p.dead<=0 and abs(p.x-m.x)<60 and abs(p.y-m.y)<60 and p.inv<=0:
+        if p and p.dead<=0 and abs(p.x-m.x)<(36 if m.species in BAMBOO_MONSTER_NAMES else 60) and abs(p.y-m.y)<60 and p.inv<=0:
             lo,hi=monster_attack_range(m.level,m.zone_mode,False)
             raw=random.randint(lo,hi)
             # Actual Guest defense is gear-derived, not an imaginary +5 armor.
@@ -1518,7 +1630,7 @@ def advance_loot():
 
 def grant_monster_kill(s,m):
     killer=players.get(s.owner)
-    if killer is None or killer.room!='forest':return
+    if killer is None or killer.room!=current_world().room:return
     old_level=killer.level
     award,levels=prog.grant_kill_exp(killer,m.level)
     if levels:
@@ -1827,8 +1939,11 @@ def snapshot():
             'loot':_reuse_snapshot_entities('loot',[{'id':d['id'],'item_id':d['item_id'],'x':d['x'],'y':d['y'],
                      'ownerId':d['ownerId'],'privateFor':round(max(0,d['privateUntil']-moment),1),
                      'expiresIn':round(max(0,d['expiresAt']-moment),1)} for d in loot_drops]),
-            'shots':_reuse_snapshot_entities('shots',[{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
-                      'dir':1 if s.vx>=0 else -1} for s in shots]),
+            'shots':_reuse_snapshot_entities('shots',
+                [{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
+                  'dir':1 if s.vx>=0 else -1} for s in shots] +
+                [{'id':s['id'],'kind':'peach','x':round(s['x'],1),'y':round(s['y'],1),
+                  'dir':1 if s['vx']>=0 else -1} for s in current_world().peaches]),
             'events':events[:80]})
     world.all_forest_players=forest_only
     world.event_highwater=current_world().event_seq
@@ -2372,6 +2487,7 @@ async def game_loop():
                     _profile_samples['monster'].append((stage_end-stage_start)/1e6)
                     stage_start=stage_end
                 update_shots(DT)
+                if world_state.room in BAMBOO_MONSTER_SLOTS: update_peach_shots(DT)
                 if ENABLE_PERFORMANCE_PROFILER:_profile_add('combat.projectiles',time.perf_counter_ns()-_prof_substage)
                 _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 advance_loot()
