@@ -1,0 +1,63 @@
+{
+  "id": "city_proto_1",
+  "version": "city-master-v1",
+  "worldWidth": 5150,
+  "lowerY": 550,
+  "upperY": 235,
+  "platforms": [
+    [
+      0,
+      5150,
+      550
+    ],
+    [
+      220,
+      4930,
+      235
+    ]
+  ],
+  "stairs": [
+    {
+      "lowerX": 855,
+      "upperX": 1160,
+      "lowerY": 550,
+      "upperY": 235,
+      "serverControlled": true
+    },
+    {
+      "lowerX": 2450,
+      "upperX": 2755,
+      "lowerY": 550,
+      "upperY": 235,
+      "serverControlled": true
+    },
+    {
+      "lowerX": 4050,
+      "upperX": 4355,
+      "lowerY": 550,
+      "upperY": 235,
+      "serverControlled": true
+    }
+  ],
+  "zones": [
+    {
+      "id": "gate",
+      "from": 0,
+      "to": 1715,
+      "title": "ย่านหน้าประตูเมือง"
+    },
+    {
+      "id": "market",
+      "from": 1715,
+      "to": 3430,
+      "title": "ย่านการค้า"
+    },
+    {
+      "id": "wuxia",
+      "from": 3430,
+      "to": 5150,
+      "title": "ย่านสำนักยุทธ์"
+    }
+  ],
+  "notes": "Buildings are visual-only and world-anchored; active shops/NPCs not yet implemented. Ground and stairs authoritative on server."
+}
