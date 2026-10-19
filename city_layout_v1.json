@@ -1,9 +1,9 @@
 {
   "id": "city_proto_1",
-  "version": "city-master-v3",
+  "version": "city8-v5",
   "worldWidth": 5150,
   "lowerY": 550,
-  "upperY": 55,
+  "upperY": 40,
   "platforms": [
     [
       0,
@@ -12,30 +12,30 @@
     ],
     [
       220,
-      4930,
-      55
+      5150,
+      40
     ]
   ],
   "stairs": [
     {
-      "lowerX": 1075,
-      "upperX": 1555,
+      "lowerX": 1100,
+      "upperX": 1820,
       "lowerY": 550,
-      "upperY": 55,
+      "upperY": 40,
       "serverControlled": true
     },
     {
-      "lowerX": 2710,
-      "upperX": 3190,
+      "lowerX": 2500,
+      "upperX": 3220,
       "lowerY": 550,
-      "upperY": 55,
+      "upperY": 40,
       "serverControlled": true
     },
     {
-      "lowerX": 4410,
-      "upperX": 4890,
+      "lowerX": 4320,
+      "upperX": 5040,
       "lowerY": 550,
-      "upperY": 55,
+      "upperY": 40,
       "serverControlled": true
     }
   ],
@@ -60,18 +60,18 @@
     }
   ],
   "notes": "Buildings are visual-only and world-anchored; active shops/NPCs not yet implemented. Ground and stairs authoritative on server.",
-  "cityV4": {
+  "cityV5": {
     "lowXs": [
       1100,
       2500,
       4320
     ],
     "spanX": 720,
-    "topY": -140,
+    "topY": 40,
     "botY": 550
   },
-  "cityV4Roads": {
+  "cityV5Roads": {
     "lower": 550,
-    "upper": -140
+    "upper": 40
   }
 }

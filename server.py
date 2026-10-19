@@ -288,10 +288,10 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
  'city_proto_1': {'name':'นครสองระดับ · 3 ย่าน',
                   # City Master V1: 2.5x the actual 2060-unit stage-one world.
                   # Single continuous lower and upper walkable surfaces.
-                  'platforms': [[0, 5150, 550], [220, 5150, -140]],
-                  'climbs': [[1100, -140, 550, 'stairs'],
-                             [2500, -140, 550, 'stairs'],
-                             [4320, -140, 550, 'stairs']]}}
+                  'platforms': [[0, 5150, 550], [220, 5150, 40]],
+                  'climbs': [[1100, 40, 550, 'stairs'],
+                             [2500, 40, 550, 'stairs'],
+                             [4320, 40, 550, 'stairs']]}}
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
@@ -1365,7 +1365,7 @@ _MOVE_FIELDS=('x','y','vx','vy','ground','climb','climb_cd','climb_dist','walk_d
 # Start zones are strict 18-unit capsules at staircase endpoints; no broad proximity trigger.
 CITY_STAIR_LO_XS=(1100.0, 2500.0, 4320.0)
 CITY_STAIR_SPAN_X=720.0
-CITY_STAIR_TOP_Y=-140.0
+CITY_STAIR_TOP_Y=40.0
 CITY_STAIR_BOT_Y=550.0
 CITY_STAIR_CLIMBS=tuple((x,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y) for x in CITY_STAIR_LO_XS)
 assert BAMBOO_MAPS['city_proto_1']['platforms'][1][2] == CITY_STAIR_TOP_Y
