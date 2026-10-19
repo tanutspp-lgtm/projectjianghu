@@ -284,8 +284,11 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
  'suburb_gate_1': {'name':'ชุมชนหน้าประตูเมือง',
                    # Map 7: peaceful town boundary, main floor only, no floating platforms.
                    'platforms': [[0, 2060, 550]],
-                   'climbs': []}}
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1')
+                   'climbs': []},
+ 'city_proto_1': {'name':'เมืองสองชั้น · ต้นแบบทดสอบ',
+                  'platforms': [[0, 2060, 550], [220, 1850, 235]],
+                  'climbs': [[855, 235, 550, 'stairs']]}}
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -332,6 +335,9 @@ def farm_nav_for(room):
 def active_ground():
     return BAMBOO_GROUNDS.get(current_world().room, GROUND)
 def active_climbs():
+    # The diagonal city stairs are handled by a separate server-owned spline,
+    # not by the rope/ladder movement or AUTO route logic.
+    if current_world().room == 'city_proto_1': return ()
     return BAMBOO_CLIMBS.get(current_world().room, CLIMBS)
 
 def map_payload(map_id):
@@ -548,7 +554,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10}  # City is a future map, not joinable yet.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70}  # City is a future map, not joinable yet.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -577,7 +583,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1')}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -1270,6 +1276,7 @@ def update_guest(p: Guest, dt, tick_now):
     p.guard = bool(p.buttons & 16) and p.broken <= 0 and p.stun <= 0 and p.climb is None
     near = next((c for c in active_climbs() if abs(c[0] - p.x) < 36 and c[1] - 8 <= p.y <= c[2] + 12), None)
     axis = int(bool(p.buttons & 8)) - int(bool(p.buttons & 4))
+    if city_stair_step(p,dt,axis): return
     # v8.0DE: Climb completion deliberately lands at rope_x+47, but normal
     # climb acquisition only works within 36px. A human holding DOWN from the
     # landing was stranded, while AUTO first walks back to the rope. Align at
@@ -1347,6 +1354,47 @@ def update_guest(p: Guest, dt, tick_now):
 _MOVE_FIELDS=('x','y','vx','vy','ground','climb','climb_cd','climb_dist','walk_dist','face')
 
 
+# City prototype: slope endpoints are authoritative world positions.
+# UP at lower stair entry (x=855,y=550), DOWN at upper entry (x=1160,y=235).
+# During transit UP/DOWN moves BOTH x and y; no teleport between floors.
+CITY_STAIR_LO_X=855.0
+CITY_STAIR_HI_X=1160.0
+CITY_STAIR_TOP_Y=235.0
+CITY_STAIR_BOT_Y=550.0
+CITY_STAIR_CLIMB=(CITY_STAIR_LO_X,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
+
+def city_stair_step(p,dt,axis):
+    if p.room!='city_proto_1':return False
+    if p.climb == CITY_STAIR_CLIMB:
+        if p.dead>0 or p.stun>0 or p.down>0:
+            p.climb=None
+            return False
+        if axis:
+            prev=p.y
+            p.y=clamp(p.y+axis*175*dt,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
+            p.climb_dist+=abs(p.y-prev)
+        ratio=(CITY_STAIR_BOT_Y-p.y)/(CITY_STAIR_BOT_Y-CITY_STAIR_TOP_Y)
+        p.x=CITY_STAIR_LO_X+(CITY_STAIR_HI_X-CITY_STAIR_LO_X)*ratio
+        p.vx=p.vy=0
+        p.ground=False
+        if axis<0:p.face=1
+        elif axis>0:p.face=-1
+        if axis<0 and p.y<=CITY_STAIR_TOP_Y+0.001:
+            p.x,p.y,p.climb,p.ground,p.climb_cd=CITY_STAIR_HI_X,CITY_STAIR_TOP_Y,None,True,.27
+        elif axis>0 and p.y>=CITY_STAIR_BOT_Y-0.001:
+            p.x,p.y,p.climb,p.ground,p.climb_cd=CITY_STAIR_LO_X,CITY_STAIR_BOT_Y,None,True,.27
+        return True
+    if p.climb is not None or not p.ground or not axis or p.climb_cd>0 or p.guard or p.stun>0:
+        return False
+    at_bottom=axis<0 and abs(p.y-CITY_STAIR_BOT_Y)<5 and abs(p.x-CITY_STAIR_LO_X)<30
+    at_top=axis>0 and abs(p.y-CITY_STAIR_TOP_Y)<5 and abs(p.x-CITY_STAIR_HI_X)<30
+    if not (at_bottom or at_top):return False
+    p.climb=CITY_STAIR_CLIMB
+    p.x=CITY_STAIR_LO_X if at_bottom else CITY_STAIR_HI_X
+    p.y=CITY_STAIR_BOT_Y if at_bottom else CITY_STAIR_TOP_Y
+    p.ground=False;p.vx=p.vy=0
+    return city_stair_step(p,dt,axis)
+
 def movement_capture(p):
     return tuple(getattr(p,k) for k in _MOVE_FIELDS)
 
@@ -1374,6 +1422,8 @@ def movement_change_mode(p,mode):
 
 
 def movement_tick(p,dt,tick_now):
+    if p.room=='city_proto_1' and p.movement_mode!='server':
+        movement_change_mode(p,'server')
     if p.movement_mode!='client' or p.auto_state.enabled:
         update_guest(p,dt,tick_now)
         return
@@ -1399,6 +1449,7 @@ def movement_tick(p,dt,tick_now):
 
 
 def movement_validate(p,m,tick_now):
+    if p.room=='city_proto_1': return 'city-prototype-server-authority'
     if p.movement_mode!='client' or p.auto_state.enabled:
         return 'not-in-client-mode'
     seq=m['seq']
@@ -1890,6 +1941,8 @@ def update_shots(dt):
 def actor_frame(a, tick):
     if a.dead > 0: return 18 if a.ground else 16
     if a.down > 0: return 17 if a.ground else 16
+    if isinstance(a,Guest) and a.room=='city_proto_1' and a.climb==CITY_STAIR_CLIMB:
+        return 3 + (int(a.climb_dist / 18) % 4)
     if a.climb: return 14 + (int(a.climb_dist / 64) % 2)
     if isinstance(a,Guest) and a.kb_time>0:return 9
     if a.stun > .02: return 9
@@ -2896,6 +2949,7 @@ async def handle_connection(ws):
         features.append('lazy-map-hibernation-v80ef')
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
+        features.append('city-two-tier-proto-v1')
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
@@ -3107,7 +3161,7 @@ async def handle_connection(ws):
                 if not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='Movement toggle rate');break
                 requested=m['mode']
-                if requested=='client' and (not ENABLE_CLIENT_MOVEMENT_AB or p.auto_state.enabled):
+                if requested=='client' and (not ENABLE_CLIENT_MOVEMENT_AB or p.auto_state.enabled or p.room=='city_proto_1'):
                     await ws.send(json.dumps({'t':'movement_mode_ack','mode':p.movement_mode,'ok':False,'reason':'unavailable'}))
                 else:
                     await ws.send(json.dumps({**movement_change_mode(p,requested),'ok':True},separators=(',',':')))
