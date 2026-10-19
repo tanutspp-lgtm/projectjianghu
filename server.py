@@ -285,9 +285,13 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
                    # Map 7: peaceful town boundary, main floor only, no floating platforms.
                    'platforms': [[0, 2060, 550]],
                    'climbs': []},
- 'city_proto_1': {'name':'เมืองสองชั้น · ต้นแบบทดสอบ',
-                  'platforms': [[0, 2060, 550], [220, 1850, 235]],
-                  'climbs': [[855, 235, 550, 'stairs']]}}
+ 'city_proto_1': {'name':'นครสองระดับ · 3 ย่าน',
+                  # City Master V1: 2.5x the actual 2060-unit stage-one world.
+                  # Single continuous lower and upper walkable surfaces.
+                  'platforms': [[0, 5150, 550], [220, 4930, 235]],
+                  'climbs': [[855, 235, 550, 'stairs'],
+                             [2450, 235, 550, 'stairs'],
+                             [4050, 235, 550, 'stairs']]}}
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
@@ -340,12 +344,15 @@ def active_climbs():
     if current_world().room == 'city_proto_1': return ()
     return BAMBOO_CLIMBS.get(current_world().room, CLIMBS)
 
+def city_world_width(room):
+    return 5150 if room == 'city_proto_1' else WORLD_W
+
 def map_payload(map_id):
     data=BAMBOO_MAPS[map_id]
     return {'map':map_id,'mapName':data['name'],
             'mapPlatforms':[{'x':a,'x2':b,'y':y} for a,b,y in data['platforms']],
             'mapClimbs':[{'x':x,'top':t,'bottom':b,'type':typ} for x,t,b,typ in data['climbs']],
-            'mapWidth':WORLD_W}
+            'mapWidth':city_world_width(map_id)}
 
 ALLOWED_BUTTONS = (1 | 2 | 4 | 8 | 16)
 ATTACKS = {'attack': (0.34, 0.32, 520, 165, 1.45, 1), 'aoe': (0.62, 0.48, 365, 135, 1.15, 99), 'break': (0.52, 0.37, 560, 45, 1.1, 2)}
@@ -1073,7 +1080,7 @@ def physics(actor, dt):
     # Dash can move > one collider margin in a single 30Hz server tick. If
     # can_stand sees the out-of-bounds x before clamping, a grounded character
     # may miss the one-way floor and fall underneath it permanently.
-    actor.x = clamp(actor.x, 27, WORLD_W - 27)
+    actor.x = clamp(actor.x, 27, city_world_width(current_world().room) - 27)
     old = actor.y
     if actor.climb is None:
         actor.vy += 1400 * dt
@@ -1354,46 +1361,49 @@ def update_guest(p: Guest, dt, tick_now):
 _MOVE_FIELDS=('x','y','vx','vy','ground','climb','climb_cd','climb_dist','walk_dist','face')
 
 
-# City prototype: slope endpoints are authoritative world positions.
-# UP at lower stair entry (x=855,y=550), DOWN at upper entry (x=1160,y=235).
-# During transit UP/DOWN moves BOTH x and y; no teleport between floors.
-CITY_STAIR_LO_X=855.0
-CITY_STAIR_HI_X=1160.0
+# CITY MASTER V1: Server-authoritative diagonal stairs, three independent connectors.
+CITY_STAIR_LO_XS=(855.0,2450.0,4050.0)
+CITY_STAIR_SPAN_X=305.0
 CITY_STAIR_TOP_Y=235.0
 CITY_STAIR_BOT_Y=550.0
-CITY_STAIR_CLIMB=(CITY_STAIR_LO_X,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
+CITY_STAIR_CLIMBS=tuple((x,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y) for x in CITY_STAIR_LO_XS)
 
 def city_stair_step(p,dt,axis):
     if p.room!='city_proto_1':return False
-    if p.climb == CITY_STAIR_CLIMB:
+    # A stair stored in p.climb is (x, top, bottom), shared with the map's authorititative climb geometry.
+    active=p.climb if p.climb in CITY_STAIR_CLIMBS else None
+    if active is not None:
         if p.dead>0 or p.stun>0 or p.down>0:
             p.climb=None
             return False
+        low_x=active[0]
         if axis:
             prev=p.y
             p.y=clamp(p.y+axis*175*dt,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
             p.climb_dist+=abs(p.y-prev)
         ratio=(CITY_STAIR_BOT_Y-p.y)/(CITY_STAIR_BOT_Y-CITY_STAIR_TOP_Y)
-        p.x=CITY_STAIR_LO_X+(CITY_STAIR_HI_X-CITY_STAIR_LO_X)*ratio
+        p.x=low_x+CITY_STAIR_SPAN_X*ratio
         p.vx=p.vy=0
         p.ground=False
         if axis<0:p.face=1
         elif axis>0:p.face=-1
         if axis<0 and p.y<=CITY_STAIR_TOP_Y+0.001:
-            p.x,p.y,p.climb,p.ground,p.climb_cd=CITY_STAIR_HI_X,CITY_STAIR_TOP_Y,None,True,.27
+            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x+CITY_STAIR_SPAN_X,CITY_STAIR_TOP_Y,None,True,.27
         elif axis>0 and p.y>=CITY_STAIR_BOT_Y-0.001:
-            p.x,p.y,p.climb,p.ground,p.climb_cd=CITY_STAIR_LO_X,CITY_STAIR_BOT_Y,None,True,.27
+            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x,CITY_STAIR_BOT_Y,None,True,.27
         return True
     if p.climb is not None or not p.ground or not axis or p.climb_cd>0 or p.guard or p.stun>0:
         return False
-    at_bottom=axis<0 and abs(p.y-CITY_STAIR_BOT_Y)<5 and abs(p.x-CITY_STAIR_LO_X)<30
-    at_top=axis>0 and abs(p.y-CITY_STAIR_TOP_Y)<5 and abs(p.x-CITY_STAIR_HI_X)<30
-    if not (at_bottom or at_top):return False
-    p.climb=CITY_STAIR_CLIMB
-    p.x=CITY_STAIR_LO_X if at_bottom else CITY_STAIR_HI_X
-    p.y=CITY_STAIR_BOT_Y if at_bottom else CITY_STAIR_TOP_Y
-    p.ground=False;p.vx=p.vy=0
-    return city_stair_step(p,dt,axis)
+    for low_x in CITY_STAIR_LO_XS:
+        at_bottom=axis<0 and abs(p.y-CITY_STAIR_BOT_Y)<5 and abs(p.x-low_x)<30
+        at_top=axis>0 and abs(p.y-CITY_STAIR_TOP_Y)<5 and abs(p.x-(low_x+CITY_STAIR_SPAN_X))<30
+        if not (at_bottom or at_top):continue
+        p.climb=(low_x,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
+        p.x=low_x if at_bottom else low_x+CITY_STAIR_SPAN_X
+        p.y=CITY_STAIR_BOT_Y if at_bottom else CITY_STAIR_TOP_Y
+        p.ground=False;p.vx=p.vy=0
+        return city_stair_step(p,dt,axis)
+    return False
 
 def movement_capture(p):
     return tuple(getattr(p,k) for k in _MOVE_FIELDS)
@@ -1469,7 +1479,7 @@ def movement_validate(p,m,tick_now):
     x,y,vx,vy=m['x'],m['y'],m['vx'],m['vy']
     grounded=m['ground']; climb=m['climb']
     # Bounds and declared state are NEVER trusted as authority.
-    if not 27<=x<=WORLD_W-27 or not -100<=y<=800:return 'map-bounds'
+    if not 27<=x<=city_world_width(p.room)-27 or not -100<=y<=800:return 'map-bounds'
     if abs(vx)>675 or abs(vy)>1200:return 'velocity-cap'
     expected=p.move_shadow or movement_capture(p)
     ex,ey,evx,evy,eground,eclimb=expected[:6]
@@ -1600,7 +1610,7 @@ def update_peach_shots(dt):
         px=peach['x']
         nx=px+peach['vx']*dt
         peach['life']-=dt
-        if peach['life']<=0 or not 0<=nx<=WORLD_W:continue
+        if peach['life']<=0 or not 0<=nx<=city_world_width(current_world().room):continue
         hit=False
         for player in players.values():
             if player.dead>0 or player.hp<=0 or player.climb is not None:continue
@@ -1934,14 +1944,14 @@ def update_shots(dt):
             if apply_shot(s, v, isinstance(v, Monster)):
                 consumed = True
                 break
-        if not consumed and -80 <= s.x <= WORLD_W + 80: active.append(s)
+        if not consumed and -80 <= s.x <= city_world_width(current_world().room) + 80: active.append(s)
     shots[:] = active
 
 
 def actor_frame(a, tick):
     if a.dead > 0: return 18 if a.ground else 16
     if a.down > 0: return 17 if a.ground else 16
-    if isinstance(a,Guest) and a.room=='city_proto_1' and a.climb==CITY_STAIR_CLIMB:
+    if isinstance(a,Guest) and a.room=='city_proto_1' and a.climb in CITY_STAIR_CLIMBS:
         return 3 + (int(a.climb_dist / 18) % 4)
     if a.climb: return 14 + (int(a.climb_dist / 64) % 2)
     if isinstance(a,Guest) and a.kb_time>0:return 9
@@ -2800,7 +2810,7 @@ async def switch_map(p, target, via='selector'):
     if via=='portal':
         if abs(target_index-source_index)!=1:
             return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
-        if target_index>source_index and p.x<WORLD_W-125:
+        if target_index>source_index and p.x<city_world_width(p.room)-125:
             return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
         if target_index<source_index and p.x>125:
             return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
@@ -2834,7 +2844,7 @@ async def switch_map(p, target, via='selector'):
     p.buttons=0;p.vx=0;p.vy=0;p.ground=True;p.climb=None;p.guard=False
     p.action='idle';p.action_at=0;p.action_duration=0  # stop mid-cast/air/climb animation on arrival
     # Right-hand portal arrival emerges near left of next map; vice versa.
-    p.x=(WORLD_W-175 if via=='portal' and target_index<source_index else 175)
+    p.x=(city_world_width(target)-175 if via=='portal' and target_index<source_index else 175)
     p.y=550
     p.auto_state.enabled=False;p.auto_state.stay_alert=False
     p.auto_state.anchor=None;p.auto_state.goal=None
@@ -2950,6 +2960,7 @@ async def handle_connection(ws):
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
         features.append('city-two-tier-proto-v1')
+        features.append('city-master-v1')
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
