@@ -288,10 +288,10 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
  'city_proto_1': {'name':'นครสองระดับ · 3 ย่าน',
                   # City Master V1: 2.5x the actual 2060-unit stage-one world.
                   # Single continuous lower and upper walkable surfaces.
-                  'platforms': [[0, 5150, 550], [220, 4930, 235]],
-                  'climbs': [[855, 235, 550, 'stairs'],
-                             [2450, 235, 550, 'stairs'],
-                             [4050, 235, 550, 'stairs']]}}
+                  'platforms': [[0, 5150, 550], [220, 5150, -140]],
+                  'climbs': [[1100, -140, 550, 'stairs'],
+                             [2500, -140, 550, 'stairs'],
+                             [4320, -140, 550, 'stairs']]}}
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
@@ -1361,48 +1361,59 @@ def update_guest(p: Guest, dt, tick_now):
 _MOVE_FIELDS=('x','y','vx','vy','ground','climb','climb_cd','climb_dist','walk_dist','face')
 
 
-# CITY MASTER V1: Server-authoritative diagonal stairs, three independent connectors.
-CITY_STAIR_LO_XS=(855.0,2450.0,4050.0)
-CITY_STAIR_SPAN_X=305.0
-CITY_STAIR_TOP_Y=235.0
+# CITY 8 V4 — exactly TWO walkable streets and three ground-anchored diagonal connections.
+# Start zones are strict 18-unit capsules at staircase endpoints; no broad proximity trigger.
+CITY_STAIR_LO_XS=(1100.0, 2500.0, 4320.0)
+CITY_STAIR_SPAN_X=720.0
+CITY_STAIR_TOP_Y=-140.0
 CITY_STAIR_BOT_Y=550.0
 CITY_STAIR_CLIMBS=tuple((x,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y) for x in CITY_STAIR_LO_XS)
+assert BAMBOO_MAPS['city_proto_1']['platforms'][1][2] == CITY_STAIR_TOP_Y
+assert len(BAMBOO_MAPS['city_proto_1']['platforms']) == 2
+CITY_STAIR_START_RADIUS=18.0
+CITY_STAIR_SPEED_X=165.0
 
 def city_stair_step(p,dt,axis):
-    if p.room!='city_proto_1':return False
-    # A stair stored in p.climb is (x, top, bottom), shared with the map's authorititative climb geometry.
+    if p.room!='city_proto_1': return False
     active=p.climb if p.climb in CITY_STAIR_CLIMBS else None
+    right=int(bool(p.buttons & 2))-int(bool(p.buttons & 1))
     if active is not None:
         if p.dead>0 or p.stun>0 or p.down>0:
             p.climb=None
             return False
         low_x=active[0]
-        if axis:
-            prev=p.y
-            p.y=clamp(p.y+axis*175*dt,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
-            p.climb_dist+=abs(p.y-prev)
-        ratio=(CITY_STAIR_BOT_Y-p.y)/(CITY_STAIR_BOT_Y-CITY_STAIR_TOP_Y)
-        p.x=low_x+CITY_STAIR_SPAN_X*ratio
+        # Directional horizontal walking controls the slope. Vertical input
+        # remains a fallback for players using on-screen UP/DOWN controls.
+        direction=right if right else -axis
+        previous_x=p.x
+        if direction:
+            p.x=clamp(p.x+direction*CITY_STAIR_SPEED_X*dt,low_x,low_x+CITY_STAIR_SPAN_X)
+        portion=(p.x-low_x)/CITY_STAIR_SPAN_X
+        p.y=CITY_STAIR_BOT_Y+(CITY_STAIR_TOP_Y-CITY_STAIR_BOT_Y)*portion
         p.vx=p.vy=0
         p.ground=False
-        if axis<0:p.face=1
-        elif axis>0:p.face=-1
-        if axis<0 and p.y<=CITY_STAIR_TOP_Y+0.001:
-            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x+CITY_STAIR_SPAN_X,CITY_STAIR_TOP_Y,None,True,.27
-        elif axis>0 and p.y>=CITY_STAIR_BOT_Y-0.001:
-            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x,CITY_STAIR_BOT_Y,None,True,.27
+        if direction:
+            p.face=1 if direction>0 else -1
+            p.climb_dist+=abs(p.x-previous_x)
+        # Only switch ground layer after the physical walk reaches an endpoint.
+        if direction>0 and p.x>=low_x+CITY_STAIR_SPAN_X-.001:
+            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x+CITY_STAIR_SPAN_X,CITY_STAIR_TOP_Y,None,True,.30
+        elif direction<0 and p.x<=low_x+.001:
+            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x,CITY_STAIR_BOT_Y,None,True,.30
         return True
-    if p.climb is not None or not p.ground or not axis or p.climb_cd>0 or p.guard or p.stun>0:
+    if p.climb is not None or not p.ground or not axis or p.climb_cd>0 or p.guard or p.stun>0 or p.down>0:
         return False
     for low_x in CITY_STAIR_LO_XS:
-        at_bottom=axis<0 and abs(p.y-CITY_STAIR_BOT_Y)<5 and abs(p.x-low_x)<30
-        at_top=axis>0 and abs(p.y-CITY_STAIR_TOP_Y)<5 and abs(p.x-(low_x+CITY_STAIR_SPAN_X))<30
-        if not (at_bottom or at_top):continue
+        at_bottom=axis<0 and abs(p.y-CITY_STAIR_BOT_Y)<3 and abs(p.x-low_x)<=CITY_STAIR_START_RADIUS
+        at_top=axis>0 and abs(p.y-CITY_STAIR_TOP_Y)<3 and abs(p.x-(low_x+CITY_STAIR_SPAN_X))<=CITY_STAIR_START_RADIUS
+        if not (at_bottom or at_top): continue
         p.climb=(low_x,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
         p.x=low_x if at_bottom else low_x+CITY_STAIR_SPAN_X
         p.y=CITY_STAIR_BOT_Y if at_bottom else CITY_STAIR_TOP_Y
         p.ground=False;p.vx=p.vy=0
-        return city_stair_step(p,dt,axis)
+        # Stay on the physical endpoint until player moves along the incline,
+        # never jump to a different road in response to a button press.
+        return True
     return False
 
 def movement_capture(p):
