@@ -288,8 +288,11 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
  'city_proto_1': {'name':'นครชั้นนอก · ตลาด',
                   'platforms': [[0, 5100, 550]], 'climbs': []},
  'city_inner_1': {'name':'นครชั้นใน · ราชการ',
-                  'platforms': [[0, 3700, 550]], 'climbs': []}}
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1')
+                  'platforms': [[0, 3700, 550]], 'climbs': []},
+ 'peach_exit_1': {'name':'ทุ่งท้อเลียบธาร',
+                  # Map 10: right side after leaving the city. Single walkable floor; the 5 supplied images provide the full stacked scene.
+                  'platforms': [[0, 2060, 550]], 'climbs': []}}
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -298,6 +301,7 @@ BAMBOO_MONSTER_QUOTAS = {
     'bamboo_3': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
     'bamboo_4': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
     'outskirts_1': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
+    'peach_exit_1': {'bamboo_spirit':4,'bamboo_rabbit':3,'brush_squirrel':3},
 }
 BAMBOO_MONSTER_NAMES = {'bamboo_spirit':'หน่อเซียน','bamboo_rabbit':'กระต่ายหูไผ่','brush_squirrel':'กระรอกหางพู่กัน'}
 def bamboo_spawn_slots(room):
@@ -558,7 +562,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70}  # City is a future map, not joinable yet.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10}  # City is a future map, not joinable yet.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -587,7 +591,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1')}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -2918,7 +2922,7 @@ async def handle_connection(ws):
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
         # City V8 uses flat roads; old two-tier handshake retired
-        features.extend(('city-master-v1','city-single-floor-v8-v9'))
+        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v1'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
