@@ -1,77 +1,186 @@
 {
-  "id": "city_proto_1",
-  "version": "city8-v5",
-  "worldWidth": 5150,
-  "lowerY": 550,
-  "upperY": 40,
-  "platforms": [
-    [
-      0,
-      5150,
-      550
-    ],
-    [
-      220,
-      5150,
-      40
-    ]
-  ],
-  "stairs": [
-    {
-      "lowerX": 1100,
-      "upperX": 1820,
-      "lowerY": 550,
-      "upperY": 40,
-      "serverControlled": true
+  "version": "city-single-ground-bg4-v8",
+  "maps": {
+    "city_proto_1": {
+      "width": 5100,
+      "groundY": 550
     },
-    {
-      "lowerX": 2500,
-      "upperX": 3220,
-      "lowerY": 550,
-      "upperY": 40,
-      "serverControlled": true
-    },
-    {
-      "lowerX": 4320,
-      "upperX": 5040,
-      "lowerY": 550,
-      "upperY": 40,
-      "serverControlled": true
+    "city_inner_1": {
+      "width": 3700,
+      "groundY": 550
     }
-  ],
-  "zones": [
-    {
-      "id": "gate",
-      "from": 0,
-      "to": 1715,
-      "title": "ย่านหน้าประตูเมือง"
-    },
-    {
-      "id": "market",
-      "from": 1715,
-      "to": 3430,
-      "title": "ย่านการค้า"
-    },
-    {
-      "id": "wuxia",
-      "from": 3430,
-      "to": 5150,
-      "title": "ย่านสำนักยุทธ์"
-    }
-  ],
-  "notes": "Buildings are visual-only and world-anchored; active shops/NPCs not yet implemented. Ground and stairs authoritative on server.",
-  "cityV5": {
-    "lowXs": [
-      1100,
-      2500,
-      4320
-    ],
-    "spanX": 720,
-    "topY": 40,
-    "botY": 550
   },
-  "cityV5Roads": {
-    "lower": 550,
-    "upper": 40
-  }
+  "buildings": [
+    {
+      "id": "home-west",
+      "map": "city_proto_1",
+      "type": "residence",
+      "asset": "A05",
+      "x": 240,
+      "w": 490,
+      "h": 342.31,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "food-market",
+      "map": "city_proto_1",
+      "type": "food",
+      "asset": "A04",
+      "x": 780,
+      "w": 560,
+      "h": 390.35,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "home-market",
+      "map": "city_proto_1",
+      "type": "residence",
+      "asset": "A05",
+      "x": 1390,
+      "w": 490,
+      "h": 342.31,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "storage-hub",
+      "map": "city_proto_1",
+      "type": "storage",
+      "asset": "A08",
+      "x": 1930,
+      "w": 560,
+      "h": 363.57,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "board-hub",
+      "map": "city_proto_1",
+      "type": "quest-board",
+      "asset": "A10",
+      "x": 2540,
+      "w": 265,
+      "h": 182.09,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "pharmacy-hub",
+      "map": "city_proto_1",
+      "type": "pharmacy",
+      "asset": "A01",
+      "x": 2860,
+      "w": 540,
+      "h": 373.37,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "clothes-hub",
+      "map": "city_proto_1",
+      "type": "clothing",
+      "asset": "A02",
+      "x": 3450,
+      "w": 625,
+      "h": 416.09,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "blacksmith-hub",
+      "map": "city_proto_1",
+      "type": "blacksmith",
+      "asset": "A06",
+      "x": 4140,
+      "w": 575,
+      "h": 420.38,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "home-inner-west",
+      "map": "city_inner_1",
+      "type": "residence",
+      "asset": "A05",
+      "x": 240,
+      "w": 490,
+      "h": 342.31,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "inn-inner",
+      "map": "city_inner_1",
+      "type": "inn",
+      "asset": "A07",
+      "x": 800,
+      "w": 635,
+      "h": 444.24,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "home-inner-east",
+      "map": "city_inner_1",
+      "type": "residence",
+      "asset": "A05",
+      "x": 1510,
+      "w": 490,
+      "h": 342.31,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": true
+    },
+    {
+      "id": "weapons-inner",
+      "map": "city_inner_1",
+      "type": "weapons",
+      "asset": "A03",
+      "x": 2050,
+      "w": 570,
+      "h": 393.96,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    },
+    {
+      "id": "government-inner",
+      "map": "city_inner_1",
+      "type": "government",
+      "asset": "A09",
+      "x": 2710,
+      "w": 710,
+      "h": 477.91,
+      "level": "ground",
+      "groundY": 550,
+      "mirror": false
+    }
+  ],
+  "background": {
+    "files": {
+      "sky": "assets/city_master/bg4/sky.webp",
+      "far": "assets/city_master/bg4/far.webp",
+      "mid": "assets/city_master/bg4/mid.webp",
+      "near": "assets/city_master/bg4/near.webp"
+    },
+    "scrollRates": {
+      "sky": 0,
+      "far": 0.13,
+      "mid": 0.3,
+      "near": 0.52
+    }
+  },
+  "uniqueServices": 9
 }

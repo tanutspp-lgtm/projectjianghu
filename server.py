@@ -285,14 +285,11 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
                    # Map 7: peaceful town boundary, main floor only, no floating platforms.
                    'platforms': [[0, 2060, 550]],
                    'climbs': []},
- 'city_proto_1': {'name':'นครสองระดับ · 3 ย่าน',
-                  # City Master V1: 2.5x the actual 2060-unit stage-one world.
-                  # Single continuous lower and upper walkable surfaces.
-                  'platforms': [[0, 5150, 550], [220, 5150, 40]],
-                  'climbs': [[1100, 40, 550, 'stairs'],
-                             [2500, 40, 550, 'stairs'],
-                             [4320, 40, 550, 'stairs']]}}
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1')
+ 'city_proto_1': {'name':'นครชั้นนอก · ตลาด',
+                  'platforms': [[0, 5100, 550]], 'climbs': []},
+ 'city_inner_1': {'name':'นครชั้นใน · ราชการ',
+                  'platforms': [[0, 3700, 550]], 'climbs': []}}
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -341,11 +338,11 @@ def active_ground():
 def active_climbs():
     # The diagonal city stairs are handled by a separate server-owned spline,
     # not by the rope/ladder movement or AUTO route logic.
-    if current_world().room == 'city_proto_1': return ()
+    if current_world().room in ('city_proto_1','city_inner_1'): return ()
     return BAMBOO_CLIMBS.get(current_world().room, CLIMBS)
 
 def city_world_width(room):
-    return 5150 if room == 'city_proto_1' else WORLD_W
+    return 5100 if room == 'city_proto_1' else (3700 if room == 'city_inner_1' else WORLD_W)
 
 def map_payload(map_id):
     data=BAMBOO_MAPS[map_id]
@@ -561,7 +558,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70}  # City is a future map, not joinable yet.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70}  # City is a future map, not joinable yet.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -590,7 +587,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1')}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -1361,59 +1358,9 @@ def update_guest(p: Guest, dt, tick_now):
 _MOVE_FIELDS=('x','y','vx','vy','ground','climb','climb_cd','climb_dist','walk_dist','face')
 
 
-# CITY 8 V4 — exactly TWO walkable streets and three ground-anchored diagonal connections.
-# Start zones are strict 18-unit capsules at staircase endpoints; no broad proximity trigger.
-CITY_STAIR_LO_XS=(1100.0, 2500.0, 4320.0)
-CITY_STAIR_SPAN_X=720.0
-CITY_STAIR_TOP_Y=40.0
-CITY_STAIR_BOT_Y=550.0
-CITY_STAIR_CLIMBS=tuple((x,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y) for x in CITY_STAIR_LO_XS)
-assert BAMBOO_MAPS['city_proto_1']['platforms'][1][2] == CITY_STAIR_TOP_Y
-assert len(BAMBOO_MAPS['city_proto_1']['platforms']) == 2
-CITY_STAIR_START_RADIUS=18.0
-CITY_STAIR_SPEED_X=165.0
-
+# CITY V8: both towns use ONE continuous ground plane and NO stair state.
+CITY_STAIR_CLIMBS=()
 def city_stair_step(p,dt,axis):
-    if p.room!='city_proto_1': return False
-    active=p.climb if p.climb in CITY_STAIR_CLIMBS else None
-    right=int(bool(p.buttons & 2))-int(bool(p.buttons & 1))
-    if active is not None:
-        if p.dead>0 or p.stun>0 or p.down>0:
-            p.climb=None
-            return False
-        low_x=active[0]
-        # Directional horizontal walking controls the slope. Vertical input
-        # remains a fallback for players using on-screen UP/DOWN controls.
-        direction=right if right else -axis
-        previous_x=p.x
-        if direction:
-            p.x=clamp(p.x+direction*CITY_STAIR_SPEED_X*dt,low_x,low_x+CITY_STAIR_SPAN_X)
-        portion=(p.x-low_x)/CITY_STAIR_SPAN_X
-        p.y=CITY_STAIR_BOT_Y+(CITY_STAIR_TOP_Y-CITY_STAIR_BOT_Y)*portion
-        p.vx=p.vy=0
-        p.ground=False
-        if direction:
-            p.face=1 if direction>0 else -1
-            p.climb_dist+=abs(p.x-previous_x)
-        # Only switch ground layer after the physical walk reaches an endpoint.
-        if direction>0 and p.x>=low_x+CITY_STAIR_SPAN_X-.001:
-            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x+CITY_STAIR_SPAN_X,CITY_STAIR_TOP_Y,None,True,.30
-        elif direction<0 and p.x<=low_x+.001:
-            p.x,p.y,p.climb,p.ground,p.climb_cd=low_x,CITY_STAIR_BOT_Y,None,True,.30
-        return True
-    if p.climb is not None or not p.ground or not axis or p.climb_cd>0 or p.guard or p.stun>0 or p.down>0:
-        return False
-    for low_x in CITY_STAIR_LO_XS:
-        at_bottom=axis<0 and abs(p.y-CITY_STAIR_BOT_Y)<3 and abs(p.x-low_x)<=CITY_STAIR_START_RADIUS
-        at_top=axis>0 and abs(p.y-CITY_STAIR_TOP_Y)<3 and abs(p.x-(low_x+CITY_STAIR_SPAN_X))<=CITY_STAIR_START_RADIUS
-        if not (at_bottom or at_top): continue
-        p.climb=(low_x,CITY_STAIR_TOP_Y,CITY_STAIR_BOT_Y)
-        p.x=low_x if at_bottom else low_x+CITY_STAIR_SPAN_X
-        p.y=CITY_STAIR_BOT_Y if at_bottom else CITY_STAIR_TOP_Y
-        p.ground=False;p.vx=p.vy=0
-        # Stay on the physical endpoint until player moves along the incline,
-        # never jump to a different road in response to a button press.
-        return True
     return False
 
 def movement_capture(p):
@@ -1443,7 +1390,7 @@ def movement_change_mode(p,mode):
 
 
 def movement_tick(p,dt,tick_now):
-    if p.room=='city_proto_1' and p.movement_mode!='server':
+    if p.room in ('city_proto_1','city_inner_1') and p.movement_mode!='server':
         movement_change_mode(p,'server')
     if p.movement_mode!='client' or p.auto_state.enabled:
         update_guest(p,dt,tick_now)
@@ -1470,7 +1417,7 @@ def movement_tick(p,dt,tick_now):
 
 
 def movement_validate(p,m,tick_now):
-    if p.room=='city_proto_1': return 'city-prototype-server-authority'
+    if p.room in ('city_proto_1','city_inner_1'): return 'city-single-floor-server-authority'
     if p.movement_mode!='client' or p.auto_state.enabled:
         return 'not-in-client-mode'
     seq=m['seq']
@@ -2970,8 +2917,8 @@ async def handle_connection(ws):
         features.append('lazy-map-hibernation-v80ef')
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
-        features.append('city-two-tier-proto-v1')
-        features.append('city-master-v1')
+        # City V8 uses flat roads; old two-tier handshake retired
+        features.extend(('city-master-v1','city-single-floor-v8-v9'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
@@ -3183,7 +3130,7 @@ async def handle_connection(ws):
                 if not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='Movement toggle rate');break
                 requested=m['mode']
-                if requested=='client' and (not ENABLE_CLIENT_MOVEMENT_AB or p.auto_state.enabled or p.room=='city_proto_1'):
+                if requested=='client' and (not ENABLE_CLIENT_MOVEMENT_AB or p.auto_state.enabled or p.room in ('city_proto_1','city_inner_1')):
                     await ws.send(json.dumps({'t':'movement_mode_ack','mode':p.movement_mode,'ok':False,'reason':'unavailable'}))
                 else:
                     await ws.send(json.dumps({**movement_change_mode(p,requested),'ok':True},separators=(',',':')))
