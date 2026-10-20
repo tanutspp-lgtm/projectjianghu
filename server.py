@@ -290,7 +290,6 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
  'city_inner_1': {'name':'นครชั้นใน · ราชการ',
                   'platforms': [[0, 3700, 550]], 'climbs': []},
  'peach_exit_1': {'name':'ทุ่งท้อเลียบธาร',
-                  # Map 10: right side after leaving the city. Single walkable floor; the 5 supplied images provide the full stacked scene.
                   'platforms': [[0, 2060, 550]], 'climbs': []}}
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
@@ -562,7 +561,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10}  # City is a future map, not joinable yet.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10}  # Map 10 farming 10 players per channel.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -2807,8 +2806,6 @@ async def switch_map(p, target, via='selector'):
     p.action='idle';p.action_at=0;p.action_duration=0  # stop mid-cast/air/climb animation on arrival
     # Right-hand portal arrival emerges near left of next map; vice versa.
     p.x=(city_world_width(target)-175 if via=='portal' and target_index<source_index else 175)
-    if target=='peach_exit_1' and via=='portal' and target_index>source_index:
-        p.x=420
     p.y=550
     p.auto_state.enabled=False;p.auto_state.stay_alert=False
     p.auto_state.anchor=None;p.auto_state.goal=None
@@ -2924,7 +2921,7 @@ async def handle_connection(ws):
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
         # City V8 uses flat roads; old two-tier handshake retired
-        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v1'))
+        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
