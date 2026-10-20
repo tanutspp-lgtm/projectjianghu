@@ -2807,6 +2807,8 @@ async def switch_map(p, target, via='selector'):
     p.action='idle';p.action_at=0;p.action_duration=0  # stop mid-cast/air/climb animation on arrival
     # Right-hand portal arrival emerges near left of next map; vice versa.
     p.x=(city_world_width(target)-175 if via=='portal' and target_index<source_index else 175)
+    if target=='peach_exit_1' and via=='portal' and target_index>source_index:
+        p.x=420
     p.y=550
     p.auto_state.enabled=False;p.auto_state.stay_alert=False
     p.auto_state.anchor=None;p.auto_state.goal=None
