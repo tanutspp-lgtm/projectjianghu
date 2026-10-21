@@ -291,7 +291,13 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
                   'platforms': [[0, 3700, 550]], 'climbs': []},
  'peach_exit_1': {'name':'ทุ่งท้อเลียบธาร',
                   'platforms': [[0, 2060, 550]], 'climbs': []}}
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1')
+# Map 11: coordinates traced directly from approved AI-generated platform artwork.
+# PNG source: assets/forest_fork_11/terrain.png (1448x1086), scaled to 2400 world units.
+BAMBOO_MAPS['forest_fork_11'] = {'name':'ทางแยกป่าและเชิงเขา',
+ 'platforms':[[0, 2400, 550], [240, 409, 281], [323, 1101, 175], [970, 1367, 298], [1720, 2262, 237], [532, 786, -19], [378, 550, -166], [630, 810, -375], [751, 1419, -123], [1357, 2140, -25], [1790, 2108, -285], [1906, 2400, -415], [2039, 2400, -564], [2128, 2400, -725], [1807, 2117, -201], [2171, 2400, -632]],
+ 'climbs':[[870, 175, 550, 'ladder'], [620, -19, 175, 'ladder'], [1969, -25, 237, 'ladder'], [2108, -201, -25, 'ladder'], [2093, -415, -201, 'rope'], [2254, -564, -415, 'ladder'], [752, -375, -123, 'rope']]}
+
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -345,7 +351,7 @@ def active_climbs():
     return BAMBOO_CLIMBS.get(current_world().room, CLIMBS)
 
 def city_world_width(room):
-    return 5100 if room == 'city_proto_1' else (3700 if room == 'city_inner_1' else WORLD_W)
+    return 2400 if room == 'forest_fork_11' else (5100 if room == 'city_proto_1' else (3700 if room == 'city_inner_1' else WORLD_W))
 
 def map_payload(map_id):
     data=BAMBOO_MAPS[map_id]
@@ -561,7 +567,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10}  # Map 10 farming 10 players per channel.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10, 'forest_fork_11':10}  # 10 player cap in Map11.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -590,7 +596,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1')}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -1440,7 +1446,7 @@ def movement_validate(p,m,tick_now):
     x,y,vx,vy=m['x'],m['y'],m['vx'],m['vy']
     grounded=m['ground']; climb=m['climb']
     # Bounds and declared state are NEVER trusted as authority.
-    if not 27<=x<=city_world_width(p.room)-27 or not -100<=y<=800:return 'map-bounds'
+    if not 27<=x<=city_world_width(p.room)-27 or not (-850 if p.room=='forest_fork_11' else -100)<=y<=800:return 'map-bounds'
     if abs(vx)>675 or abs(vy)>1200:return 'velocity-cap'
     expected=p.move_shadow or movement_capture(p)
     ex,ey,evx,evy,eground,eclimb=expected[:6]
@@ -2921,7 +2927,7 @@ async def handle_connection(ws):
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
         # City V8 uses flat roads; old two-tier handshake retired
-        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3'))
+        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-art-v1'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
