@@ -291,11 +291,11 @@ BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
                   'platforms': [[0, 3700, 550]], 'climbs': []},
  'peach_exit_1': {'name':'ทุ่งท้อเลียบธาร',
                   'platforms': [[0, 2060, 550]], 'climbs': []}}
-# Map 11: coordinates traced directly from approved AI-generated platform artwork.
-# PNG source: assets/forest_fork_11/terrain.png (1448x1086), scaled to 2400 world units.
+# Map 11 V21: server-authoritative tileset platform/rope geometry.
+# Must match the approved V21 frontend MAP11_GEOMETRY exactly (world width 2400).
 BAMBOO_MAPS['forest_fork_11'] = {'name':'ทางแยกป่าและเชิงเขา',
- 'platforms':[[0, 2400, 550], [240, 409, 281], [323, 1101, 175], [970, 1367, 298], [1720, 2262, 237], [532, 786, -19], [378, 550, -166], [630, 810, -375], [751, 1419, -123], [1357, 2140, -25], [1790, 2108, -285], [1906, 2400, -415], [2039, 2400, -564], [2128, 2400, -725], [1807, 2117, -201], [2171, 2400, -632]],
- 'climbs':[[870, 175, 550, 'ladder'], [620, -19, 175, 'ladder'], [1969, -25, 237, 'ladder'], [2108, -201, -25, 'ladder'], [2093, -415, -201, 'rope'], [2254, -564, -415, 'ladder'], [752, -375, -123, 'rope']]}
+  'platforms':[[0, 2400, 550], [250, 700, 300], [730, 920, 215], [980, 1260, 130], [1320, 1680, 50], [1740, 1970, -25], [1855, 2085, -185], [1960, 2210, -355], [2140, 2400, -445], [2080, 2400, -700]],
+  'climbs':[[440, 300, 550, 'rope'], [1900, -185, -25, 'rope'], [2020, -355, -185, 'rope'], [2300, -700, -445, 'rope']]}
 
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11')
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
@@ -2927,7 +2927,7 @@ async def handle_connection(ws):
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
         # City V8 uses flat roads; old two-tier handshake retired
-        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-art-v1'))
+        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
