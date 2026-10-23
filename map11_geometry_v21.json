@@ -1,0 +1,136 @@
+{
+  "mapId": "forest_fork_11",
+  "version": "map11-v21-clean-ropes",
+  "worldWidth": 2400,
+  "platforms": [
+    {
+      "x": 0,
+      "x2": 2400,
+      "y": 550
+    },
+    {
+      "x": 250,
+      "x2": 700,
+      "y": 300
+    },
+    {
+      "x": 730,
+      "x2": 920,
+      "y": 215
+    },
+    {
+      "x": 980,
+      "x2": 1260,
+      "y": 130
+    },
+    {
+      "x": 1320,
+      "x2": 1680,
+      "y": 50
+    },
+    {
+      "x": 1740,
+      "x2": 1970,
+      "y": -25
+    },
+    {
+      "x": 1855,
+      "x2": 2085,
+      "y": -185
+    },
+    {
+      "x": 1960,
+      "x2": 2210,
+      "y": -355
+    },
+    {
+      "x": 2140,
+      "x2": 2400,
+      "y": -445
+    },
+    {
+      "x": 2080,
+      "x2": 2400,
+      "y": -700
+    }
+  ],
+  "climbs": [
+    {
+      "x": 440,
+      "top": 300,
+      "bottom": 550,
+      "type": "rope"
+    },
+    {
+      "x": 1900,
+      "top": -185,
+      "bottom": -25,
+      "type": "rope"
+    },
+    {
+      "x": 2020,
+      "top": -355,
+      "bottom": -185,
+      "type": "rope"
+    },
+    {
+      "x": 2300,
+      "top": -700,
+      "bottom": -445,
+      "type": "rope"
+    }
+  ],
+  "styles": [
+    null,
+    {
+      "key": "dirt20",
+      "h": 178,
+      "grassFraction": 0.24
+    },
+    {
+      "key": "dirt22",
+      "h": 148,
+      "grassFraction": 0.23
+    },
+    {
+      "key": "dirt20",
+      "h": 154,
+      "grassFraction": 0.24
+    },
+    {
+      "key": "granite20",
+      "h": 164,
+      "grassFraction": 0.23
+    },
+    {
+      "key": "granite32",
+      "h": 142,
+      "grassFraction": 0.25
+    },
+    {
+      "key": "granite22",
+      "h": 152,
+      "grassFraction": 0.24
+    },
+    {
+      "key": "granite31",
+      "h": 146,
+      "grassFraction": 0.21
+    },
+    {
+      "key": "granite22",
+      "h": 152,
+      "grassFraction": 0.24
+    },
+    {
+      "key": "granite22",
+      "h": 160,
+      "grassFraction": 0.24
+    }
+  ],
+  "portalMarker": {
+    "x": 2335,
+    "y": -690,
+    "active": false
+  }
+}
