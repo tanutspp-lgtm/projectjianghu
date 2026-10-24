@@ -1,0 +1,109 @@
+--- a/server.py
++++ b/server.py
+@@ -300,8 +300,10 @@
+ # Four forest worlds beyond the lower-right Map11 portal. Scenery-first, no new monster balance.
+ GRANITE_FOREST_MAPS = {'granite_forest_1': {'name': 'ชายป่าเชิงผา', 'platforms': [[0, 2400, 550], [240, 720, 300], [840, 1340, 300], [1460, 2060, 300], [510, 990, 60], [1110, 1680, 60], [900, 1400, -180]], 'climbs': [[430, 300, 550, 'rope'], [1130, 300, 550, 'rope'], [1890, 300, 550, 'rope'], [650, 60, 300, 'rope'], [1200, 60, 300, 'rope'], [1260, -180, 60, 'rope']]}, 'granite_forest_2': {'name': 'ดงไม้ยักษ์', 'platforms': [[0, 2400, 550], [200, 680, 300], [800, 1320, 300], [1440, 2080, 300], [480, 980, 60], [1100, 1660, 60], [1780, 2240, 60], [1620, 2080, -180]], 'climbs': [[400, 300, 550, 'rope'], [1050, 300, 550, 'rope'], [1870, 300, 550, 'rope'], [600, 60, 300, 'rope'], [1230, 60, 300, 'rope'], [1930, 60, 300, 'rope'], [1980, -180, 60, 'rope']]}, 'granite_forest_3': {'name': 'ช่องแสงกลางพนา', 'platforms': [[0, 2400, 550], [120, 2280, 300], [120, 2280, 60], [120, 2280, -180], [120, 2280, -420]], 'climbs': [[340, 300, 550, 'rope'], [2060, 300, 550, 'rope'], [460, 60, 300, 'rope'], [1940, 60, 300, 'rope'], [580, -180, 60, 'rope'], [1820, -180, 60, 'rope'], [700, -420, -180, 'rope'], [1700, -420, -180, 'rope']]}, 'granite_forest_4': {'name': 'ป่าลึกใต้ผาหิน', 'platforms': [[0, 2400, 550], [200, 680, 300], [800, 1320, 300], [1440, 2070, 300], [430, 930, 60], [1050, 1660, 60], [1780, 2240, 60], [890, 1390, -180], [1520, 2020, -180]], 'climbs': [[350, 300, 550, 'rope'], [1060, 300, 550, 'rope'], [1950, 300, 550, 'rope'], [570, 60, 300, 'rope'], [1230, 60, 300, 'rope'], [1870, 60, 300, 'rope'], [1300, -180, 60, 'rope'], [1950, -180, 60, 'rope']]}}
+ BAMBOO_MAPS.update(GRANITE_FOREST_MAPS)
+-
+-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS)
++MOUNTAIN_MAPS = {'granite_ascent_1': {'name': 'ทางไต่ผาแกรนิต', 'platforms': [[0, 1400, 550], [700, 965, 310], [884, 1140, 70], [1059, 1340, -170], [884, 1221, -410], [709, 1037, -650], [884, 1165, -890], [1059, 1345, -1130], [884, 1221, -1370], [709, 1046, -1610], [884, 1174, -1850], [1059, 1349, -2090], [884, 1229, -2330], [709, 1050, -2570], [884, 1182, -2810], [1059, 1353, -3050], [884, 1238, -3290], [709, 1059, -3530], [884, 1187, -3770], [1059, 1357, -4010], [884, 1400, -4250]], 'climbs': [[807, 310, 550, 'ladder'], [903, 70, 310, 'ladder'], [1071, -170, 70, 'ladder'], [1159, -410, -170, 'ladder'], [896, -650, -410, 'ladder'], [975, -890, -650, 'ladder'], [1071, -1130, -890, 'ladder'], [1159, -1370, -1130, 'ladder'], [896, -1610, -1370, 'ladder'], [984, -1850, -1610, 'ladder'], [1071, -2090, -1850, 'ladder'], [1167, -2330, -2090, 'ladder'], [896, -2570, -2330, 'ladder'], [988, -2810, -2570, 'ladder'], [1071, -3050, -2810, 'ladder'], [1176, -3290, -3050, 'ladder'], [896, -3530, -3290, 'ladder'], [997, -3770, -3530, 'ladder'], [1071, -4010, -3770, 'ladder'], [1295, -4250, -4010, 'ladder']]}}
++BAMBOO_MAPS.update(MOUNTAIN_MAPS)
++
++PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS)
+ # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
+ # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
+ BAMBOO_MONSTER_QUOTAS = {
+@@ -355,7 +357,7 @@
+     return BAMBOO_CLIMBS.get(current_world().room, CLIMBS)
+ 
+ def city_world_width(room):
+-    return 2400 if room == 'forest_fork_11' or room in GRANITE_FOREST_MAPS else (5100 if room == 'city_proto_1' else (3700 if room == 'city_inner_1' else WORLD_W))
++    return 1400 if room in MOUNTAIN_MAPS else 2400 if room == 'forest_fork_11' or room in GRANITE_FOREST_MAPS else (5100 if room == 'city_proto_1' else (3700 if room == 'city_inner_1' else WORLD_W))
+ 
+ def map_payload(map_id):
+     data=BAMBOO_MAPS[map_id]
+@@ -573,6 +575,7 @@
+ CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
+ MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10, 'forest_fork_11':10}  # 10 player cap in Map11.
+ MAP_HARD_CAPS.update({room:10 for room in GRANITE_FOREST_MAPS})
++MAP_HARD_CAPS.update({room:10 for room in MOUNTAIN_MAPS})
+ CHANNEL_SWITCH_COOLDOWN = 10.0
+ CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
+ MAX_PENDING_JOINS = 16
+@@ -601,7 +604,7 @@
+     sleeps: int = 0
+     wakes: int = 0
+ 
+-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS)}
++worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS)}
+ _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
+ connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
+ 
+@@ -1451,7 +1454,7 @@
+     x,y,vx,vy=m['x'],m['y'],m['vx'],m['vy']
+     grounded=m['ground']; climb=m['climb']
+     # Bounds and declared state are NEVER trusted as authority.
+-    if not 27<=x<=city_world_width(p.room)-27 or not (-850 if p.room=='forest_fork_11' or p.room in GRANITE_FOREST_MAPS else -100)<=y<=800:return 'map-bounds'
++    if not 27<=x<=city_world_width(p.room)-27 or not (-4500 if p.room in MOUNTAIN_MAPS else -850 if p.room=='forest_fork_11' or p.room in GRANITE_FOREST_MAPS else -100)<=y<=800:return 'map-bounds'
+     if abs(vx)>675 or abs(vy)>1200:return 'velocity-cap'
+     expected=p.move_shadow or movement_capture(p)
+     ex,ey,evx,evy,eground,eclimb=expected[:6]
+@@ -2779,15 +2782,32 @@
+         return {'t':'map_ack','ok':True,'same':True,**map_payload(p.room)}
+     source_index=PUBLIC_MAP_IDS.index(p.room)
+     target_index=PUBLIC_MAP_IDS.index(target)
++    branch_portal = via=='portal' and {p.room,target}=={'forest_fork_11','granite_ascent_1'}
+     if via=='portal':
+-        if (target in GRANITE_FOREST_MAPS or p.room in GRANITE_FOREST_MAPS) and (not p.ground or p.climb is not None or abs(p.y-550)>40):
+-            return {'t':'map_ack','ok':False,'reason':'portal_wrong_floor','map':p.room}
+-        if abs(target_index-source_index)!=1:
+-            return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
+-        if target_index>source_index and p.x<city_world_width(p.room)-125:
+-            return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
+-        if target_index<source_index and p.x>125:
+-            return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
++        if p.room in MOUNTAIN_MAPS or target in MOUNTAIN_MAPS:
++            if not branch_portal:
++                return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
++            if not p.ground or p.climb is not None:
++                return {'t':'map_ack','ok':False,'reason':'portal_wrong_floor','map':p.room}
++            if p.room=='forest_fork_11':
++                if abs(p.y+700)>35:
++                    return {'t':'map_ack','ok':False,'reason':'portal_wrong_floor','map':p.room}
++                if p.x<city_world_width(p.room)-125:
++                    return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
++            else:
++                if abs(p.y-550)>35:
++                    return {'t':'map_ack','ok':False,'reason':'portal_wrong_floor','map':p.room}
++                if p.x>125:
++                    return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
++        else:
++            if (target in GRANITE_FOREST_MAPS or p.room in GRANITE_FOREST_MAPS) and (not p.ground or p.climb is not None or abs(p.y-550)>40):
++                return {'t':'map_ack','ok':False,'reason':'portal_wrong_floor','map':p.room}
++            if abs(target_index-source_index)!=1:
++                return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
++            if target_index>source_index and p.x<city_world_width(p.room)-125:
++                return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
++            if target_index<source_index and p.x>125:
++                return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
+     elif via!='selector':
+         return {'t':'map_ack','ok':False,'reason':'invalid_via','map':p.room}
+     target_world=worlds[(p.channel,target)]
+@@ -2820,6 +2840,8 @@
+     # Right-hand portal arrival emerges near left of next map; vice versa.
+     p.x=(city_world_width(target)-175 if via=='portal' and target_index<source_index else 175)
+     p.y=550
++    if branch_portal:
++        p.x,p.y=((175,550) if target=='granite_ascent_1' else (2225,-700))
+     p.auto_state.enabled=False;p.auto_state.stay_alert=False
+     p.auto_state.anchor=None;p.auto_state.goal=None
+     p.manual_target_id=None;p.manual_auto_skill=None;p.manual_guard=False
+@@ -2934,7 +2956,7 @@
+         features.append('bamboo-map-worlds-v1')
+         features.append('suburb-gate-7worlds-v1')
+         # City V8 uses flat roads; old two-tier handshake retired
+-        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks'))
++        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks','granite-ascent-v2-all-ladders'))
+         if stress_test: features.append('open-channel-stress-v80eh')
+         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
+         features.append('event-journal-v80ek')

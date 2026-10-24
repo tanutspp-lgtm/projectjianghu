@@ -1,0 +1,285 @@
+{
+  "mapId": "granite_ascent_1",
+  "name": "ทางไต่ผาแกรนิต",
+  "feature": "granite-ascent-v2-all-ladders",
+  "worldWidth": 1400,
+  "platforms": [
+    {
+      "x": 0,
+      "x2": 1400,
+      "y": 550,
+      "style": "granite"
+    },
+    {
+      "x": 700,
+      "x2": 965,
+      "y": 310,
+      "style": "wood",
+      "row": 1
+    },
+    {
+      "x": 884,
+      "x2": 1140,
+      "y": 70,
+      "style": "wood",
+      "row": 2
+    },
+    {
+      "x": 1059,
+      "x2": 1340,
+      "y": -170,
+      "style": "wood",
+      "row": 0
+    },
+    {
+      "x": 884,
+      "x2": 1221,
+      "y": -410,
+      "style": "granite",
+      "row": 1
+    },
+    {
+      "x": 709,
+      "x2": 1037,
+      "y": -650,
+      "style": "wood",
+      "row": 2
+    },
+    {
+      "x": 884,
+      "x2": 1165,
+      "y": -890,
+      "style": "wood",
+      "row": 0
+    },
+    {
+      "x": 1059,
+      "x2": 1345,
+      "y": -1130,
+      "style": "wood",
+      "row": 1
+    },
+    {
+      "x": 884,
+      "x2": 1221,
+      "y": -1370,
+      "style": "granite",
+      "row": 2
+    },
+    {
+      "x": 709,
+      "x2": 1046,
+      "y": -1610,
+      "style": "wood",
+      "row": 0
+    },
+    {
+      "x": 884,
+      "x2": 1174,
+      "y": -1850,
+      "style": "wood",
+      "row": 1
+    },
+    {
+      "x": 1059,
+      "x2": 1349,
+      "y": -2090,
+      "style": "wood",
+      "row": 2
+    },
+    {
+      "x": 884,
+      "x2": 1229,
+      "y": -2330,
+      "style": "granite",
+      "row": 0
+    },
+    {
+      "x": 709,
+      "x2": 1050,
+      "y": -2570,
+      "style": "wood",
+      "row": 1
+    },
+    {
+      "x": 884,
+      "x2": 1182,
+      "y": -2810,
+      "style": "wood",
+      "row": 2
+    },
+    {
+      "x": 1059,
+      "x2": 1353,
+      "y": -3050,
+      "style": "wood",
+      "row": 0
+    },
+    {
+      "x": 884,
+      "x2": 1238,
+      "y": -3290,
+      "style": "granite",
+      "row": 1
+    },
+    {
+      "x": 709,
+      "x2": 1059,
+      "y": -3530,
+      "style": "wood",
+      "row": 2
+    },
+    {
+      "x": 884,
+      "x2": 1187,
+      "y": -3770,
+      "style": "wood",
+      "row": 0
+    },
+    {
+      "x": 1059,
+      "x2": 1357,
+      "y": -4010,
+      "style": "wood",
+      "row": 1
+    },
+    {
+      "x": 884,
+      "x2": 1400,
+      "y": -4250,
+      "style": "granite",
+      "row": 2
+    }
+  ],
+  "climbs": [
+    {
+      "x": 807,
+      "top": 310,
+      "bottom": 550,
+      "type": "ladder"
+    },
+    {
+      "x": 903,
+      "top": 70,
+      "bottom": 310,
+      "type": "ladder"
+    },
+    {
+      "x": 1071,
+      "top": -170,
+      "bottom": 70,
+      "type": "ladder"
+    },
+    {
+      "x": 1159,
+      "top": -410,
+      "bottom": -170,
+      "type": "ladder"
+    },
+    {
+      "x": 896,
+      "top": -650,
+      "bottom": -410,
+      "type": "ladder"
+    },
+    {
+      "x": 975,
+      "top": -890,
+      "bottom": -650,
+      "type": "ladder"
+    },
+    {
+      "x": 1071,
+      "top": -1130,
+      "bottom": -890,
+      "type": "ladder"
+    },
+    {
+      "x": 1159,
+      "top": -1370,
+      "bottom": -1130,
+      "type": "ladder"
+    },
+    {
+      "x": 896,
+      "top": -1610,
+      "bottom": -1370,
+      "type": "ladder"
+    },
+    {
+      "x": 984,
+      "top": -1850,
+      "bottom": -1610,
+      "type": "ladder"
+    },
+    {
+      "x": 1071,
+      "top": -2090,
+      "bottom": -1850,
+      "type": "ladder"
+    },
+    {
+      "x": 1167,
+      "top": -2330,
+      "bottom": -2090,
+      "type": "ladder"
+    },
+    {
+      "x": 896,
+      "top": -2570,
+      "bottom": -2330,
+      "type": "ladder"
+    },
+    {
+      "x": 988,
+      "top": -2810,
+      "bottom": -2570,
+      "type": "ladder"
+    },
+    {
+      "x": 1071,
+      "top": -3050,
+      "bottom": -2810,
+      "type": "ladder"
+    },
+    {
+      "x": 1176,
+      "top": -3290,
+      "bottom": -3050,
+      "type": "ladder"
+    },
+    {
+      "x": 896,
+      "top": -3530,
+      "bottom": -3290,
+      "type": "ladder"
+    },
+    {
+      "x": 997,
+      "top": -3770,
+      "bottom": -3530,
+      "type": "ladder"
+    },
+    {
+      "x": 1071,
+      "top": -4010,
+      "bottom": -3770,
+      "type": "ladder"
+    },
+    {
+      "x": 1295,
+      "top": -4250,
+      "bottom": -4010,
+      "type": "ladder"
+    }
+  ],
+  "entry": {
+    "x": 175,
+    "y": 550
+  },
+  "futureExit": {
+    "x": 1320,
+    "y": -4250,
+    "enabled": false
+  }
+}
