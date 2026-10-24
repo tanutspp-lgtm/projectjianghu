@@ -1,0 +1,426 @@
+{
+  "granite_forest_1": {
+    "mapId": "granite_forest_1",
+    "name": "ชายป่าเชิงผา",
+    "version": "forest-granite-chain-v3-map3-four-long-decks",
+    "worldWidth": 2400,
+    "platforms": [
+      {
+        "x": 0,
+        "x2": 2400,
+        "y": 550
+      },
+      {
+        "x": 240,
+        "x2": 720,
+        "y": 300,
+        "tileStyle": "carved"
+      },
+      {
+        "x": 840,
+        "x2": 1340,
+        "y": 300,
+        "tileStyle": "roots"
+      },
+      {
+        "x": 1460,
+        "x2": 2060,
+        "y": 300,
+        "tileStyle": "pillars"
+      },
+      {
+        "x": 510,
+        "x2": 990,
+        "y": 60,
+        "tileStyle": "moss"
+      },
+      {
+        "x": 1110,
+        "x2": 1680,
+        "y": 60,
+        "tileStyle": "carved"
+      },
+      {
+        "x": 900,
+        "x2": 1400,
+        "y": -180,
+        "tileStyle": "roots"
+      }
+    ],
+    "climbs": [
+      {
+        "x": 430,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 1130,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 1890,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 650,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1200,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1260,
+        "top": -180,
+        "bottom": 60,
+        "type": "rope"
+      }
+    ],
+    "nearTrees": [
+      [
+        -160,
+        1000
+      ],
+      [
+        2440,
+        1080
+      ]
+    ]
+  },
+  "granite_forest_2": {
+    "mapId": "granite_forest_2",
+    "name": "ดงไม้ยักษ์",
+    "version": "forest-granite-chain-v3-map3-four-long-decks",
+    "worldWidth": 2400,
+    "platforms": [
+      {
+        "x": 0,
+        "x2": 2400,
+        "y": 550
+      },
+      {
+        "x": 200,
+        "x2": 680,
+        "y": 300,
+        "tileStyle": "roots"
+      },
+      {
+        "x": 800,
+        "x2": 1320,
+        "y": 300,
+        "tileStyle": "pillars"
+      },
+      {
+        "x": 1440,
+        "x2": 2080,
+        "y": 300,
+        "tileStyle": "moss"
+      },
+      {
+        "x": 480,
+        "x2": 980,
+        "y": 60,
+        "tileStyle": "carved"
+      },
+      {
+        "x": 1100,
+        "x2": 1660,
+        "y": 60,
+        "tileStyle": "roots"
+      },
+      {
+        "x": 1780,
+        "x2": 2240,
+        "y": 60,
+        "tileStyle": "pillars"
+      },
+      {
+        "x": 1620,
+        "x2": 2080,
+        "y": -180,
+        "tileStyle": "moss"
+      }
+    ],
+    "climbs": [
+      {
+        "x": 400,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 1050,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 1870,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 600,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1230,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1930,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1980,
+        "top": -180,
+        "bottom": 60,
+        "type": "rope"
+      }
+    ],
+    "nearTrees": [
+      [
+        -70,
+        1160
+      ],
+      [
+        1850,
+        1100
+      ]
+    ]
+  },
+  "granite_forest_3": {
+    "mapId": "granite_forest_3",
+    "name": "ช่องแสงกลางพนา",
+    "version": "forest-granite-chain-v3-map3-four-long-decks",
+    "worldWidth": 2400,
+    "platforms": [
+      {
+        "x": 0,
+        "x2": 2400,
+        "y": 550
+      },
+      {
+        "x": 120,
+        "x2": 2280,
+        "y": 300,
+        "tileStyle": "pillars"
+      },
+      {
+        "x": 120,
+        "x2": 2280,
+        "y": 60,
+        "tileStyle": "moss"
+      },
+      {
+        "x": 120,
+        "x2": 2280,
+        "y": -180,
+        "tileStyle": "carved"
+      },
+      {
+        "x": 120,
+        "x2": 2280,
+        "y": -420,
+        "tileStyle": "roots"
+      }
+    ],
+    "climbs": [
+      {
+        "x": 340,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 2060,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 460,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1940,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 580,
+        "top": -180,
+        "bottom": 60,
+        "type": "rope"
+      },
+      {
+        "x": 1820,
+        "top": -180,
+        "bottom": 60,
+        "type": "rope"
+      },
+      {
+        "x": 700,
+        "top": -420,
+        "bottom": -180,
+        "type": "rope"
+      },
+      {
+        "x": 1700,
+        "top": -420,
+        "bottom": -180,
+        "type": "rope"
+      }
+    ],
+    "nearTrees": [
+      [
+        -240,
+        1040
+      ],
+      [
+        2520,
+        1100
+      ]
+    ]
+  },
+  "granite_forest_4": {
+    "mapId": "granite_forest_4",
+    "name": "ป่าลึกใต้ผาหิน",
+    "version": "forest-granite-chain-v3-map3-four-long-decks",
+    "worldWidth": 2400,
+    "platforms": [
+      {
+        "x": 0,
+        "x2": 2400,
+        "y": 550
+      },
+      {
+        "x": 200,
+        "x2": 680,
+        "y": 300,
+        "tileStyle": "moss"
+      },
+      {
+        "x": 800,
+        "x2": 1320,
+        "y": 300,
+        "tileStyle": "carved"
+      },
+      {
+        "x": 1440,
+        "x2": 2070,
+        "y": 300,
+        "tileStyle": "roots"
+      },
+      {
+        "x": 430,
+        "x2": 930,
+        "y": 60,
+        "tileStyle": "pillars"
+      },
+      {
+        "x": 1050,
+        "x2": 1660,
+        "y": 60,
+        "tileStyle": "moss"
+      },
+      {
+        "x": 1780,
+        "x2": 2240,
+        "y": 60,
+        "tileStyle": "carved"
+      },
+      {
+        "x": 890,
+        "x2": 1390,
+        "y": -180,
+        "tileStyle": "roots"
+      },
+      {
+        "x": 1520,
+        "x2": 2020,
+        "y": -180,
+        "tileStyle": "pillars"
+      }
+    ],
+    "climbs": [
+      {
+        "x": 350,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 1060,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 1950,
+        "top": 300,
+        "bottom": 550,
+        "type": "rope"
+      },
+      {
+        "x": 570,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1230,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1870,
+        "top": 60,
+        "bottom": 300,
+        "type": "rope"
+      },
+      {
+        "x": 1300,
+        "top": -180,
+        "bottom": 60,
+        "type": "rope"
+      },
+      {
+        "x": 1950,
+        "top": -180,
+        "bottom": 60,
+        "type": "rope"
+      }
+    ],
+    "nearTrees": [
+      [
+        200,
+        1180
+      ],
+      [
+        2240,
+        1130
+      ]
+    ]
+  }
+}
