@@ -1,0 +1,46 @@
+{
+  "frontend": "V56",
+  "backend": "World V8",
+  "baseFrontend": "V53",
+  "baseBackend": "Mountain V5",
+  "feature": "world-maps-v56-06a035c9468fdcd9",
+  "newMaps": [
+    "sword_cave_top",
+    "sword_cave_b1",
+    "sword_cave_b2",
+    "swamp_1",
+    "swamp_2",
+    "swamp_3",
+    "caravan_road_2",
+    "old_checkpoint_3",
+    "granite_inland_1",
+    "meadow_stream_1"
+  ],
+  "directedPortalLinks": 18,
+  "physicsScenarios": 312,
+  "pythonJavascriptMatchingSteps": 15120,
+  "serverFunctionClimbCases": 348,
+  "serverFunctionPortalSelectorCases": 53,
+  "pitRecoveryRoutes": 8,
+  "nativeCanvasRendered": true,
+  "browserTested": false,
+  "fullBackendStarted": false,
+  "onlineTested": false,
+  "fpsMeasured": false,
+  "deployed": false,
+  "githubOrHostatomCompared": false,
+  "existingFrontendChangedFiles": [
+    "index.html"
+  ],
+  "modifiedServerFunctions": [
+    "city_world_width",
+    "physics",
+    "update_guest",
+    "movement_validate",
+    "switch_map",
+    "handle_connection"
+  ],
+  "originalGameLoopAndActionFunctionUnchanged": true,
+  "javascriptFilesSyntaxChecked": 42,
+  "fullServerNeedsExistingDependencies": true
+}

@@ -302,8 +302,16 @@ GRANITE_FOREST_MAPS = {'granite_forest_1': {'name': 'ชายป่าเชิ
 BAMBOO_MAPS.update(GRANITE_FOREST_MAPS)
 MOUNTAIN_MAPS = {'granite_ascent_1': {'name': 'ทางไต่ผาแกรนิต', 'platforms': [[0, 1400, 550], [700, 965, 310], [884, 1140, 70], [1059, 1340, -170], [884, 1221, -410], [709, 1037, -650], [884, 1165, -890], [1059, 1345, -1130], [884, 1221, -1370], [709, 1046, -1610], [884, 1174, -1850], [1059, 1349, -2090], [884, 1229, -2330], [709, 1050, -2570], [884, 1182, -2810], [1059, 1353, -3050], [884, 1238, -3290], [709, 1059, -3530], [884, 1187, -3770], [1059, 1357, -4010], [884, 1400, -4250]], 'climbs': [[807, 310, 550, 'ladder'], [903, 70, 310, 'ladder'], [1071, -170, 70, 'ladder'], [1159, -410, -170, 'ladder'], [896, -650, -410, 'ladder'], [975, -890, -650, 'ladder'], [1071, -1130, -890, 'ladder'], [1159, -1370, -1130, 'ladder'], [896, -1610, -1370, 'ladder'], [984, -1850, -1610, 'ladder'], [1071, -2090, -1850, 'ladder'], [1167, -2330, -2090, 'ladder'], [896, -2570, -2330, 'ladder'], [988, -2810, -2570, 'ladder'], [1071, -3050, -2810, 'ladder'], [1176, -3290, -3050, 'ladder'], [896, -3530, -3290, 'ladder'], [997, -3770, -3530, 'ladder'], [1071, -4010, -3770, 'ladder'], [1295, -4250, -4010, 'ladder']]}}
 BAMBOO_MAPS.update(MOUNTAIN_MAPS)
+GRANITE_WALL_MAPS = {'granite_wall_1': {'name': 'ระเบียงผาแกรนิต', 'platforms': [[0, 2400, 550], [120, 2280, 310], [220, 2180, 70]], 'climbs': [[400, 310, 550, 'ladder'], [2000, 310, 550, 'ladder'], [650, 70, 310, 'ladder'], [1750, 70, 310, 'ladder']]}, 'granite_wall_2': {'name': 'ทางเลียบผารอยแยก', 'platforms': [[0, 2400, 550], [80, 2130, 280], [300, 2320, 10], [1990, 2230, -470]], 'climbs': [[760, 280, 550, 'ladder'], [1830, 280, 550, 'ladder'], [500, 10, 280, 'ladder'], [1500, 10, 280, 'ladder'], [2050, -470, 10, 'ladder']]}, 'granite_summit_1': {'name': 'ยอดเขาแกรนิต', 'platforms': [[0, 2000, 550], [160, 400, 650], [440, 720, 470], [800, 1080, 470], [1320, 1600, 470], [1680, 1960, 470]], 'climbs': [[220, 550, 650, 'ladder']]}}
+BAMBOO_MAPS.update(GRANITE_WALL_MAPS)
+GRANITE_WALL_PORTALS = {('granite_ascent_1', 'granite_wall_1'): ('right', -4250, 65, 175, 550), ('granite_wall_1', 'granite_ascent_1'): ('left', 550, 125, 1225, -4250), ('granite_wall_1', 'granite_wall_2'): ('right', 550, 125, 175, 550), ('granite_wall_2', 'granite_wall_1'): ('left', 550, 125, 2225, 550)}
 
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS)
+WORLD_V56=json.loads((Path(__file__).resolve().parent/'world_v56.json').read_text())
+EXPANSION_MAPS=WORLD_V56['maps']
+from world_physics_v56 import step as expansion_physics, ground_y as expansion_ground_y, portal_at as expansion_portal_at, dismount as expansion_dismount
+BAMBOO_MAPS.update({mid:{'name':m['name'],'platforms':[[p['x'],p['x2'],p['y']] for p in m['platforms']],'climbs':[[c['x'],c['top'],c['bottom'],c.get('type','rope')] for c in m['climbs']]} for mid,m in EXPANSION_MAPS.items()})
+
+PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS,*GRANITE_WALL_MAPS,*EXPANSION_MAPS)
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -345,8 +353,27 @@ WORLD_FARM_NAV = {'forest': FARM_NAV, **{
     map_id: farm_auto.Navigation(BAMBOO_GROUNDS[map_id], BAMBOO_CLIMBS[map_id])
     for map_id in BAMBOO_MAPS if map_id != 'forest'
 }}
+from swamp_pit_nav import MultiPitNavigator
+SWAMP_RECOVERY={mid:MultiPitNavigator(m) for mid,m in EXPANSION_MAPS.items() if m['kind']=='swamp'}
+class ExpansionNavigation:
+    def __init__(self,room,base):self.room,self.base=room,base
+    def __getattr__(self,name):return getattr(self.base,name)
+    def choose(self,actor,state,now,monsters,allow_cast=True):
+        nav=SWAMP_RECOVERY.get(self.room)
+        goal=getattr(state,'goal',None)
+        if nav:
+            decision=nav.choose(actor,(goal['x'],goal['y']) if isinstance(goal,dict) and 'x' in goal and 'y' in goal else None,now)
+            if decision is not None:return decision.buttons,list(decision.actions)
+            # The raised central bank is continuous ground, not a missing ladder.
+            m=EXPANSION_MAPS[self.room];gy=expansion_ground_y(m,actor.x)
+            if isinstance(goal,dict) and actor.ground and gy is not None and abs(actor.y-gy)<3 and abs(goal.get('x',actor.x)-actor.x)>12 and not any(q['left']<=actor.x<=q['right'] for q in m['pits']):
+                gx=goal['x'];between=[y for x,y in m['profile'] if min(gx,actor.x)<=x<=max(gx,actor.x)]
+                if any(y<550 for y in between) or gy<550:return (2 if gx>actor.x else 1),[]
+        return self.base.choose(actor,state,now,monsters,allow_cast=allow_cast)
+for _mid in EXPANSION_MAPS:WORLD_FARM_NAV[_mid]=ExpansionNavigation(_mid,WORLD_FARM_NAV[_mid])
 def farm_nav_for(room):
     return WORLD_FARM_NAV.get(room, FARM_NAV)
+
 
 def active_ground():
     return BAMBOO_GROUNDS.get(current_world().room, GROUND)
@@ -356,8 +383,11 @@ def active_climbs():
     if current_world().room in ('city_proto_1','city_inner_1'): return ()
     return BAMBOO_CLIMBS.get(current_world().room, CLIMBS)
 
+GRANITE_SUMMIT_LADDER_LINKS = {('granite_wall_2', 'granite_summit_1'): (-1, 2050, -470, 10, 25, 267, 550), ('granite_summit_1', 'granite_wall_2'): (1, 220, 550, 650, 25, 2097, 10)}
+
 def city_world_width(room):
-    return 1400 if room in MOUNTAIN_MAPS else 2400 if room == 'forest_fork_11' or room in GRANITE_FOREST_MAPS else (5100 if room == 'city_proto_1' else (3700 if room == 'city_inner_1' else WORLD_W))
+    if room in EXPANSION_MAPS:return EXPANSION_MAPS[room]['worldWidth']
+    return 2000 if room=='granite_summit_1' else 1400 if room in MOUNTAIN_MAPS else 2400 if room == 'forest_fork_11' or room in GRANITE_FOREST_MAPS or room in GRANITE_WALL_MAPS else (5100 if room == 'city_proto_1' else (3700 if room == 'city_inner_1' else WORLD_W))
 
 def map_payload(map_id):
     data=BAMBOO_MAPS[map_id]
@@ -576,6 +606,8 @@ CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessi
 MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10, 'forest_fork_11':10}  # 10 player cap in Map11.
 MAP_HARD_CAPS.update({room:10 for room in GRANITE_FOREST_MAPS})
 MAP_HARD_CAPS.update({room:10 for room in MOUNTAIN_MAPS})
+MAP_HARD_CAPS.update({room:10 for room in GRANITE_WALL_MAPS})
+MAP_HARD_CAPS.update({room:10 for room in EXPANSION_MAPS})
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
@@ -604,7 +636,7 @@ class WorldState:
     sleeps: int = 0
     wakes: int = 0
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS)}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS,*GRANITE_WALL_MAPS,*EXPANSION_MAPS)}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -1090,6 +1122,8 @@ def set_action(actor, a, dur):
 
 
 def physics(actor, dt):
+    if current_world().room in EXPANSION_MAPS:
+        expansion_physics(actor,dt,EXPANSION_MAPS[current_world().room]);return
     # v8.0CI: Resolve horizontal world-wall collision BEFORE ground support.
     # Dash can move > one collider margin in a single 30Hz server tick. If
     # can_stand sees the out-of-bounds x before clamping, a grounded character
@@ -1249,6 +1283,7 @@ def pending_auto_manual(p: Guest, server_now: float) -> bool:
     return True
 
 def update_guest(p: Guest, dt, tick_now):
+    if EXPANSION_MAPS.get(p.room,{}).get('downOnly'):p.buttons &= ~4
     p.applied_input_seq=p.last_seq  # ack only after simulation consumes this input
     # v8.0DV: preserve exact timer order, clamp and 30Hz duration while
     # avoiding six dynamic getattr/setattr operations per Guest per tick.
@@ -1279,6 +1314,7 @@ def update_guest(p: Guest, dt, tick_now):
         if p.dead <= 0:
             p.dead = 0.0
             p.x, p.y, p.vx, p.vy, p.hp, p.stun, p.down, p.inv, p.cool, p.climb = (175 + len(players) * 23, 550, 0, 0, p.max_hp, 0, 0, 1, .3, None)
+            if p.room in EXPANSION_MAPS:p.x,p.y=EXPANSION_MAPS[p.room]['spawn']
             p.sp=p.max_sp;p.sta=p.max_sta
             p.ground = True
             event('respawn', p.x, p.y, victim=p.id)
@@ -1351,9 +1387,9 @@ def update_guest(p: Guest, dt, tick_now):
         p.climb_dist += abs(p.y - old_y)
         p.x, p.vx, p.vy = cx, 0, 0
         if axis < 0 and p.y <= top + 1:
-            p.climb, p.climb_cd, p.y, p.x, p.ground = None, .28, top, cx + 47, True
+            p.climb, p.climb_cd, p.y, p.x, p.ground = None, .28, top, expansion_dismount(EXPANSION_MAPS.get(p.room),cx,top,47), True
         elif axis > 0 and p.y >= bottom - 1:
-            p.climb, p.climb_cd, p.y, p.x, p.ground = None, .28, bottom, cx + 45, True
+            p.climb, p.climb_cd, p.y, p.x, p.ground = None, .28, bottom, expansion_dismount(EXPANSION_MAPS.get(p.room),cx,bottom,45), True
         return
     move = int(bool(p.buttons & 2)) - int(bool(p.buttons & 1))
     if move and p.stun <= 0 and not p.guard:
@@ -1454,8 +1490,9 @@ def movement_validate(p,m,tick_now):
     x,y,vx,vy=m['x'],m['y'],m['vx'],m['vy']
     grounded=m['ground']; climb=m['climb']
     # Bounds and declared state are NEVER trusted as authority.
-    if not 27<=x<=city_world_width(p.room)-27 or not (-4500 if p.room in MOUNTAIN_MAPS else -850 if p.room=='forest_fork_11' or p.room in GRANITE_FOREST_MAPS else -100)<=y<=800:return 'map-bounds'
+    if not 27<=x<=city_world_width(p.room)-27 or not (-4800 if p.room in EXPANSION_MAPS else -4500 if p.room in MOUNTAIN_MAPS else -850 if p.room=='forest_fork_11' or p.room in GRANITE_FOREST_MAPS or p.room in GRANITE_WALL_MAPS else -100)<=y<=800:return 'map-bounds'
     if abs(vx)>675 or abs(vy)>1200:return 'velocity-cap'
+    if p.room in EXPANSION_MAPS and any(x+19>r['x'] and x-19<r['x']+r['w'] and y>r['y']+.1 and y-122<r['y']+r['h']-.1 for r in EXPANSION_MAPS[p.room].get('solids',())):return 'solid-wall'
     expected=p.move_shadow or movement_capture(p)
     ex,ey,evx,evy,eground,eclimb=expected[:6]
     moving_dash=p.action=='dash' and p.action_at<=.32 and p.cool>0
@@ -1485,10 +1522,14 @@ def movement_validate(p,m,tick_now):
         if abs(x-cx)>2 or not top-1<=y<=bottom+1:return 'climb-geometry'
     elif grounded:
         supported=any(lo+8<x<hi-8 and abs(y-top)<=2 for lo,hi,top in active_ground())
+        if p.room in EXPANSION_MAPS:
+            gy=expansion_ground_y(EXPANSION_MAPS[p.room],x)
+            if gy is not None:supported=abs(y-gy)<=2 or any(not q.get('contourGround') and q['x']+8<x<q['x2']-8 and abs(y-q['y'])<=2 for q in EXPANSION_MAPS[p.room]['platforms'])
         if not supported:return 'invalid-ground'
     # Crossing a one-way solid from above to below (descending) is not legal.
     if y>p.y+2 and vy>=0 and not climb:
-        for lo,hi,top in active_ground():
+        collision_lanes=([(q['x'],q['x2'],q['y']) for q in EXPANSION_MAPS[p.room]['platforms'] if not q.get('contourGround')] if p.room in EXPANSION_MAPS else active_ground())
+        for lo,hi,top in collision_lanes:
             if lo+8<min(x,p.x) and max(x,p.x)<hi-8 and p.y<=top+2<y-2:
                 return 'platform-through'
     if abs(y-p.y)>105 and not climb:return 'vertical-teleport'
@@ -2783,8 +2824,33 @@ async def switch_map(p, target, via='selector'):
     source_index=PUBLIC_MAP_IDS.index(p.room)
     target_index=PUBLIC_MAP_IDS.index(target)
     branch_portal = via=='portal' and {p.room,target}=={'forest_fork_11','granite_ascent_1'}
+    wall_portal = GRANITE_WALL_PORTALS.get((p.room,target)) if via=='portal' else None
+    summit_ladder = GRANITE_SUMMIT_LADDER_LINKS.get((p.room,target)) if via=='portal' else None
+    expansion_link=next((l for l in WORLD_V56['links'] if l['from']==p.room and l['to']==target),None) if via=='portal' else None
     if via=='portal':
-        if p.room in MOUNTAIN_MAPS or target in MOUNTAIN_MAPS:
+        if expansion_link is not None:
+            if not expansion_portal_at(expansion_link,p):return {'t':'map_ack','ok':False,'reason':'portal_too_far_or_no_up','map':p.room}
+        elif p.room in EXPANSION_MAPS or target in EXPANSION_MAPS:
+            return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
+        elif summit_ladder is not None:
+            direction,cx,top,bottom,tolerance,_,_=summit_ladder
+            end=top if direction<0 else bottom
+            on_ladder=(p.climb==(cx,top,bottom) and abs(p.x-cx)<=12
+                       and (end-8<=p.y<=end+tolerance if direction<0 else end-tolerance<=p.y<=end+8))
+            landed=(p.climb is None and p.ground and abs(p.y-end)<=8
+                    and abs(p.x-cx)<=75)
+            intent=bool(p.buttons & (4 if direction<0 else 8))
+            if not intent or not (on_ladder or landed):
+                return {'t':'map_ack','ok':False,'reason':'portal_wrong_ladder','map':p.room}
+        elif p.room in GRANITE_WALL_MAPS or target in GRANITE_WALL_MAPS:
+            if wall_portal is None:
+                return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
+            side,exit_y,margin,_,_=wall_portal
+            if not p.ground or p.climb is not None or abs(p.y-exit_y)>35:
+                return {'t':'map_ack','ok':False,'reason':'portal_wrong_floor','map':p.room}
+            if (side=='right' and p.x<city_world_width(p.room)-margin) or (side=='left' and p.x>margin):
+                return {'t':'map_ack','ok':False,'reason':'portal_too_far','map':p.room}
+        elif p.room in MOUNTAIN_MAPS or target in MOUNTAIN_MAPS:
             if not branch_portal:
                 return {'t':'map_ack','ok':False,'reason':'invalid_portal','map':p.room}
             if not p.ground or p.climb is not None:
@@ -2822,6 +2888,7 @@ async def switch_map(p, target, via='selector'):
     # Only genuinely incapacitated or dead characters are rejected.
     if p.dead>0 or p.hp<=0 or p.stun>0 or p.down>0:
         return {'t':'map_ack','ok':False,'reason':'busy','map':p.room}
+    for nav in SWAMP_RECOVERY.values():nav.reset(p.id)
     origin=p.world_ref
     origin.shots[:]=[shot for shot in origin.shots if shot.owner!=p.id]
     record_world_event(origin, {'t':'leave','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
@@ -2840,8 +2907,14 @@ async def switch_map(p, target, via='selector'):
     # Right-hand portal arrival emerges near left of next map; vice versa.
     p.x=(city_world_width(target)-175 if via=='portal' and target_index<source_index else 175)
     p.y=550
+    if target in EXPANSION_MAPS:p.x,p.y=EXPANSION_MAPS[target]['spawn']
+    if expansion_link:p.x,p.y=expansion_link['spawn']
     if branch_portal:
         p.x,p.y=((175,550) if target=='granite_ascent_1' else (2225,-700))
+    if wall_portal:
+        p.x,p.y=wall_portal[3:]
+    if summit_ladder:
+        p.x,p.y=summit_ladder[5:]
     p.auto_state.enabled=False;p.auto_state.stay_alert=False
     p.auto_state.anchor=None;p.auto_state.goal=None
     p.manual_target_id=None;p.manual_auto_skill=None;p.manual_guard=False
@@ -2956,7 +3029,8 @@ async def handle_connection(ws):
         features.append('bamboo-map-worlds-v1')
         features.append('suburb-gate-7worlds-v1')
         # City V8 uses flat roads; old two-tier handshake retired
-        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks','granite-ascent-v2-all-ladders'))
+        features.append(WORLD_V56['feature'])
+        features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks','granite-ascent-v2-all-ladders','granite-wall-chain-v3-jump-platforms'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
@@ -3091,6 +3165,8 @@ async def handle_connection(ws):
                 previous_auto=p.auto_state.enabled
                 p.auto_state.enabled=m['enabled'] if p.room in PUBLIC_MAP_IDS else False
                 if previous_auto!=p.auto_state.enabled:p.auto_revision+=1
+                if not p.auto_state.enabled:
+                    for nav in SWAMP_RECOVERY.values():nav.reset(p.id)
                 if previous_auto!=p.auto_state.enabled:
                     p.fast_self_last=None
                     while not p.fast_self_outbox.empty():
@@ -3236,6 +3312,7 @@ async def handle_connection(ws):
             # Client input NEVER overrides the AI's movement or goal.
             if p.auto_state.enabled and (buttons & (1|2|4|8)):
                 p.auto_state.enabled=False
+                for nav in SWAMP_RECOVERY.values():nav.reset(p.id)
                 p.auto_revision+=1
                 _em_auto_canceled+=1
                 async with p.ws_send_lock:
@@ -3291,6 +3368,7 @@ async def handle_connection(ws):
                 fast.cancel()
                 try:await fast
                 except asyncio.CancelledError:pass
+            for nav in SWAMP_RECOVERY.values():nav.reset(guest_id)
             p = players.pop(guest_id)
             connected_players.pop(guest_id,None)
             event('leave', p.x, p.y, victim=guest_id)
