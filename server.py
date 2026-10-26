@@ -1492,6 +1492,9 @@ def movement_validate(p,m,tick_now):
     # Bounds and declared state are NEVER trusted as authority.
     if not 27<=x<=city_world_width(p.room)-27 or not (-4800 if p.room in EXPANSION_MAPS else -4500 if p.room in MOUNTAIN_MAPS else -850 if p.room=='forest_fork_11' or p.room in GRANITE_FOREST_MAPS or p.room in GRANITE_WALL_MAPS else -100)<=y<=800:return 'map-bounds'
     if abs(vx)>675 or abs(vy)>1200:return 'velocity-cap'
+    if p.room in EXPANSION_MAPS:
+        soil_y=expansion_ground_y(EXPANSION_MAPS[p.room],x)
+        if soil_y is not None and y>soil_y+.25:return 'terrain-through'
     if p.room in EXPANSION_MAPS and any(x+19>r['x'] and x-19<r['x']+r['w'] and y>r['y']+.1 and y-122<r['y']+r['h']-.1 for r in EXPANSION_MAPS[p.room].get('solids',())):return 'solid-wall'
     expected=p.move_shadow or movement_capture(p)
     ex,ey,evx,evy,eground,eclimb=expected[:6]
@@ -3408,3 +3411,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+

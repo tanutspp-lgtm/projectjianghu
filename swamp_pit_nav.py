@@ -172,3 +172,4 @@ class MultiPitNavigator:
                     self.active[actor.id] = i
                 return decision
         return None
+

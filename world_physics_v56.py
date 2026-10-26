@@ -19,8 +19,23 @@ def step(p,dt,m):
     if p.climb is not None:return
     old_x=p.x-p.vx*dt;old_y=p.y;was_ground=p.ground
     gy=ground_y(m,p.x);previous_ground=ground_y(m,old_x)
-    if m['kind']=='swamp' and was_ground and abs(old_y-previous_ground)<3 and gy<old_y-2 and any(q['left']<=old_x<=q['right'] for q in m['pits']):
-        p.x=old_x;p.vx=0;gy=previous_ground
+    if m['kind']=='swamp':
+        in_pit=any(q['left']<=old_x<=q['right'] for q in m['pits'])
+        follow_slope=was_ground and abs(old_y-previous_ground)<3 and not in_pit
+        dx=p.x-old_x
+        if not follow_slope and abs(dx)>1e-9:
+            safe=old_x
+            for i in range(1,math.ceil(abs(dx)/2)+1):
+                probe=old_x+dx*i/math.ceil(abs(dx)/2)
+                if old_y>ground_y(m,probe)+.01:
+                    blocked=probe
+                    for _ in range(24):
+                        middle=(safe+blocked)/2
+                        if old_y>ground_y(m,middle)+.01:blocked=middle
+                        else:safe=middle
+                    p.x=safe;p.vx=0;gy=ground_y(m,p.x)
+                    break
+                safe=probe
     solids=m.get('solids',())
     hits=[r for r in solids if p.y>r['y']+.001 and p.y-123.26<r['y']+r['h']-.001 and p.x+20>r['x'] and p.x-20<r['x']+r['w']]
     if hits:
@@ -37,6 +52,8 @@ def step(p,dt,m):
     if solids and p.vy<0:
         ceiling=[r for r in solids if p.x+20>r['x'] and p.x-20<r['x']+r['w'] and old_y-123.26>=r['y']+r['h']-.01 and p.y-123.26<=r['y']+r['h']]
         if ceiling:p.y=max(r['y']+r['h'] for r in ceiling)+123.26;p.vy=0
+    if m['kind']=='swamp' and p.y>gy:
+        p.y=gy;p.vy=0;p.ground=True
     if p.y>850:
         p.x,p.y=m['spawn'];p.vx=p.vy=0;p.ground=True;p.climb=None
 
@@ -48,3 +65,4 @@ def dismount(m,cx,y,offset):
     if m is None:return cx+offset
     q=next((q for q in m['platforms'] if abs(q['y']-y)<1 and q['x']<=cx+8 and q['x2']>=cx-8),None)
     return max(q['x']+24,min(q['x2']-24,cx+offset)) if q else cx+offset
+

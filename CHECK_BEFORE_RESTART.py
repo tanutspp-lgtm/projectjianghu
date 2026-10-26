@@ -17,3 +17,4 @@ if errors:
  print('\n'.join(errors));sys.exit(1)
 print('Syntax and direct dependencies found. This does not verify the running service, online gameplay, or newer Git changes.')
 print('Feature:',json.loads((root/'world_v56.json').read_text())['feature'])
+
