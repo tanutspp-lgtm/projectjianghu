@@ -38,6 +38,10 @@ def step(p,dt,m):
                 safe=probe
     solids=m.get('solids',())
     hits=[r for r in solids if p.y>r['y']+.001 and p.y-123.26<r['y']+r['h']-.001 and p.x+20>r['x'] and p.x-20<r['x']+r['w']]
+    if m['kind']=='cave':
+        # A floor overlap is resolved by vertical landing, never a teleport to
+        # the far side of a broad rock mass. Only crossed side faces block X.
+        hits=[r for r in hits if (p.vx>0 and old_x+20<=r['x']+.01) or (p.vx<0 and old_x-20>=r['x']+r['w']-.01)]
     if hits:
         if p.vx>0:p.x=min(r['x']-20 for r in hits)
         elif p.vx<0:p.x=max(r['x']+r['w']+20 for r in hits)
