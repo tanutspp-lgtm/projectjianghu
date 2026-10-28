@@ -43,7 +43,10 @@ def step(p,dt,m):
         elif p.vx<0:p.x=max(r['x']+r['w']+20 for r in hits)
         p.vx=0
     p.vy+=1400*dt;p.y+=p.vy*dt;p.ground=False
-    if m['kind']=='swamp' and was_ground and abs(old_y-previous_ground)<3 and p.vy>=0 and p.y>=gy-18:
+    decks=[q['y'] for q in m['platforms'] if q.get('continuousDeck') and q['x']+8<p.x<q['x2']-8 and old_y<=q['y']+7 and p.y>=q['y']]
+    if p.vy>=0 and decks:
+        p.y=min(decks);p.vy=0;p.ground=True
+    elif m['kind']=='swamp' and was_ground and abs(old_y-previous_ground)<3 and p.vy>=0 and p.y>=gy-18:
         p.y=gy;p.vy=0;p.ground=True
     elif p.vy>=0:
         floors=[q['y'] for q in m['platforms'] if not q.get('contourGround') and q['x']+8<p.x<q['x2']-8 and old_y<=q['y']+7 and p.y>=q['y']]
