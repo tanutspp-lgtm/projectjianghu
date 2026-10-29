@@ -371,6 +371,10 @@ class ExpansionNavigation:
                 if any(y<550 for y in between) or gy<550:return (2 if gx>actor.x else 1),[]
         return self.base.choose(actor,state,now,monsters,allow_cast=allow_cast)
 for _mid in EXPANSION_MAPS:WORLD_FARM_NAV[_mid]=ExpansionNavigation(_mid,WORLD_FARM_NAV[_mid])
+from late_map_nav_v67 import LateNavigation
+for _mid,_map in EXPANSION_MAPS.items():
+    if _map.get('region')=='late_v67':WORLD_FARM_NAV[_mid]=LateNavigation(_map)
+
 def farm_nav_for(room):
     return WORLD_FARM_NAV.get(room, FARM_NAV)
 
