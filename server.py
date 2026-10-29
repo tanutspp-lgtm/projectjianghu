@@ -639,6 +639,8 @@ class WorldState:
     sleeping_loot: list = field(default_factory=list)
     sleeps: int = 0
     wakes: int = 0
+    minimap_sample: int = -1
+    minimap_data: dict = field(default_factory=dict)
 
 worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS,*GRANITE_WALL_MAPS,*EXPANSION_MAPS)}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
@@ -1052,6 +1054,8 @@ def hibernate_world(world):
     # Loot is NOT picked up or re-created by sleeping. Keep original unique IDs,
     # owner/private windows, pickup delays and absolute expiry deadlines.
     world.sleeping_loot = [d.copy() for d in world.loot_drops if d['expiresAt'] > now]
+    world.minimap_sample = -1
+    world.minimap_data = {}
     world.monsters.clear()
     world.shots.clear()
     world.peaches.clear()
@@ -2108,6 +2112,26 @@ def _reuse_snapshot_entities(kind, entries):
     return result
 
 
+def minimap_snapshot(moment):
+    """Shared 2Hz positions for this map/channel; independent of combat AOI.
+    Read-only integer coordinates, no stats, inventory or client-supplied data.
+    Existing private delta baselines send this field only when it changes.
+    """
+    w=current_world();sample=int(moment*2)
+    if w.minimap_sample!=sample:
+        geometry=EXPANSION_MAPS.get(w.room,BAMBOO_MAPS.get(w.room,{}))
+        npcs=geometry.get('npcs',())
+        w.minimap_data={'map':w.room,'channel':w.channel,'sample':sample,
+            'players':[[p.id,round(p.x),round(p.y)] for p in w.players.values()
+                       if p.room==w.room and p.channel==w.channel and p.dead<=0 and p.hp>0],
+            'mobs':[[round(m.x),round(m.y)] for m in w.monsters.values() if m.dead<=0 and m.hp>0],
+            'npcs':[[round(n['x']),round(n['y'])] for n in npcs
+                    if isinstance(n,dict) and isinstance(n.get('x'),(int,float))
+                    and isinstance(n.get('y'),(int,float)) and math.isfinite(n['x']) and math.isfinite(n['y'])]}
+        w.minimap_sample=sample
+    return w.minimap_data
+
+
 def snapshot():
     """Shared immutable-by-convention world state; no per-guest JSON on the tick path."""
     moment=time.monotonic()
@@ -2115,7 +2139,7 @@ def snapshot():
     # actors are forest guests there is no foreign room to filter in 100 per-
     # client AOI views. Existing in-flight snapshots stay safe on disconnect.
     forest_only=all(p.room=='forest' for p in players.values())
-    world=SharedSnapshot({'t':'snapshot','tick':server_step,
+    world=SharedSnapshot({'t':'snapshot','tick':server_step,'minimap':minimap_snapshot(moment),
             'players':_reuse_snapshot_entities('players',[{**actor_json(p),'avatar':p.avatar} for p in players.values()]),
             'mobs':_reuse_snapshot_entities('mobs',[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
                      'biteAge':round(max(0,moment-m.bite_started_at),3) if m.bite_started_at>0 else -1,
@@ -2313,6 +2337,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         if ENABLE_PERFORMANCE_PROFILER:_profile_add('writer.delta',time.perf_counter_ns()-_writer_delta_start)
         _writer_private_start=time.perf_counter_ns()
     priv=private_progression(p)
+    if 'minimap' in world:priv['minimap']=world['minimap']
     priv['inputAck']=current['players'][p.id]['lastAppliedSeq']
     if full or prev_private is None:
         result['self']=priv
@@ -2475,7 +2500,7 @@ async def snapshot_writer(p: Guest):
                 packet,current,full_tick,priv,inv=encode_aoi_delta(world,p,previous,last_full_tick,prev_private,prev_inventory,pending_events)
             else:
                 # Legacy clients receive original full-world shape until upgraded.
-                old=dict(world);old['players']=[a for a in world['players'] if (players.get(a['id']) is None or players[a['id']].room==p.room)];old['self']=private_progression(p);old['inventory']=p.inventory;old['events']=pending_events
+                old=dict(world);old['players']=[a for a in world['players'] if (players.get(a['id']) is None or players[a['id']].room==p.room)];old['self']=private_progression(p);old['self']['minimap']=world.get('minimap',{});old['inventory']=p.inventory;old['events']=pending_events
                 packet=_COMPACT_WIRE_JSON_ENCODER.encode(old)
                 current,full_tick,priv,inv=None,-1,None,None
             perf_encodes.append(time.monotonic()-encode_start)
@@ -3037,6 +3062,7 @@ async def handle_connection(ws):
         features.append('suburb-gate-7worlds-v1')
         # City V8 uses flat roads; old two-tier handshake retired
         features.append(WORLD_V56['feature'])
+        features.append('minimap-v69-mapwide-v1')
         features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks','granite-ascent-v64-single-map','granite-wall-chain-v64-single-ascent-link'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')

@@ -37,10 +37,11 @@ class LateNavigation(Navigation):
         if not leg or leg.get('kind')!='jump' or p.climb or p.dead>0 or p.hp<=0 or p.stun>0 or p.down>0 or state.combat_target_id or any(a!='jump' for a in actions):return buttons,actions
         at=self.platform_at(p)
         if at==leg['to']:state.leg=None;return buttons,actions
+        if leg.get('drop'):return self.approach(p.x,leg['land'],4),[]
         if at==leg['from']:
-            direction=self.approach(p.x,leg['launch'],3)
+            direction=self.approach(p.x,leg['launch'],10.5)
             if direction:return direction,[]
-            if t-state.last_jump>.8:
+            if t-state.last_jump>.35:
                 state.last_jump=t
                 return (2 if leg['direction']>0 else 1),['jump']
             return 0,[]

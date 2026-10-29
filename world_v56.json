@@ -1,5 +1,5 @@
 {
-  "version": "Frontend V67 / Backend World V18",
+  "version": "Frontend V73 / Backend World V20",
   "maps": {
     "sword_cave_top": {
       "name": "ถ้ำเซียนกระบี่ · ทางทะลุภูเขา",
@@ -10315,88 +10315,90 @@
       "name": "ทางเกวียนร้าง",
       "kind": "swamp",
       "number": 2,
-      "worldWidth": 6200,
+      "worldWidth": 4030,
       "platforms": [
         {
           "x": 0,
-          "x2": 6200,
+          "x2": 4030,
           "y": 550,
           "contourGround": true
         },
         {
-          "x": 200,
-          "x2": 2200,
+          "x": 130,
+          "x2": 1430,
           "y": 20,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 2000,
-          "x2": 4050,
+          "x": 1300,
+          "x2": 2632,
           "y": -560,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 4140,
-          "x2": 4419,
+          "x": 2691,
+          "x2": 2970,
           "y": -360,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 4510,
-          "x2": 6050,
+          "x": 3030,
+          "x2": 3932,
           "y": -160,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 560,
-          "x2": 1720,
+          "x": 364,
+          "x2": 1118,
           "y": -950,
           "key": "earthLong",
-          "bodyDepth": 260
+          "bodyDepth": 94
         },
         {
-          "x": 820,
-          "x2": 1242,
+          "x": 459,
+          "x2": 881,
           "y": -450,
-          "key": "medium"
+          "key": "medium",
+          "bodyDepth": 150
         }
       ],
       "climbs": [
         {
-          "x": 550,
+          "x": 358,
           "top": 20,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 5200,
+          "x": 3380,
           "top": -160,
           "bottom": 600.0,
           "type": "rope"
         },
         {
-          "x": 2100,
+          "x": 1365,
           "top": -560,
           "bottom": 20,
           "type": "rope"
         },
         {
-          "x": 3300,
+          "x": 2145,
           "top": -560,
           "bottom": 500.0,
           "type": "rope"
         },
         {
-          "x": 970,
+          "x": 630,
           "top": -450,
           "bottom": 20,
           "type": "rope"
         },
         {
-          "x": 1100,
+          "x": 715,
           "top": -950,
           "bottom": -450,
           "type": "rope"
@@ -10415,39 +10417,39 @@
           550
         ],
         [
-          950,
+          618,
           550
         ],
         [
-          1400,
+          910,
           580
         ],
         [
-          2200,
+          1430,
           580
         ],
         [
-          2800,
+          1820,
           500
         ],
         [
-          3500,
+          2275,
           500
         ],
         [
-          4100,
+          2665,
           600
         ],
         [
-          5200,
+          3380,
           600
         ],
         [
-          5700,
+          3705,
           550
         ],
         [
-          6200,
+          4030,
           550
         ]
       ],
@@ -10455,202 +10457,202 @@
       "decor": [
         {
           "kind": "tree",
-          "x": 635,
+          "x": 413,
           "y": 20,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 545,
+          "x": 354,
           "y": 20,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 740,
+          "x": 481,
           "y": 20,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 1560,
+          "x": 1014,
           "y": 20,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 1470,
+          "x": 956,
           "y": 20,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 1665,
+          "x": 1082,
           "y": 20,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 960,
+          "x": 624,
           "y": 20,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 1860,
+          "x": 1209,
           "y": 20,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 2328,
+          "x": 1513,
           "y": -560,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 2238,
+          "x": 1455,
           "y": -560,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 2433,
+          "x": 1581,
           "y": -560,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 3509,
+          "x": 2281,
           "y": -560,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 3419,
+          "x": 2222,
           "y": -560,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 3614,
+          "x": 2349,
           "y": -560,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 2779,
+          "x": 1806,
           "y": -560,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 3702,
+          "x": 2406,
           "y": -560,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 5049,
+          "x": 3346,
           "y": -160,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 4959,
+          "x": 3292,
           "y": -160,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 5154,
+          "x": 3407,
           "y": -160,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 5095,
+          "x": 3373,
           "y": -160,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 5788,
+          "x": 3779,
           "y": -160,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 966,
+          "x": 628,
           "y": -950,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 876,
+          "x": 569,
           "y": -950,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 1071,
+          "x": 696,
           "y": -950,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 1001,
+          "x": 651,
           "y": -950,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 1523,
+          "x": 990,
           "y": -950,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 330,
+          "x": 214,
           "y": 550.0,
           "h": 232.0,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 280,
           "y": 550.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 5800,
+          "x": 3770,
           "y": 550.0,
           "h": 340,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 5900,
+          "x": 3835,
           "y": 550.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 3224,
+          "x": 2096,
           "y": 500.0,
           "h": 340,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 3324,
+          "x": 2161,
           "y": 500.0,
           "h": 56
         }
@@ -10659,15 +10661,15 @@
         {
           "from": 2,
           "to": 3,
-          "launch": 4030,
-          "land": 4172,
+          "launch": 2613,
+          "land": 2717,
           "direction": 1
         },
         {
           "from": 3,
           "to": 4,
-          "launch": 4399,
-          "land": 4542,
+          "launch": 2951,
+          "land": 3056,
           "direction": 1
         }
       ],
@@ -10685,100 +10687,104 @@
       "name": "ด่านหินเก่า",
       "kind": "swamp",
       "number": 3,
-      "worldWidth": 6000,
+      "worldWidth": 3900,
       "platforms": [
         {
           "x": 0,
-          "x2": 6000,
+          "x2": 3900,
           "y": 550,
           "contourGround": true
         },
         {
-          "x": 220,
-          "x2": 1730,
+          "x": 143,
+          "x2": 1124,
           "y": 0,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 1790,
-          "x2": 2069,
+          "x": 1164,
+          "x2": 1443,
           "y": -80,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 2130,
-          "x2": 2409,
+          "x": 1503,
+          "x2": 1782,
           "y": -160,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 2470,
-          "x2": 4000,
+          "x": 1842,
+          "x2": 2540,
           "y": -160,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 4070,
-          "x2": 4349,
+          "x": 2600,
+          "x2": 2879,
           "y": -80,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 4420,
-          "x2": 4699,
+          "x": 2939,
+          "x2": 3218,
           "y": 0,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 4760,
-          "x2": 5840,
+          "x": 3278,
+          "x2": 3796,
           "y": 0,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 1200,
-          "x2": 4840,
+          "x": 780,
+          "x2": 3146,
           "y": -760,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         }
       ],
       "climbs": [
         {
-          "x": 700,
+          "x": 455,
           "top": 0,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 3100,
+          "x": 2015,
           "top": -160,
           "bottom": 610.0,
           "type": "rope"
         },
         {
-          "x": 5350,
+          "x": 3478,
           "top": 0,
           "bottom": 548.04,
           "type": "rope"
         },
         {
-          "x": 1450,
+          "x": 942,
           "top": -760,
           "bottom": 0,
           "type": "rope"
         },
         {
-          "x": 3500,
+          "x": 2275,
           "top": -760,
           "bottom": -160,
           "type": "rope"
         },
         {
-          "x": 4800,
+          "x": 3120,
           "top": -760,
           "bottom": 0,
           "type": "rope"
@@ -10797,39 +10803,39 @@
           550
         ],
         [
-          1000,
+          650,
           550
         ],
         [
-          1500,
+          975,
           460
         ],
         [
-          2100,
+          1365,
           460
         ],
         [
-          2500,
+          1625,
           610
         ],
         [
-          3500,
+          2275,
           610
         ],
         [
-          4000,
+          2600,
           480
         ],
         [
-          4900,
+          3185,
           480
         ],
         [
-          5400,
+          3510,
           550
         ],
         [
-          6000,
+          3900,
           550
         ]
       ],
@@ -10837,170 +10843,170 @@
       "decor": [
         {
           "kind": "tree",
-          "x": 863,
+          "x": 561,
           "y": 0,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 773,
+          "x": 502,
           "y": 0,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 968,
+          "x": 629,
           "y": 0,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 794,
+          "x": 516,
           "y": 0,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 1473,
+          "x": 957,
           "y": 0,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 3121,
+          "x": 2139,
           "y": -160,
           "h": 302,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 3031,
+          "x": 2098,
           "y": -160,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 3226,
+          "x": 2187,
           "y": -160,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 3051,
+          "x": 2107,
           "y": -160,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 3740,
+          "x": 2421,
           "y": -160,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 5138,
+          "x": 3460,
           "y": 0,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 5048,
+          "x": 3416,
           "y": 0,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 5243,
+          "x": 3510,
           "y": 0,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 5170,
+          "x": 3474,
           "y": 0,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 5656,
+          "x": 3707,
           "y": 0,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 1782,
+          "x": 1158,
           "y": -760,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 1692,
+          "x": 1100,
           "y": -760,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 1887,
+          "x": 1227,
           "y": -760,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 3675,
+          "x": 2389,
           "y": -760,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 3585,
+          "x": 2330,
           "y": -760,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 3780,
+          "x": 2457,
           "y": -760,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 2583,
+          "x": 1679,
           "y": -760,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 4221,
+          "x": 2744,
           "y": -760,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 330,
+          "x": 214,
           "y": 550.0,
           "h": 252.0,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 280,
           "y": 550.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 5600,
+          "x": 3640,
           "y": 550.0,
           "h": 252.0,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 5700,
+          "x": 3705,
           "y": 550.0,
           "h": 56
         }
@@ -11009,71 +11015,71 @@
         {
           "from": 1,
           "to": 2,
-          "launch": 1710,
-          "land": 1822,
+          "launch": 1105,
+          "land": 1190,
           "direction": 1
         },
         {
           "from": 2,
           "to": 1,
-          "launch": 1810,
-          "land": 1698,
+          "launch": 1183,
+          "land": 1098,
           "direction": -1
         },
         {
           "from": 2,
           "to": 3,
-          "launch": 2049,
-          "land": 2162,
+          "launch": 1424,
+          "land": 1529,
           "direction": 1
         },
         {
           "from": 3,
           "to": 2,
-          "launch": 2150,
-          "land": 2037,
+          "launch": 1522,
+          "land": 1417,
           "direction": -1
         },
         {
           "from": 3,
           "to": 4,
-          "launch": 2389,
-          "land": 2502,
+          "launch": 1763,
+          "land": 1868,
           "direction": 1
         },
         {
           "from": 4,
           "to": 3,
-          "launch": 2490,
-          "land": 2377,
+          "launch": 1861,
+          "land": 1756,
           "direction": -1
         },
         {
           "from": 4,
           "to": 5,
-          "launch": 3980,
-          "land": 4102,
+          "launch": 2521,
+          "land": 2626,
           "direction": 1
         },
         {
           "from": 5,
           "to": 6,
-          "launch": 4329,
-          "land": 4452,
+          "launch": 2860,
+          "land": 2965,
           "direction": 1
         },
         {
           "from": 6,
           "to": 7,
-          "launch": 4679,
-          "land": 4792,
+          "launch": 3199,
+          "land": 3304,
           "direction": 1
         },
         {
           "from": 7,
           "to": 6,
-          "launch": 4780,
-          "land": 4667,
+          "launch": 3297,
+          "land": 3192,
           "direction": -1
         }
       ],
@@ -11390,75 +11396,177 @@
     "meadow_stream_1": {
       "name": "ทุ่งหญ้าเลียบธาร",
       "kind": "swamp",
-      "worldWidth": 5400,
+      "worldWidth": 3510,
       "spawn": [
-        190,
-        550.0
+        196,
+        550
       ],
       "platforms": [
         {
           "x": 0,
-          "x2": 5400,
+          "x2": 3510,
           "y": 550,
           "contourGround": true
         },
         {
+          "x": 1100,
+          "x2": 1379,
+          "y": 280,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 760,
+          "x2": 1039,
+          "y": 200,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
           "x": 420,
-          "x2": 2140,
-          "y": -20,
+          "x2": 699,
+          "y": 120,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 760,
+          "x2": 1560,
+          "y": 40,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 80
         },
         {
-          "x": 2200,
-          "x2": 2479,
-          "y": -100,
-          "key": "small"
+          "x": 2300,
+          "x2": 2579,
+          "y": 280,
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 2550,
-          "x2": 2829,
-          "y": -180,
-          "key": "small"
+          "x": 2640,
+          "x2": 2919,
+          "y": 200,
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 2900,
-          "x2": 5080,
+          "x": 2980,
+          "x2": 3259,
+          "y": 120,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 2103,
+          "x2": 2920,
+          "y": 40,
+          "key": "earthLong",
+          "bodyDepth": 80
+        },
+        {
+          "x": 1620,
+          "x2": 2042,
+          "y": -40,
+          "key": "medium",
+          "bodyDepth": 150
+        },
+        {
+          "x": 2103,
+          "x2": 2382,
+          "y": -120,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 1620,
+          "x2": 2042,
           "y": -200,
-          "key": "earthLong",
-          "bodyDepth": 270
+          "key": "medium",
+          "bodyDepth": 150
         },
         {
-          "x": 1500,
-          "x2": 4100,
-          "y": -700,
+          "x": 760,
+          "x2": 1560,
+          "y": -280,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 80
+        },
+        {
+          "x": 2103,
+          "x2": 2920,
+          "y": -280,
+          "key": "earthLong",
+          "bodyDepth": 80
+        },
+        {
+          "x": 420,
+          "x2": 699,
+          "y": -360,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 760,
+          "x2": 1039,
+          "y": -440,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 1100,
+          "x2": 1379,
+          "y": -520,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 2980,
+          "x2": 3259,
+          "y": -360,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 2640,
+          "x2": 2919,
+          "y": -440,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 2300,
+          "x2": 2579,
+          "y": -520,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 1440,
+          "x2": 1719,
+          "y": -600,
+          "key": "small",
+          "bodyDepth": 144
+        },
+        {
+          "x": 1780,
+          "x2": 2202,
+          "y": -520,
+          "key": "medium",
+          "bodyDepth": 150
         }
       ],
       "climbs": [
         {
-          "x": 850,
-          "top": -20,
-          "bottom": 546.9921875,
+          "x": 1240,
+          "top": 280,
+          "bottom": 564.3193318824851,
           "type": "rope"
         },
         {
-          "x": 4300,
-          "top": -200,
-          "bottom": 520.0,
-          "type": "rope"
-        },
-        {
-          "x": 1820,
-          "top": -700,
-          "bottom": -20,
-          "type": "rope"
-        },
-        {
-          "x": 3450,
-          "top": -700,
-          "bottom": -200,
+          "x": 2440,
+          "top": 280,
+          "bottom": 565.9501384422384,
           "type": "rope"
         }
       ],
@@ -11470,273 +11578,354 @@
           550
         ],
         [
-          800,
+          619,
           550
         ],
         [
-          1200,
-          480
+          981,
+          570
         ],
         [
-          2000,
-          480
+          1600,
+          555
         ],
         [
-          2500,
-          600
+          2168,
+          580
         ],
         [
-          3400,
-          600
+          2736,
+          550
         ],
         [
-          4000,
-          520
-        ],
-        [
-          4600,
-          520
-        ],
-        [
-          5400,
+          3510,
           550
         ]
       ],
       "pits": [],
       "decor": [
         {
-          "kind": "tree",
-          "x": 695,
-          "y": -20,
-          "h": 330,
-          "mirror": false
-        },
-        {
           "kind": "bush",
-          "x": 605,
-          "y": -20,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 800,
-          "y": -20,
-          "h": 62
-        },
-        {
-          "kind": "tree",
-          "x": 1590,
-          "y": -20,
-          "h": 330,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 1500,
-          "y": -20,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 1695,
-          "y": -20,
-          "h": 62
-        },
-        {
-          "kind": "flowers",
-          "x": 1074,
-          "y": -20,
-          "h": 27
-        },
-        {
-          "kind": "flowers",
-          "x": 1848,
-          "y": -20,
-          "h": 27
-        },
-        {
-          "kind": "tree",
-          "x": 3249,
-          "y": -200,
-          "h": 202,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 3159,
-          "y": -200,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 3354,
-          "y": -200,
-          "h": 62
-        },
-        {
-          "kind": "tree",
-          "x": 4497,
-          "y": -200,
-          "h": 330,
-          "mirror": false
-        },
-        {
-          "kind": "bush",
-          "x": 4407,
-          "y": -200,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 4602,
-          "y": -200,
-          "h": 62
-        },
-        {
-          "kind": "flowers",
-          "x": 3728,
-          "y": -200,
-          "h": 27
-        },
-        {
-          "kind": "flowers",
-          "x": 4709,
-          "y": -200,
-          "h": 27
-        },
-        {
-          "kind": "tree",
-          "x": 2031,
-          "y": -700,
-          "h": 330,
-          "mirror": false
-        },
-        {
-          "kind": "bush",
-          "x": 1941,
-          "y": -700,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 2136,
-          "y": -700,
-          "h": 62
-        },
-        {
-          "kind": "tree",
-          "x": 3268,
-          "y": -700,
-          "h": 330,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 3178,
-          "y": -700,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 3373,
-          "y": -700,
-          "h": 62
-        },
-        {
-          "kind": "flowers",
-          "x": 2488,
-          "y": -700,
-          "h": 27
-        },
-        {
-          "kind": "flowers",
-          "x": 3658,
-          "y": -700,
-          "h": 27
-        },
-        {
-          "kind": "tree",
-          "x": 330,
+          "x": 520,
           "y": 550.0,
-          "h": 272.0,
-          "mirror": false
+          "h": 38
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 2800,
           "y": 550.0,
-          "h": 56
-        },
-        {
-          "kind": "tree",
-          "x": 5000,
-          "y": 535.0,
-          "h": 340,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 5100,
-          "y": 540.5078125,
-          "h": 56
-        },
-        {
-          "kind": "tree",
-          "x": 2808,
-          "y": 600.0,
-          "h": 340,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 2908,
-          "y": 600.0,
-          "h": 56
+          "h": 38
         }
       ],
       "navJumps": [
         {
           "from": 1,
           "to": 2,
-          "launch": 2120,
-          "land": 2232,
-          "direction": 1
-        },
-        {
-          "from": 2,
-          "to": 1,
-          "launch": 2220,
-          "land": 2108,
+          "launch": 1119,
+          "land": 1013,
           "direction": -1
         },
         {
-          "from": 3,
-          "to": 2,
-          "launch": 2570,
-          "land": 2447,
+          "from": 2,
+          "to": 3,
+          "launch": 779,
+          "land": 673,
           "direction": -1
         },
         {
           "from": 3,
           "to": 4,
-          "launch": 2809,
-          "land": 2932,
+          "launch": 680,
+          "land": 786,
           "direction": 1
         },
         {
           "from": 4,
-          "to": 3,
-          "launch": 2920,
-          "land": 2797,
+          "to": 9,
+          "launch": 1541,
+          "land": 1646,
+          "direction": 1
+        },
+        {
+          "from": 8,
+          "to": 9,
+          "launch": 2122,
+          "land": 2016,
           "direction": -1
+        },
+        {
+          "from": 9,
+          "to": 10,
+          "launch": 2023,
+          "land": 2129,
+          "direction": 1
+        },
+        {
+          "from": 10,
+          "to": 11,
+          "launch": 2122,
+          "land": 2016,
+          "direction": -1
+        },
+        {
+          "from": 11,
+          "to": 12,
+          "launch": 1639,
+          "land": 1534,
+          "direction": -1
+        },
+        {
+          "from": 11,
+          "to": 13,
+          "launch": 2023,
+          "land": 2129,
+          "direction": 1
+        },
+        {
+          "from": 5,
+          "to": 6,
+          "launch": 2560,
+          "land": 2666,
+          "direction": 1
+        },
+        {
+          "from": 6,
+          "to": 7,
+          "launch": 2900,
+          "land": 3006,
+          "direction": 1
+        },
+        {
+          "from": 7,
+          "to": 8,
+          "launch": 2999,
+          "land": 2894,
+          "direction": -1
+        },
+        {
+          "from": 12,
+          "to": 14,
+          "launch": 779,
+          "land": 673,
+          "direction": -1
+        },
+        {
+          "from": 14,
+          "to": 15,
+          "launch": 680,
+          "land": 786,
+          "direction": 1
+        },
+        {
+          "from": 15,
+          "to": 16,
+          "launch": 1020,
+          "land": 1126,
+          "direction": 1
+        },
+        {
+          "from": 16,
+          "to": 20,
+          "launch": 1360,
+          "land": 1466,
+          "direction": 1
+        },
+        {
+          "from": 20,
+          "to": 21,
+          "launch": 1700,
+          "land": 1806,
+          "direction": 1
+        },
+        {
+          "from": 21,
+          "to": 19,
+          "launch": 2183,
+          "land": 2326,
+          "direction": 1
+        },
+        {
+          "from": 19,
+          "to": 18,
+          "launch": 2560,
+          "land": 2666,
+          "direction": 1
+        },
+        {
+          "from": 18,
+          "to": 17,
+          "launch": 2900,
+          "land": 3006,
+          "direction": 1
+        },
+        {
+          "from": 17,
+          "to": 8,
+          "launch": 2999,
+          "land": 2894.0399999999977,
+          "direction": -1,
+          "drop": true
+        },
+        {
+          "from": 2,
+          "to": 1,
+          "launch": 1020,
+          "land": 1126,
+          "direction": 1
+        },
+        {
+          "from": 3,
+          "to": 0,
+          "launch": 680,
+          "land": 782.5000000000006,
+          "direction": 1,
+          "drop": true
+        },
+        {
+          "from": 4,
+          "to": 3,
+          "launch": 779,
+          "land": 673,
+          "direction": -1
+        },
+        {
+          "from": 9,
+          "to": 4,
+          "launch": 1639,
+          "land": 1534,
+          "direction": -1
+        },
+        {
+          "from": 9,
+          "to": 0,
+          "launch": 2023,
+          "land": 2125.5000000000014,
+          "direction": 1,
+          "drop": true
+        },
+        {
+          "from": 10,
+          "to": 0,
+          "launch": 2122,
+          "land": 2019.4999999999989,
+          "direction": -1,
+          "drop": true
+        },
+        {
+          "from": 11,
+          "to": 8,
+          "launch": 2023,
+          "land": 2125.5000000000014,
+          "direction": 1,
+          "drop": true
+        },
+        {
+          "from": 12,
+          "to": 11,
+          "launch": 1541,
+          "land": 1646,
+          "direction": 1
+        },
+        {
+          "from": 13,
+          "to": 11,
+          "launch": 2122,
+          "land": 2016,
+          "direction": -1
+        },
+        {
+          "from": 6,
+          "to": 5,
+          "launch": 2659,
+          "land": 2553,
+          "direction": -1
+        },
+        {
+          "from": 7,
+          "to": 0,
+          "launch": 2999,
+          "land": 2896.4999999999977,
+          "direction": -1,
+          "drop": true
+        },
+        {
+          "from": 8,
+          "to": 7,
+          "launch": 2901,
+          "land": 3006,
+          "direction": 1
+        },
+        {
+          "from": 14,
+          "to": 4,
+          "launch": 680,
+          "land": 789.3333333333339,
+          "direction": 1,
+          "drop": true
+        },
+        {
+          "from": 15,
+          "to": 14,
+          "launch": 779,
+          "land": 673,
+          "direction": -1
+        },
+        {
+          "from": 16,
+          "to": 15,
+          "launch": 1119,
+          "land": 1013,
+          "direction": -1
+        },
+        {
+          "from": 20,
+          "to": 16,
+          "launch": 1459,
+          "land": 1353,
+          "direction": -1
+        },
+        {
+          "from": 21,
+          "to": 20,
+          "launch": 1799,
+          "land": 1693,
+          "direction": -1
+        },
+        {
+          "from": 19,
+          "to": 21,
+          "launch": 2319,
+          "land": 2176,
+          "direction": -1
+        },
+        {
+          "from": 18,
+          "to": 19,
+          "launch": 2659,
+          "land": 2553,
+          "direction": -1
+        },
+        {
+          "from": 17,
+          "to": 18,
+          "launch": 2999,
+          "land": 2893,
+          "direction": -1
+        },
+        {
+          "from": 13,
+          "to": 17,
+          "launch": 2901,
+          "land": 3006,
+          "direction": 1
         }
       ],
       "solids": [],
       "cameraBounds": {
-        "top": -2000,
-        "bottom": 1000
+        "top": -1000,
+        "bottom": 850
       },
-      "layoutRevision": 67,
+      "layoutRevision": 73,
       "jumpPairs": [],
       "scenery": {
         "scene": "assets/world_v56/meadow_bg.png"
@@ -11746,30 +11935,30 @@
       "name": "ป่าริมธาร",
       "kind": "swamp",
       "region": "late_v67",
-      "worldWidth": 6400,
+      "worldWidth": 4160,
       "profile": [
         [
           0,
           550
         ],
         [
-          1067,
+          694,
           550
         ],
         [
-          1733,
+          1126,
           520
         ],
         [
-          2800,
+          1820,
           520
         ],
         [
-          3467,
+          2254,
           550
         ],
         [
-          6400,
+          4160,
           550
         ]
       ],
@@ -11781,72 +11970,72 @@
       "platforms": [
         {
           "x": 0,
-          "x2": 6400,
+          "x2": 4160,
           "y": 550,
           "contourGround": true
         },
         {
-          "x": 240,
-          "x2": 3057,
+          "x": 156,
+          "x2": 1987,
           "y": 0,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 3147,
-          "x2": 6133,
+          "x": 2046,
+          "x2": 3986,
           "y": 0,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 640,
-          "x2": 2643,
+          "x": 416,
+          "x2": 1718,
           "y": -620,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 2733,
-          "x2": 5707,
+          "x": 1776,
+          "x2": 3710,
           "y": -620,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         }
       ],
       "climbs": [
         {
-          "x": 747,
+          "x": 486,
           "top": 0,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 5600,
+          "x": 3640,
           "top": 0,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 1827,
+          "x": 1188,
           "top": 0,
           "bottom": 520.0,
           "type": "rope"
         },
         {
-          "x": 4880,
+          "x": 3172,
           "top": 0,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 2107,
+          "x": 1370,
           "top": -620,
           "bottom": 0,
           "type": "rope"
         },
         {
-          "x": 4040,
+          "x": 2626,
           "top": -620,
           "bottom": 0,
           "type": "rope"
@@ -11858,227 +12047,227 @@
       "decor": [
         {
           "kind": "tree",
-          "x": 806,
+          "x": 524,
           "y": 0,
           "h": 322,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 716,
+          "x": 465,
           "y": 0,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 911,
+          "x": 592,
           "y": 0,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 2156,
-          "y": 0,
-          "h": 322,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 2066,
-          "y": 0,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 2261,
-          "y": 0,
-          "h": 62
-        },
-        {
-          "kind": "flowers",
-          "x": 1310,
-          "y": 0,
-          "h": 27
-        },
-        {
-          "kind": "flowers",
-          "x": 2578,
-          "y": 0,
-          "h": 27
-        },
-        {
-          "kind": "tree",
-          "x": 3625,
-          "y": 0,
-          "h": 322,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 3535,
-          "y": 0,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 3730,
-          "y": 0,
-          "h": 62
-        },
-        {
-          "kind": "tree",
-          "x": 5177,
-          "y": 0,
-          "h": 322,
-          "mirror": false
-        },
-        {
-          "kind": "bush",
-          "x": 5087,
-          "y": 0,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 5282,
-          "y": 0,
-          "h": 62
-        },
-        {
-          "kind": "flowers",
-          "x": 4282,
-          "y": 0,
-          "h": 27
-        },
-        {
-          "kind": "flowers",
-          "x": 5625,
-          "y": 0,
-          "h": 27
-        },
-        {
-          "kind": "tree",
-          "x": 960,
-          "y": -620,
-          "h": 330,
-          "mirror": false
-        },
-        {
-          "kind": "bush",
-          "x": 870,
-          "y": -620,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 1065,
-          "y": -620,
-          "h": 62
-        },
-        {
-          "kind": "tree",
-          "x": 2002,
-          "y": -620,
-          "h": 330,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 1912,
-          "y": -620,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 2107,
-          "y": -620,
-          "h": 62
-        },
-        {
-          "kind": "flowers",
           "x": 1401,
-          "y": -620,
-          "h": 27
-        },
-        {
-          "kind": "flowers",
-          "x": 2302,
-          "y": -620,
-          "h": 27
-        },
-        {
-          "kind": "tree",
-          "x": 3209,
-          "y": -620,
-          "h": 330,
+          "y": 0,
+          "h": 322,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 3119,
-          "y": -620,
+          "x": 1343,
+          "y": 0,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 3314,
-          "y": -620,
+          "x": 1470,
+          "y": 0,
+          "h": 62
+        },
+        {
+          "kind": "flowers",
+          "x": 852,
+          "y": 0,
+          "h": 27
+        },
+        {
+          "kind": "flowers",
+          "x": 1676,
+          "y": 0,
+          "h": 27
+        },
+        {
+          "kind": "tree",
+          "x": 2356,
+          "y": 0,
+          "h": 322,
+          "mirror": true
+        },
+        {
+          "kind": "bush",
+          "x": 2298,
+          "y": 0,
+          "h": 48
+        },
+        {
+          "kind": "bush",
+          "x": 2424,
+          "y": 0,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 4755,
+          "x": 3365,
+          "y": 0,
+          "h": 322,
+          "mirror": false
+        },
+        {
+          "kind": "bush",
+          "x": 3307,
+          "y": 0,
+          "h": 48
+        },
+        {
+          "kind": "bush",
+          "x": 3433,
+          "y": 0,
+          "h": 62
+        },
+        {
+          "kind": "flowers",
+          "x": 2783,
+          "y": 0,
+          "h": 27
+        },
+        {
+          "kind": "flowers",
+          "x": 3656,
+          "y": 0,
+          "h": 27
+        },
+        {
+          "kind": "tree",
+          "x": 624,
           "y": -620,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 4665,
+          "x": 566,
           "y": -620,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4860,
+          "x": 692,
+          "y": -620,
+          "h": 62
+        },
+        {
+          "kind": "tree",
+          "x": 1301,
+          "y": -620,
+          "h": 330,
+          "mirror": true
+        },
+        {
+          "kind": "bush",
+          "x": 1243,
+          "y": -620,
+          "h": 48
+        },
+        {
+          "kind": "bush",
+          "x": 1370,
           "y": -620,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 3863,
+          "x": 911,
           "y": -620,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 5201,
+          "x": 1496,
           "y": -620,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 330,
+          "x": 2086,
+          "y": -620,
+          "h": 330,
+          "mirror": true
+        },
+        {
+          "kind": "bush",
+          "x": 2027,
+          "y": -620,
+          "h": 48
+        },
+        {
+          "kind": "bush",
+          "x": 2154,
+          "y": -620,
+          "h": 62
+        },
+        {
+          "kind": "tree",
+          "x": 3091,
+          "y": -620,
+          "h": 330,
+          "mirror": false
+        },
+        {
+          "kind": "bush",
+          "x": 3032,
+          "y": -620,
+          "h": 48
+        },
+        {
+          "kind": "bush",
+          "x": 3159,
+          "y": -620,
+          "h": 62
+        },
+        {
+          "kind": "flowers",
+          "x": 2511,
+          "y": -620,
+          "h": 27
+        },
+        {
+          "kind": "flowers",
+          "x": 3381,
+          "y": -620,
+          "h": 27
+        },
+        {
+          "kind": "tree",
+          "x": 214,
           "y": 550.0,
           "h": 252.0,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 280,
           "y": 550.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 6000,
+          "x": 3900,
           "y": 550.0,
           "h": 252.0,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 6100,
+          "x": 3965,
           "y": 550.0,
           "h": 56
         }
@@ -12088,29 +12277,29 @@
         {
           "from": 1,
           "to": 2,
-          "launch": 3037,
-          "land": 3179,
+          "launch": 1963,
+          "land": 2072,
           "direction": 1
         },
         {
           "from": 2,
           "to": 1,
-          "launch": 3167,
-          "land": 3025,
+          "launch": 2070,
+          "land": 1961,
           "direction": -1
         },
         {
           "from": 3,
           "to": 4,
-          "launch": 2623,
-          "land": 2765,
+          "launch": 1694,
+          "land": 1802,
           "direction": 1
         },
         {
           "from": 4,
           "to": 3,
-          "launch": 2753,
-          "land": 2611,
+          "launch": 1800,
+          "land": 1692,
           "direction": -1
         }
       ],
@@ -12127,46 +12316,46 @@
       "name": "สะพานช่องเขา",
       "kind": "swamp",
       "region": "late_v67",
-      "worldWidth": 7000,
+      "worldWidth": 4550,
       "profile": [
         [
           0,
           550
         ],
         [
-          808,
+          525,
           550
         ],
         [
-          1481,
+          963,
           350
         ],
         [
-          2181,
+          1418,
           350
         ],
         [
-          2463,
+          1601,
           650
         ],
         [
-          4267,
+          2774,
           650
+        ],
+        [
+          2958,
+          350
+        ],
+        [
+          3412,
+          350
+        ],
+        [
+          3938,
+          550
         ],
         [
           4550,
-          350
-        ],
-        [
-          5250,
-          350
-        ],
-        [
-          6058,
-          550
-        ],
-        [
-          7000,
           550
         ]
       ],
@@ -12178,84 +12367,84 @@
       "platforms": [
         {
           "x": 0,
-          "x2": 7000,
+          "x2": 4550,
           "y": 550,
           "contourGround": true
         },
         {
-          "x": 2100,
-          "x2": 4631,
+          "x": 1365,
+          "x2": 3010,
           "y": 350,
           "key": "bridge",
           "continuousDeck": true
         },
         {
-          "x": 162,
-          "x2": 3302,
+          "x": 105,
+          "x2": 2146,
           "y": -200,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 3392,
-          "x2": 6825,
+          "x": 2205,
+          "x2": 4436,
           "y": -200,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 1413,
-          "x2": 5640,
+          "x": 918,
+          "x2": 3666,
           "y": -900,
           "key": "earthLong",
-          "bodyDepth": 260
+          "bodyDepth": 94
         }
       ],
       "climbs": [
         {
-          "x": 808,
+          "x": 525,
           "top": -200,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 6381,
+          "x": 4148,
           "top": -200,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 2894,
-          "top": -200,
-          "bottom": 350,
-          "type": "rope"
-        },
-        {
-          "x": 4038,
+          "x": 1881,
           "top": -200,
           "bottom": 350,
           "type": "rope"
         },
         {
           "x": 2625,
+          "top": -200,
+          "bottom": 350,
+          "type": "rope"
+        },
+        {
+          "x": 1706,
           "top": 350,
           "bottom": 650.0,
           "type": "rope"
         },
         {
-          "x": 4173,
+          "x": 2712,
           "top": 350,
           "bottom": 650.0,
           "type": "rope"
         },
         {
-          "x": 2423,
+          "x": 1575,
           "top": -900,
           "bottom": -200,
           "type": "rope"
         },
         {
-          "x": 4927,
+          "x": 3203,
           "top": -900,
           "bottom": -200,
           "type": "rope"
@@ -12267,177 +12456,177 @@
       "decor": [
         {
           "kind": "tree",
-          "x": 664,
+          "x": 432,
           "y": -200,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 574,
+          "x": 373,
           "y": -200,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 769,
+          "x": 500,
           "y": -200,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 2297,
+          "x": 1493,
           "y": -200,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 2207,
+          "x": 1435,
           "y": -200,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 2402,
+          "x": 1561,
           "y": -200,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 1355,
+          "x": 881,
           "y": -200,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 2768,
+          "x": 1799,
           "y": -200,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 4056,
+          "x": 2636,
           "y": -200,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 3966,
+          "x": 2578,
           "y": -200,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4161,
+          "x": 2705,
           "y": -200,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 5726,
+          "x": 3722,
           "y": -200,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 5636,
+          "x": 3663,
           "y": -200,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 5831,
+          "x": 3790,
           "y": -200,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 4697,
+          "x": 3053,
           "y": -200,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 6241,
+          "x": 4057,
           "y": -200,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 2089,
+          "x": 1358,
           "y": -900,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 1999,
+          "x": 1299,
           "y": -900,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 2194,
+          "x": 1426,
           "y": -900,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 4287,
+          "x": 2787,
           "y": -900,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 4197,
+          "x": 2728,
           "y": -900,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4392,
+          "x": 2855,
           "y": -900,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 3019,
+          "x": 1962,
           "y": -900,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 4921,
+          "x": 3199,
           "y": -900,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 330,
+          "x": 214,
           "y": 550.0,
           "h": 340,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 280,
           "y": 550.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 6600,
+          "x": 4290,
           "y": 550.0,
           "h": 340,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 6700,
+          "x": 4355,
           "y": 550.0,
           "h": 56
         }
@@ -12447,15 +12636,15 @@
         {
           "from": 2,
           "to": 3,
-          "launch": 3282,
-          "land": 3424,
+          "launch": 2122,
+          "land": 2231,
           "direction": 1
         },
         {
           "from": 3,
           "to": 2,
-          "launch": 3412,
-          "land": 3270,
+          "launch": 2229,
+          "land": 2120,
           "direction": -1
         }
       ],
@@ -12472,42 +12661,42 @@
       "name": "ทางเลียบสันเขา",
       "kind": "swamp",
       "region": "late_v67",
-      "worldWidth": 6600,
+      "worldWidth": 4290,
       "profile": [
         [
           0,
           400
         ],
         [
-          825,
+          536,
           400
         ],
         [
-          1375,
+          894,
           490
         ],
         [
-          2475,
+          1609,
           490
         ],
         [
-          3300,
+          2145,
           550
         ],
         [
-          4125,
+          2681,
           550
         ],
         [
-          4950,
+          3218,
           470
         ],
         [
-          5775,
+          3754,
           470
         ],
         [
-          6600,
+          4290,
           550
         ]
       ],
@@ -12519,91 +12708,94 @@
       "platforms": [
         {
           "x": 0,
-          "x2": 6600,
+          "x2": 4290,
           "y": 550,
           "contourGround": true
         },
         {
-          "x": 248,
-          "x2": 2250,
+          "x": 161,
+          "x2": 1400,
           "y": -80,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 3300,
-          "x2": 5060,
+          "x": 2477,
+          "x2": 3289,
           "y": -400,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 4702,
-          "x2": 6352,
+          "x": 3056,
+          "x2": 4129,
           "y": -720,
           "key": "earthLong",
-          "bodyDepth": 165
+          "bodyDepth": 59
         },
         {
-          "x": 619,
-          "x2": 3135,
+          "x": 402,
+          "x2": 2038,
           "y": -1050,
           "key": "earthLong",
-          "bodyDepth": 245
+          "bodyDepth": 88
         },
         {
-          "x": 1732,
-          "x2": 2313,
+          "x": 1103,
+          "x2": 1525,
           "y": -650,
-          "key": "earthLong",
-          "bodyDepth": 270
+          "key": "medium",
+          "bodyDepth": 150
         },
         {
-          "x": 2280,
-          "x2": 2559,
+          "x": 1460,
+          "x2": 1739,
           "y": -160,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 2620,
-          "x2": 2899,
+          "x": 1799,
+          "x2": 2078,
           "y": -240,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 2960,
-          "x2": 3239,
+          "x": 2138,
+          "x2": 2417,
           "y": -320,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         }
       ],
       "climbs": [
         {
-          "x": 1224,
+          "x": 796,
           "top": -80,
           "bottom": 473.37359987978965,
           "type": "rope"
         },
         {
-          "x": 4840,
+          "x": 3146,
           "top": -720,
           "bottom": -400,
           "type": "rope"
         },
         {
-          "x": 1994,
+          "x": 1296,
           "top": -650,
           "bottom": -80,
           "type": "rope"
         },
         {
-          "x": 2118,
+          "x": 1377,
           "top": -1050,
           "bottom": -650,
           "type": "rope"
         },
         {
-          "x": 5748,
+          "x": 3736,
           "top": -720,
           "bottom": 470.0,
           "type": "rope"
@@ -12615,208 +12807,208 @@
       "decor": [
         {
           "kind": "tree",
-          "x": 568,
+          "x": 359,
           "y": -80,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 478,
+          "x": 304,
           "y": -80,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 673,
+          "x": 424,
           "y": -80,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 1609,
+          "x": 1004,
           "y": -80,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 1519,
+          "x": 948,
           "y": -80,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 1714,
+          "x": 1069,
           "y": -80,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 1009,
+          "x": 632,
           "y": -80,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 1910,
+          "x": 1190,
           "y": -80,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 3582,
+          "x": 2607,
           "y": -400,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 3492,
+          "x": 2566,
           "y": -400,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 3687,
+          "x": 2656,
           "y": -400,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 4497,
+          "x": 3029,
           "y": -400,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 4407,
+          "x": 2988,
           "y": -400,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4602,
+          "x": 3077,
           "y": -400,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 3969,
+          "x": 2786,
           "y": -400,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 4761,
+          "x": 3151,
           "y": -400,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 5280,
+          "x": 3432,
           "y": -720,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 5190,
+          "x": 3374,
           "y": -720,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 5385,
+          "x": 3500,
           "y": -720,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 5329,
+          "x": 3464,
           "y": -720,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 6072,
+          "x": 3947,
           "y": -720,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 1022,
+          "x": 664,
           "y": -1050,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 932,
+          "x": 606,
           "y": -1050,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 1127,
+          "x": 733,
           "y": -1050,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 2330,
+          "x": 1514,
           "y": -1050,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 2240,
+          "x": 1456,
           "y": -1050,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 2435,
+          "x": 1583,
           "y": -1050,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 1575,
+          "x": 1024,
           "y": -1050,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 2707,
+          "x": 1760,
           "y": -1050,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 330,
+          "x": 214,
           "y": 400.0,
           "h": 182.0,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 280,
           "y": 400.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 6200,
+          "x": 4030,
           "y": 511.8176252886997,
           "h": 340,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 6300,
+          "x": 4095,
           "y": 525.9579263711495,
           "h": 56
         }
@@ -12826,57 +13018,57 @@
         {
           "from": 1,
           "to": 6,
-          "launch": 2230,
-          "land": 2312,
+          "launch": 1381,
+          "land": 1486,
           "direction": 1
         },
         {
           "from": 2,
           "to": 8,
-          "launch": 3320,
-          "land": 3207,
+          "launch": 2496,
+          "land": 2391,
           "direction": -1
         },
         {
           "from": 6,
           "to": 1,
-          "launch": 2300,
-          "land": 2218,
+          "launch": 1479,
+          "land": 1374,
           "direction": -1
         },
         {
           "from": 6,
           "to": 7,
-          "launch": 2539,
-          "land": 2652,
+          "launch": 1720,
+          "land": 1825,
           "direction": 1
         },
         {
           "from": 7,
           "to": 6,
-          "launch": 2640,
-          "land": 2527,
+          "launch": 1818,
+          "land": 1713,
           "direction": -1
         },
         {
           "from": 7,
           "to": 8,
-          "launch": 2879,
-          "land": 2992,
+          "launch": 2059,
+          "land": 2164,
           "direction": 1
         },
         {
           "from": 8,
           "to": 2,
-          "launch": 3219,
-          "land": 3332,
+          "launch": 2398,
+          "land": 2503,
           "direction": 1
         },
         {
           "from": 8,
           "to": 7,
-          "launch": 2980,
-          "land": 2867,
+          "launch": 2157,
+          "land": 2052,
           "direction": -1
         }
       ],
@@ -12893,46 +13085,46 @@
       "name": "ลำน้ำในช่องเขา",
       "kind": "swamp",
       "region": "late_v67",
-      "worldWidth": 6800,
+      "worldWidth": 4420,
       "profile": [
         [
           0,
           550
         ],
         [
-          600,
+          390,
           550
         ],
         [
-          1000,
+          650,
           640
         ],
         [
-          1800,
+          1170,
           640
         ],
         [
-          2200,
+          1430,
           550
         ],
         [
-          3000,
+          1950,
           550
         ],
         [
-          3500,
+          2275,
           620
         ],
         [
-          4200,
+          2730,
           620
         ],
         [
-          4600,
+          2990,
           550
         ],
         [
-          6800,
+          4420,
           550
         ]
       ],
@@ -12944,78 +13136,80 @@
       "platforms": [
         {
           "x": 0,
-          "x2": 6800,
+          "x2": 4420,
           "y": 550,
           "contourGround": true
         },
         {
-          "x": 180,
-          "x2": 2400,
+          "x": 117,
+          "x2": 1560,
           "y": 40,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 2490,
-          "x2": 2769,
+          "x": 1620,
+          "x2": 1899,
           "y": -40,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 2850,
-          "x2": 3129,
+          "x": 1959,
+          "x2": 2238,
           "y": -120,
-          "key": "small"
+          "key": "small",
+          "bodyDepth": 144
         },
         {
-          "x": 3200,
-          "x2": 6600,
+          "x": 2298,
+          "x2": 4290,
           "y": -120,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 1600,
-          "x2": 5200,
+          "x": 1040,
+          "x2": 3380,
           "y": -780,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 5300,
-          "x2": 6500,
+          "x": 3445,
+          "x2": 4225,
           "y": -500,
           "key": "earthLong",
-          "bodyDepth": 225
+          "bodyDepth": 81
         }
       ],
       "climbs": [
         {
-          "x": 500,
+          "x": 325,
           "top": 40,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 6000,
+          "x": 3900,
           "top": -120,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 2100,
+          "x": 1365,
           "top": -780,
           "bottom": 40,
           "type": "rope"
         },
         {
-          "x": 4500,
+          "x": 2925,
           "top": -780,
           "bottom": -120,
           "type": "rope"
         },
         {
-          "x": 5800,
+          "x": 3770,
           "top": -500,
           "bottom": -120,
           "type": "rope"
@@ -13027,201 +13221,201 @@
       "decor": [
         {
           "kind": "tree",
-          "x": 650,
+          "x": 422,
           "y": 40,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 560,
+          "x": 364,
           "y": 40,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 755,
+          "x": 491,
           "y": 40,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 1690,
+          "x": 1098,
           "y": 40,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 1600,
+          "x": 1040,
           "y": 40,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 1795,
+          "x": 1167,
           "y": 40,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 1024,
+          "x": 666,
           "y": 40,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 2023,
+          "x": 1315,
           "y": 40,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 3744,
+          "x": 2617,
           "y": -120,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 3654,
+          "x": 2564,
           "y": -120,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 3849,
+          "x": 2678,
           "y": -120,
           "h": 62
         },
         {
           "kind": "bush",
-          "x": 5422,
+          "x": 3600,
           "y": -120,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 5617,
+          "x": 3714,
           "y": -120,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 4492,
+          "x": 3055,
           "y": -120,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 6022,
+          "x": 3951,
           "y": -120,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 2291,
+          "x": 1489,
           "y": -780,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 2201,
+          "x": 1431,
           "y": -780,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 2396,
+          "x": 1557,
           "y": -780,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 4048,
+          "x": 2631,
           "y": -780,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 3958,
+          "x": 2573,
           "y": -780,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4153,
+          "x": 2699,
           "y": -780,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 2968,
+          "x": 1929,
           "y": -780,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 4588,
+          "x": 2982,
           "y": -780,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 5835,
+          "x": 3793,
           "y": -500,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 5745,
+          "x": 3734,
           "y": -500,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 5940,
+          "x": 3861,
           "y": -500,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 5756,
+          "x": 3741,
           "y": -500,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 6296,
+          "x": 4092,
           "y": -500,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 330,
+          "x": 214,
           "y": 550.0,
           "h": 212.0,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 280,
           "y": 550.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 6400,
+          "x": 4160,
           "y": 550.0,
           "h": 340,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 6500,
+          "x": 4225,
           "y": 550.0,
           "h": 56
         }
@@ -13230,36 +13424,50 @@
         {
           "from": 2,
           "to": 1,
-          "launch": 2510,
-          "land": 2368,
+          "launch": 1639,
+          "land": 1534,
           "direction": -1
         },
         {
           "from": 3,
           "to": 2,
-          "launch": 2870,
-          "land": 2737,
+          "launch": 1978,
+          "land": 1873,
           "direction": -1
         },
         {
           "from": 3,
           "to": 4,
-          "launch": 3109,
-          "land": 3232,
+          "launch": 2219,
+          "land": 2324,
           "direction": 1
         },
         {
           "from": 4,
           "to": 3,
-          "launch": 3220,
-          "land": 3097,
+          "launch": 2317,
+          "land": 2212,
           "direction": -1
         },
         {
           "from": 5,
           "to": 6,
-          "launch": 5180,
-          "land": 5332,
+          "launch": 3361,
+          "land": 3471,
+          "direction": 1
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "launch": 1541,
+          "land": 1646,
+          "direction": 1
+        },
+        {
+          "from": 2,
+          "to": 3,
+          "launch": 1880,
+          "land": 1985,
           "direction": 1
         }
       ],
@@ -13277,30 +13485,30 @@
       "name": "อ่าวเรือเก่า",
       "kind": "swamp",
       "region": "late_v67",
-      "worldWidth": 7200,
+      "worldWidth": 4680,
       "profile": [
         [
           0,
           550
         ],
         [
-          1200,
+          780,
           550
         ],
         [
-          2267,
+          1474,
           585
         ],
         [
-          3867,
+          2514,
           585
         ],
         [
-          4933,
+          3206,
           550
         ],
         [
-          7200,
+          4680,
           550
         ]
       ],
@@ -13312,103 +13520,103 @@
       "platforms": [
         {
           "x": 0,
-          "x2": 7200,
+          "x2": 4680,
           "y": 550,
           "contourGround": true
         },
         {
-          "x": 213,
-          "x2": 3483,
+          "x": 138,
+          "x2": 2264,
           "y": -20,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 3573,
-          "x2": 6987,
+          "x": 2322,
+          "x2": 4542,
           "y": -20,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 667,
-          "x2": 5457,
+          "x": 434,
+          "x2": 3547,
           "y": -650,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 5547,
-          "x2": 6947,
+          "x": 3606,
+          "x2": 4516,
           "y": -650,
           "key": "earthLong",
-          "bodyDepth": 270
+          "bodyDepth": 97
         },
         {
-          "x": 1493,
-          "x2": 6320,
+          "x": 970,
+          "x2": 4108,
           "y": -1280,
           "key": "earthLong",
-          "bodyDepth": 260
+          "bodyDepth": 94
         }
       ],
       "climbs": [
         {
-          "x": 773,
+          "x": 502,
           "top": -20,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 3133,
+          "x": 2036,
           "top": -20,
           "bottom": 585.0,
           "type": "rope"
         },
         {
-          "x": 4147,
+          "x": 2696,
           "top": -20,
           "bottom": 579.0243206689508,
           "type": "rope"
         },
         {
-          "x": 6600,
+          "x": 4290,
           "top": -20,
           "bottom": 550.0,
           "type": "rope"
         },
         {
-          "x": 1800,
+          "x": 1170,
           "top": -650,
           "bottom": -20,
           "type": "rope"
         },
         {
-          "x": 4693,
+          "x": 3050,
           "top": -650,
           "bottom": -20,
           "type": "rope"
         },
         {
-          "x": 6173,
+          "x": 4012,
           "top": -650,
           "bottom": -20,
           "type": "rope"
         },
         {
-          "x": 2573,
+          "x": 1672,
           "top": -1280,
           "bottom": -650,
           "type": "rope"
         },
         {
-          "x": 5053,
+          "x": 3284,
           "top": -1280,
           "bottom": -650,
           "type": "rope"
         },
         {
-          "x": 6027,
+          "x": 3918,
           "top": -1280,
           "bottom": -650,
           "type": "rope"
@@ -13420,122 +13628,153 @@
       "decor": [
         {
           "kind": "tree",
-          "x": 851,
+          "x": 553,
           "y": -20,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 761,
+          "x": 495,
           "y": -20,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 956,
+          "x": 621,
           "y": -20,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 2437,
+          "x": 1584,
           "y": -20,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 2347,
+          "x": 1526,
           "y": -20,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 2542,
+          "x": 1652,
           "y": -20,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 1456,
+          "x": 946,
           "y": -20,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 2927,
+          "x": 1903,
           "y": -20,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 4234,
+          "x": 2752,
           "y": -20,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 4144,
+          "x": 2694,
           "y": -20,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4339,
+          "x": 2820,
           "y": -20,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 5895,
+          "x": 3832,
           "y": -20,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 5805,
+          "x": 3773,
           "y": -20,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 6000,
+          "x": 3900,
           "y": -20,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 4870,
+          "x": 3166,
           "y": -20,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 6407,
+          "x": 4165,
           "y": -20,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 1433,
+          "x": 931,
           "y": -650,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 1343,
+          "x": 873,
           "y": -650,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 1538,
+          "x": 1000,
           "y": -650,
           "h": 62
+        },
+        {
+          "kind": "tree",
+          "x": 2551,
+          "y": -650,
+          "h": 330,
+          "mirror": true
+        },
+        {
+          "kind": "bush",
+          "x": 2492,
+          "y": -650,
+          "h": 48
+        },
+        {
+          "kind": "bush",
+          "x": 2619,
+          "y": -650,
+          "h": 62
+        },
+        {
+          "kind": "flowers",
+          "x": 1617,
+          "y": -650,
+          "h": 27
+        },
+        {
+          "kind": "flowers",
+          "x": 3018,
+          "y": -650,
+          "h": 27
         },
         {
           "kind": "tree",
@@ -13546,132 +13785,101 @@
         },
         {
           "kind": "bush",
-          "x": 3834,
+          "x": 3866,
           "y": -650,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4029,
+          "x": 3992,
           "y": -650,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 2487,
+          "x": 3951,
           "y": -650,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 4643,
+          "x": 4361,
           "y": -650,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 6037,
-          "y": -650,
-          "h": 330,
-          "mirror": true
-        },
-        {
-          "kind": "bush",
-          "x": 5947,
-          "y": -650,
-          "h": 48
-        },
-        {
-          "kind": "bush",
-          "x": 6142,
-          "y": -650,
-          "h": 62
-        },
-        {
-          "kind": "flowers",
-          "x": 6079,
-          "y": -650,
-          "h": 27
-        },
-        {
-          "kind": "flowers",
-          "x": 6709,
-          "y": -650,
-          "h": 27
-        },
-        {
-          "kind": "tree",
-          "x": 2265,
+          "x": 1472,
           "y": -1280,
           "h": 330,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 2175,
+          "x": 1414,
           "y": -1280,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 2370,
+          "x": 1540,
           "y": -1280,
           "h": 62
         },
         {
           "kind": "tree",
-          "x": 4775,
+          "x": 3104,
           "y": -1280,
           "h": 330,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 4685,
+          "x": 3045,
           "y": -1280,
           "h": 48
         },
         {
           "kind": "bush",
-          "x": 4880,
+          "x": 3172,
           "y": -1280,
           "h": 62
         },
         {
           "kind": "flowers",
-          "x": 3327,
+          "x": 2163,
           "y": -1280,
           "h": 27
         },
         {
           "kind": "flowers",
-          "x": 5499,
+          "x": 3574,
           "y": -1280,
           "h": 27
         },
         {
           "kind": "tree",
-          "x": 330,
+          "x": 214,
           "y": 550.0,
           "h": 272.0,
           "mirror": false
         },
         {
           "kind": "bush",
-          "x": 430,
+          "x": 280,
           "y": 550.0,
           "h": 56
         },
         {
           "kind": "tree",
-          "x": 6800,
+          "x": 4420,
           "y": 550.0,
           "h": 272.0,
           "mirror": true
         },
         {
           "kind": "bush",
-          "x": 6900,
+          "x": 4485,
           "y": 550.0,
           "h": 56
         }
@@ -13681,29 +13889,29 @@
         {
           "from": 1,
           "to": 2,
-          "launch": 3463,
-          "land": 3605,
+          "launch": 2240,
+          "land": 2348,
           "direction": 1
         },
         {
           "from": 2,
           "to": 1,
-          "launch": 3593,
-          "land": 3451,
+          "launch": 2346,
+          "land": 2238,
           "direction": -1
         },
         {
           "from": 3,
           "to": 4,
-          "launch": 5437,
-          "land": 5579,
+          "launch": 3523,
+          "land": 3632,
           "direction": 1
         },
         {
           "from": 4,
           "to": 3,
-          "launch": 5567,
-          "land": 5425,
+          "launch": 3630,
+          "land": 3521,
           "direction": -1
         }
       ],
@@ -13893,7 +14101,7 @@
         550
       ],
       "spawn": [
-        190,
+        210,
         550.0
       ],
       "radius": 75,
@@ -13917,11 +14125,11 @@
     {
       "to": "caravan_road_2",
       "exit": [
-        5310,
-        548.9463671875
+        3417,
+        550.0
       ],
       "spawn": [
-        190,
+        210,
         550.0
       ],
       "radius": 75,
@@ -13935,8 +14143,8 @@
         550.0
       ],
       "spawn": [
-        5210,
-        545.7272265625
+        3287,
+        550.0
       ],
       "radius": 75,
       "intent": false,
@@ -13945,12 +14153,12 @@
     {
       "to": "old_checkpoint_3",
       "exit": [
-        5990,
+        3894,
         -160
       ],
       "spawn": [
-        190,
-        550
+        210,
+        550.0
       ],
       "radius": 75,
       "intent": false,
@@ -13963,7 +14171,7 @@
         550
       ],
       "spawn": [
-        5870,
+        3764,
         -160
       ],
       "radius": 75,
@@ -14002,11 +14210,11 @@
       "from": "river_forest_1",
       "to": "gorge_bridge_2",
       "exit": [
-        6073,
+        3947,
         0
       ],
       "spawn": [
-        342,
+        274,
         -200
       ],
       "radius": 65,
@@ -14016,11 +14224,11 @@
       "from": "gorge_bridge_2",
       "to": "river_forest_1",
       "exit": [
-        222,
+        144,
         -200
       ],
       "spawn": [
-        5953,
+        3817,
         0
       ],
       "radius": 65,
@@ -14030,7 +14238,7 @@
       "from": "gorge_bridge_2",
       "to": "coastal_ridge_3",
       "exit": [
-        6765,
+        4397,
         -200
       ],
       "spawn": [
@@ -14048,7 +14256,7 @@
         400.0
       ],
       "spawn": [
-        6645,
+        4267,
         -200
       ],
       "radius": 65,
@@ -14058,7 +14266,7 @@
       "from": "gorge_bridge_2",
       "to": "underbridge_stream_4",
       "exit": [
-        6910,
+        4492,
         550.0
       ],
       "spawn": [
@@ -14076,7 +14284,7 @@
         550.0
       ],
       "spawn": [
-        6810,
+        4362,
         550.0
       ],
       "radius": 65,
@@ -14086,11 +14294,11 @@
       "from": "coastal_ridge_3",
       "to": "old_boat_cove_5",
       "exit": [
-        6292,
+        4090,
         -720
       ],
       "spawn": [
-        393,
+        307,
         -20
       ],
       "radius": 65,
@@ -14100,11 +14308,11 @@
       "from": "old_boat_cove_5",
       "to": "coastal_ridge_3",
       "exit": [
-        273,
+        177,
         -20
       ],
       "spawn": [
-        6172,
+        3960,
         -720
       ],
       "radius": 65,
@@ -14114,7 +14322,7 @@
       "from": "underbridge_stream_4",
       "to": "old_boat_cove_5",
       "exit": [
-        6710,
+        4362,
         550.0
       ],
       "spawn": [
@@ -14132,7 +14340,7 @@
         550.0
       ],
       "spawn": [
-        6610,
+        4232,
         550.0
       ],
       "radius": 65,
@@ -14153,5 +14361,5 @@
       "intent": true
     }
   ],
-  "feature": "world-maps-v67-late-regions-v1"
+  "feature": "world-maps-v73-prefab-jumpchains-v1"
 }
