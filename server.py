@@ -373,7 +373,7 @@ class ExpansionNavigation:
 for _mid in EXPANSION_MAPS:WORLD_FARM_NAV[_mid]=ExpansionNavigation(_mid,WORLD_FARM_NAV[_mid])
 from late_map_nav_v67 import LateNavigation
 for _mid,_map in EXPANSION_MAPS.items():
-    if _map.get('region')=='late_v67':WORLD_FARM_NAV[_mid]=LateNavigation(_map)
+    if _map.get('region') in ('late_v67','tomb_v76'):WORLD_FARM_NAV[_mid]=LateNavigation(_map)
 
 def farm_nav_for(room):
     return WORLD_FARM_NAV.get(room, FARM_NAV)
@@ -584,6 +584,8 @@ class Monster(Actor):
     # Newbie bamboo mobs are peaceful until struck by an actual player attack.
     retaliate_target: str = ''
     retaliate_until: float = 0.0
+    mob_kb_left: float = 0.0
+    mob_kb_dir: int = 0
 
 
 @dataclass
@@ -1168,7 +1170,7 @@ def hurt(victim, damage, x, y, kind,critical=False,owner=None):
     victim.stun = 0.25
     victim.inv = .42 if isinstance(victim, Guest) else 0
     if isinstance(victim,Monster):
-        # Offline v8.0AY: ranged impacts INTERRUPT movement, not physical shove.
+        # V81: damage interrupts movement; hit_by_shot schedules bounded physical shove.
         victim.vx=0
         victim.bite_started_at=-1e9
         victim.bite_hit_done=False
@@ -1657,6 +1659,36 @@ def update_peach_shots(dt):
     world.peaches=alive
 
 
+# V81 balance choice, not a claimed exact MapleStory pixel measurement.
+MONSTER_KNOCKBACK_DISTANCE=60.0
+MONSTER_KNOCKBACK_DURATION=.20
+
+def register_monster_shove(m,source_x,flight_direction=0):
+    if m.dead>0 or m.hp<=0:return
+    m.mob_kb_dir=(1 if flight_direction>0 else -1 if flight_direction<0 else 1 if m.x>=source_x else -1)
+    m.mob_kb_left=MONSTER_KNOCKBACK_DURATION if m.ground else 0.0
+    m.vx=0
+    m.bite_started_at=-1e9;m.bite_hit_done=False
+    m.stun=max(m.stun,MONSTER_KNOCKBACK_DURATION)
+
+def monster_shove_allowed(m,x):
+    if x<27 or x>city_world_width(current_world().room)-27 or abs(x-m.home)>380:return False
+    if not any(abs(m.y-y)<12 and lo+20<x<hi-20 for lo,hi,y in active_ground()):return False
+    solids=EXPANSION_MAPS.get(current_world().room,{}).get('solids',())
+    return not any(m.y>r['y']+.001 and m.y-123.26<r['y']+r['h']-.001 and x+20>r['x'] and x-20<r['x']+r['w'] for r in solids)
+
+def step_monster_shove(m,dt):
+    if m.mob_kb_left<=0:return False
+    used=min(dt,m.mob_kb_left);distance=MONSTER_KNOCKBACK_DISTANCE/MONSTER_KNOCKBACK_DURATION*used;old=m.x
+    m.mob_kb_left=max(0,m.mob_kb_left-used)
+    count=max(1,math.ceil(distance/2))
+    for _ in range(count):
+        x=m.x+m.mob_kb_dir*distance/count
+        if not monster_shove_allowed(m,x):m.mob_kb_left=0;break
+        m.x=x
+    m.vx=(m.x-old)/dt if dt>0 else 0
+    return True
+
 def update_mob(m,dt,player_grid=None):
     t=time.monotonic()
     if m.dead>0:
@@ -1664,7 +1696,7 @@ def update_mob(m,dt,player_grid=None):
         if m.dead==0:
             m.hp=m.max_hp
             m.x=m.home;m.y=m.spawn_y
-            m.vx=m.vy=m.stun=m.down=m.broken=0
+            m.vx=m.vy=m.stun=m.down=m.broken=m.mob_kb_left=0
             m.ground=True;m.guard=False
             m.bite_started_at=-1e9;m.bite_hit_done=False
             m.bite_ready_at=t+.45
@@ -1675,6 +1707,9 @@ def update_mob(m,dt,player_grid=None):
     m.stun=max(0,m.stun-dt)
     m.down=max(0,m.down-dt)
     m.broken=max(0,m.broken-dt)
+    if step_monster_shove(m,dt):
+        physics(m,dt)
+        return
     # Spatial grid reduces candidates; lane is constant for this target selection.
     # Cache only across candidate checks BEFORE movement, never across game ticks.
     _mob_ai_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
@@ -1837,8 +1872,11 @@ def hit_by_shot(s,victim,damage,is_mob):
             victim.retaliate_target=attacker.id
             victim.retaliate_until=time.monotonic()+12.0
     previous_alive=victim.hp>0 and victim.dead<=0
+    previous_hp=victim.hp
     actual=mitigate(damage,victim.defense) if is_mob else damage
     hurt(victim,actual,s.x,s.y,s.kind,critical=s.critical,owner=s.owner)
+    if is_mob and victim.hp<previous_hp and victim.hp>0:
+        register_monster_shove(victim,s.x,s.vx)
     if previous_alive and is_mob and victim.hp<=0:grant_monster_kill(s,victim)
     return actual
 
@@ -1850,6 +1888,7 @@ def bonus_hit(killer, victim, raw,kind='qi_echo'):
     if victim.species in BAMBOO_MONSTER_NAMES:
         victim.retaliate_target=killer.id;victim.retaliate_until=time.monotonic()+12.0
     victim.hp=max(0,victim.hp-value)
+    register_monster_shove(victim,killer.x)
     victim.stun=max(victim.stun,.2)
     victim.vx=0
     victim.bite_started_at=-1e9
@@ -3441,4 +3480,5 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+
 

@@ -14,11 +14,12 @@ class LateNavigation(Navigation):
     def __init__(self,m):
         self.map=m
         super().__init__([(p['x'],p['x2'],p['y']) for p in m['platforms']],[(c['x'],c['top'],c['bottom']) for c in m['climbs']])
-        for t in self.ground:t['y']=ground_y(m,t['x'])
+        if m.get('profile'):
+            for t in self.ground:t['y']=ground_y(m,t['x'])
         self.graph=[[] for _ in self.platforms]
         # Include actual intermediate crossing footholds, plus the sloped floor.
         for k,c in enumerate(self.climbs):
-            ends=[i for i,p in enumerate(self.platforms) if p['x']+12<=c['x']<=p['x2']-12 and c['top']-2<=(ground_y(m,c['x']) if i==0 else p['y'])<=c['bottom']+2]
+            ends=[i for i,p in enumerate(self.platforms) if p['x']+12<=c['x']<=p['x2']-12 and c['top']-2<=(ground_y(m,c['x']) if i==0 and m.get('profile') else p['y'])<=c['bottom']+2]
             for a in ends:
                 for b in ends:
                     if a!=b:self.graph[a].append(dict(to=b,climb=k,cost=1+abs(self.platforms[a]['y']-self.platforms[b]['y'])/175))
@@ -29,7 +30,7 @@ class LateNavigation(Navigation):
             self.graph[e['from']].append(dict(e,climb=k,cost=2,kind='jump'))
     def platform_at(self,p):
         if p.climb or not p.ground:return -1
-        if abs(p.y-ground_y(self.map,p.x))<17:return 0
+        if self.map.get('profile') and abs(p.y-ground_y(self.map,p.x))<17:return 0
         return super().platform_at(p)
     def choose(self,p,state,t,monsters,allow_cast=True):
         buttons,actions=super().choose(p,state,t,monsters,allow_cast)
@@ -47,3 +48,4 @@ class LateNavigation(Navigation):
             return 0,[]
         if at<0:return self.approach(p.x,leg['land'],4),[]
         return buttons,actions
+
