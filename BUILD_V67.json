@@ -1,0 +1,11 @@
+{
+  "build": "Frontend V67 / Backend World V18",
+  "feature": "world-maps-v67-late-regions-v1",
+  "date": "2026-10-29",
+  "baselineServerGitHubBlob": "4a5f29473c9e7443fe4e7e28624f9d958e4b4513",
+  "currentFiles": {
+    "server.py": "18a1ec1cecdf08cd33d4c6369023761e6d23baf51e199f778477a3357fdcd212",
+    "world_v56.json": "6f6833c4be2fb0f4f5b75532401d0aee70638bf6e34214ef5a55d3ad640f5f31",
+    "late_map_nav_v67.py": "10e09300ce7274ebedefcdd13e0f6a405aa3ce8c547622423e52c83684f0b0ab"
+  }
+}

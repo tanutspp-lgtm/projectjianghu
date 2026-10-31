@@ -1,0 +1,13 @@
+{
+  "package": "JIANGHU V103 BACKEND_FULL",
+  "worldFeature": "world-maps-v101-beach-trilogy-v2",
+  "worldSha256": "3e31a4d202ff3da167fbb78a4b0713a2683944795f84b02e8036b076faf22fcf",
+  "sources": [
+    "V67 full",
+    "V81 combined",
+    "V103 world"
+  ],
+  "fileCount": 134,
+  "liveTested": false,
+  "liveRepoCompared": false
+}

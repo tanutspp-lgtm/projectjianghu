@@ -1,9 +1,8 @@
-# Latest: Frontend V65 / Backend World V16
+# Current build: V67
 
-Use README_V65_TH.txt and CHECK_WORLD_V65.py. The full package retains historical documents.
-
-Fixes: sword_cave_top bridge seam, granite_inland_1 two-way climbing, inland graphics,
-restored HUD dependencies, maps 30–34 left canopy removal.
-World feature: world-maps-v65-cave-seams-inland-climb-v1.
-server.py unchanged from verified V64 GitHub blob 4a5f29473c9e7443fe4e7e28624f9d958e4b4513.
-Do not deploy a frontend-only fix for geometry changes. Update backend through GitHub then pull.
+อ่าน README_V67_TH.txt ก่อนอัปเดต
+Frontend Vercel ตัวเต็ม; Backend GitHub → git pull → check → restart
+Feature: `world-maps-v67-late-regions-v1`
+เปลี่ยน 8 แมพช่วงท้าย พร้อม Geometry/Portal/AUTO ที่ตรงกัน
+ข้อกำหนดออกแบบ: MAP_DESIGN_START_HERE_TH.md และ docs/map_design
+ผลตรวจเครื่องทดสอบ: qa/v67; ยังไม่ได้ยืนยันการ Deploy จริง
