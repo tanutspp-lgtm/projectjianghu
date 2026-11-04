@@ -1,0 +1,24 @@
+Project Jianghu V108 — QA 1 พฤศจิกายน 2026
+
+ทดสอบตัวเกมจริงใน Chromium โหมดออฟไลน์ และ backend Python ที่รันในเครื่อง
+วิดีโอจับภาพตามนาฬิกาเกมที่ควบคุมไว้ 20 FPS เพื่อดูเส้นทาง/ภาพ ไม่ใช่ benchmark FPS หรือเครือข่าย
+
+- 3 แมพ: พื้นเดิม + แพลตฟอร์มใหม่ 3 ชั้น + เชือกใหม่ 3 เส้นต่อแมพ
+- ใช้เฉพาะ source atlas ฝั่งซ้าย x18..309 / y233..325 ไม่ใช้กลุ่มแพลตฟอร์มไม้ไผ่ขวาบน
+- prefab PNG 8 ขนาดเป็นการต่อ native sprite ไม่ยืดภาพ runtime; anchor[6,18]
+- กรอบภาพแพลตฟอร์มทั้ง 9 ชิ้นไม่ทับกรอบภาพต้นมะพร้าว; ตำแหน่งต้นมะพร้าวเดิม
+- Frontend: ปีนขึ้นทั้ง 9 ชั้น กระโดด/ลงยืนบนแต่ละชั้น และปีนกลับพื้นทั้งหมดผ่าน
+- Backend: ทดสอบ actual update_guest/perform_action/collision ของ 9 ชั้น ขึ้น/ลง/กระโดดผ่าน
+- Backend AUTO ไปชั้นบนสุดแล้วกลับพื้น ครบทั้ง 3 แมพ; graph เชื่อมได้ทั้ง 4 พื้น
+- WebSocket ในเครื่อง: welcome มี feature V108, map_ack ส่ง 4 platforms / 3 climbs ครบ 3 แมพ
+- Frontend วาร์ปจริง 6 ทิศทาง อ่าวเรือเก่า ↔ หาด1 ↔ หาด2 ↔ หาด3 ผ่าน
+- Backend ตรวจ portal trigger และฟิสิกส์ลงพื้นปลายทาง 6 ทิศทางผ่าน
+- ตรวจภาพทั้ง 3 หาดที่ 1440x900, 960x540 และ 390x844
+- recapture มินิแมพ 3 หาดจาก production renderer; bounds[0,3000,-350,810]; decode ครบ 41 ภาพใน browser และ ZIP
+- Cache สูงสุด 25058336 bytes อยู่ในงบเดิม 25165824 bytes
+- world_v56.js, WORLD_V56_GEOMETRY.json, backend/world_v56.json ข้อมูลตรงกัน
+- ไม่เปลี่ยน maps อื่น, links/warp, combat, physics, netcode, server.py, world_physics_v56.py หรือ late_map_nav_v67.py
+- คลื่น V106 และฉากเกาะ V107 เดิม; ไม่มี JS error ระหว่างชุดทดสอบ
+- วิดีโอ 30 วินาที แสดงการปีนถึงชั้นบนสุดจริงทั้ง 3 แมพ
+
+ไม่ได้เชื่อม/แก้ไข VPS หรือ deployment ที่ใช้งานจริงในรอบนี้

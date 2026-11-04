@@ -1,0 +1,23 @@
+Project Jianghu V111 — QA 1 พฤศจิกายน 2026
+
+ทดสอบ HTML เกมจริงใน Chromium โหมด Offline Sandbox และ Python server/WebSocket ในเครื่อง
+- หาดแรกคง platform/rope/profile/warp ของV110; เพิ่มเฉพาะมะพร้าวเป็น8ต้น
+- หาดสอง5เกาะ/2เชือก: ขั้นกระโดดเฉียง4ชิ้นและเกาะชมวิวสูง, มะพร้าว7ต้น
+- หาดสาม5เกาะ/4เชือก: สองกลุ่มซ้ายขวา มีเกาะเชื่อมกระโดดกลาง, มะพร้าว7ต้น
+- ทั้ง3หาดกว้าง2060เหมือนV110; ไม่มีท่าเรือ/เรือ
+- กรอบภาพแพลตฟอร์มทั้ง13ชิ้นไม่ทับกรอบภาพมะพร้าว; รากมะพร้าวห่างจุดวาร์ปอย่างน้อย120หน่วย
+- Browser/backend เดินพื้นซ้าย→ขวาและกลับ6เที่ยว, ปีนเชือกจริงทั้ง9เส้นขึ้น/ลงผ่าน
+- Browser/backend กระโดดจริงครบ10เส้นทางใหม่ทั้งสองทิศ (6ของหาด2,4ของหาด3)
+- Backend AUTOไปทุกเกาะตามลำดับและย้อนกลับ รวม32เป้าหมาย, graphเชื่อมทุกพื้น
+- Offline graphเชื่อมครบทุกเกาะด้วยข้อมูลnavJumpsเดียวกัน
+- WebSocket welcomeมีfeatureใหม่,map_ackส่งwidth2060และplatform/ropeถูกจำนวนครบ3หาด
+- Browserและactual WebSocket portal map_change วาร์ป6ทิศ cove↔open↔tidal↔deepwater ผ่าน
+- ตรวจภาพ1440x900,960x540,390x844; ไม่มีpageerror, cacheอยู่ในงบเดิม
+- recapture minimap3หาดจากproduction renderer, cache111, bounds[0,2060,-350,810]
+- decode minimapครบ41ภาพในbrowserและZIP
+- ข้อมูลworld_v56.js/WORLD_V56_GEOMETRY.json/backend world_v56.jsonตรงกัน
+- ไม่แก้physics/combat/netcode,server.py,late_map_nav_v67.py,world_physics_v56.py
+- คลื่น/BG/renderer/ภาพทรายV109/สุสานเดิม; ไม่มีการโหลดภาพท่าเรือ
+- ไม่ได้ทดสอบหรือแก้ไข VPS/deployment จริง
+
+qa/v111 มี source และผลทดสอบสำหรับตรวจย้อนหลัง ไม่ถูกโหลดในหน้าเกม

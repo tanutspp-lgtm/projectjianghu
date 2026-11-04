@@ -614,6 +614,7 @@ MAP_HARD_CAPS.update({room:10 for room in GRANITE_FOREST_MAPS})
 MAP_HARD_CAPS.update({room:10 for room in MOUNTAIN_MAPS})
 MAP_HARD_CAPS.update({room:10 for room in GRANITE_WALL_MAPS})
 MAP_HARD_CAPS.update({room:10 for room in EXPANSION_MAPS})
+MAP_HARD_CAPS['fishing_village_9']=70  # V123: safe harbor town, same city capacity.
 CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16

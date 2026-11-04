@@ -1,0 +1,18 @@
+Project Jianghu V110 — QA 1 พฤศจิกายน 2026
+
+ทดสอบ HTML เกมจริงใน Chromium โหมด Offline Sandbox และ Python backend/WebSocket ในเครื่อง
+- อ้างอิง suburb_gate_1 / outskirts_1 กว้าง2060; ทั้ง3หาดลด3000→2060 (สั้นลง31.33%)
+- ข้อมูลโลก JS/JSON/frontend/backendตรงกัน WorldV29 / world-maps-v110-compact-beaches-v1
+- เดินตามพื้นจริงทั้งซ้าย→ขวาและขวา→ซ้ายใน3หาด ไม่มีตก/ทะลุ slope ทั้ง browser/backend
+- ปีนขึ้น9ชั้น กระโดดลงยืนครบ และปีนกลับพื้นครบทั้ง browser/backend
+- AUTO server ขึ้นชั้น3และกลับพื้นครบ3แมพ; graphเชื่อม4พื้นได้
+- Backend WebSocket welcomeมีfeatureใหม่, map_ackส่งwidth2060/4platforms/3climbsครบ3แมพ
+- วาร์ป6ทิศทาง cove↔open↔tidal↔deepwater ผ่าน browser และ actual WebSocket portal map_change
+- เช็ค spawnใหม่อยู่ในขนาดแมพและลงตำแหน่งตรง JSON; ความสูง exit/spawnตรง contourจริง
+- ภาพแพลตฟอร์มใหม่ทั้ง9กรอบไม่ทับกรอบมะพร้าว; ขนาดแพลตฟอร์ม/asset V109 เดิมทั้งหมด
+- แมพสามไม่โหลดและไม่วาด harbor_depth_pier.png ซึ่งมีทั้งท่าเรือและเรือ
+- ตรวจภาพ1440x900,960x540,390x844 และมุมพื้นซ้าย/ขวา/ชั้นสูง
+- recapture minimap3ภาพจาก production renderer ขอบเขต[0,2060,-350,810],cache110
+- decode minimapครบ41ภาพในbrowserและZIP, cacheไม่เกินงบเดิม, ไม่มีpageerror
+- คลื่น6ชั้น/เกาะฉากหลัง/สุสาน/ฟิสิกส์/ต่อสู้/netcodeเดิม; server.pyและnav/physicsไม่ได้แก้
+- ไม่ได้ทดสอบหรือแก้ไข VPS/deployment ที่ใช้งานจริง
