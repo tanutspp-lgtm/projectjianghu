@@ -1,0 +1,11 @@
+{
+  "frontend": "V170",
+  "backend": "V156",
+  "world": "Frontend V155 / Backend World V50",
+  "feature": "world-maps-v155-long-snow-rock-platforms-v1",
+  "maps": 40,
+  "world_json_and_embedded_js_equal": true,
+  "backend_py_compile": "passed",
+  "production_module_dependencies": "present",
+  "visual_verification": "UI V169 checked; BG smoothing V169 and layout V170 still not runtime visually verified"
+}

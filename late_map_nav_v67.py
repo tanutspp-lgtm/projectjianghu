@@ -2,6 +2,7 @@
 Movement uses ordinary buttons/actions; combat/goal selection remains farm_auto.
 """
 from farm_auto_v80bu import Navigation
+from cave_contours_v145 import platform_y
 
 def ground_y(m,x):
     for (a,b),(c,d) in zip(m['profile'],m['profile'][1:]):
@@ -16,10 +17,12 @@ class LateNavigation(Navigation):
         super().__init__([(p['x'],p['x2'],p['y']) for p in m['platforms']],[(c['x'],c['top'],c['bottom']) for c in m['climbs']])
         if m.get('profile'):
             for t in self.ground:t['y']=ground_y(m,t['x'])
+        if m.get('caveContours'):
+            for tile in self.ground+self.upper:tile['y']=platform_y(m['platforms'][tile['platform']],tile['x'])
         self.graph=[[] for _ in self.platforms]
         # Include actual intermediate crossing footholds, plus the sloped floor.
         for k,c in enumerate(self.climbs):
-            ends=[i for i,p in enumerate(self.platforms) if p['x']+12<=c['x']<=p['x2']-12 and c['top']-2<=(ground_y(m,c['x']) if i==0 and m.get('profile') else p['y'])<=c['bottom']+2]
+            ends=[i for i,p in enumerate(self.platforms) if p['x']+12<=c['x']<=p['x2']-12 and c['top']-2<=(ground_y(m,c['x']) if i==0 and m.get('profile') else platform_y(m['platforms'][i],c['x']))<=c['bottom']+2]
             for a in ends:
                 for b in ends:
                     if a!=b:self.graph[a].append(dict(to=b,climb=k,cost=1+abs(self.platforms[a]['y']-self.platforms[b]['y'])/175))
@@ -31,6 +34,8 @@ class LateNavigation(Navigation):
     def platform_at(self,p):
         if p.climb or not p.ground:return -1
         if self.map.get('profile') and abs(p.y-ground_y(self.map,p.x))<17:return 0
+        if self.map.get('caveContours'):
+            return next((i for i,q in enumerate(self.map['platforms']) if q['x']+5<p.x<q['x2']-5 and abs(p.y-platform_y(q,p.x))<17),-1)
         return super().platform_at(p)
     def choose(self,p,state,t,monsters,allow_cast=True):
         buttons,actions=super().choose(p,state,t,monsters,allow_cast)
