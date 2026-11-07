@@ -1,5 +1,6 @@
 """V56 map collision only. The existing input, combat and tick schedulers own actors."""
 import math
+from cave_contours_v145 import step as cave_step, platform_y
 
 def ground_y(m,x):
     if 'profile' not in m:return None
@@ -15,6 +16,7 @@ def ground_y(m,x):
     return y
 
 def step(p,dt,m):
+    if m.get("caveContours"):return cave_step(p,dt,m)
     p.x=max(27,min(m['worldWidth']-27,p.x))
     if p.climb is not None:return
     old_x=p.x-p.vx*dt;old_y=p.y;was_ground=p.ground
@@ -70,6 +72,6 @@ def portal_at(link,p):
 
 def dismount(m,cx,y,offset):
     if m is None:return cx+offset
-    q=next((q for q in m['platforms'] if abs(q['y']-y)<1 and q['x']<=cx+8 and q['x2']>=cx-8),None)
+    q=next((q for q in m['platforms'] if abs(platform_y(q,cx)-y)<1 and q['x']<=cx+8 and q['x2']>=cx-8),None)
     return max(q['x']+24,min(q['x2']-24,cx+offset)) if q else cx+offset
 

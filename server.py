@@ -50,6 +50,7 @@ def encode_compact_snapshot_ek(packet, cache=None):
 import combat_progression_v80bs as prog
 import sandbox_loadouts_v80bt as loadouts
 import monster_hp_def_v80bu as monster_balance
+import cave_ice_v156 as cave_ice
 import farm_auto_v80bu as farm_auto
 from urllib.request import Request, urlopen  # v8.0BO AUTHORITATIVE COMBAT
 
@@ -308,6 +309,7 @@ GRANITE_WALL_PORTALS = {('granite_ascent_1', 'granite_wall_1'): ('right', -1850,
 
 WORLD_V56=json.loads((Path(__file__).resolve().parent/'world_v56.json').read_text())
 EXPANSION_MAPS=WORLD_V56['maps']
+from cave_contours_v145 import platform_y as contour_platform_y, overlaps as contour_overlaps
 from world_physics_v56 import step as expansion_physics, ground_y as expansion_ground_y, portal_at as expansion_portal_at, dismount as expansion_dismount
 BAMBOO_MAPS.update({mid:{'name':m['name'],'platforms':[[p['x'],p['x2'],p['y']] for p in m['platforms']],'climbs':[[c['x'],c['top'],c['bottom'],c.get('type','rope')] for c in m['climbs']]} for mid,m in EXPANSION_MAPS.items()})
 
@@ -1507,6 +1509,7 @@ def movement_validate(p,m,tick_now):
         soil_y=expansion_ground_y(EXPANSION_MAPS[p.room],x)
         if soil_y is not None and y>soil_y+.25:return 'terrain-through'
     if p.room in EXPANSION_MAPS and any(x+19>r['x'] and x-19<r['x']+r['w'] and y>r['y']+.1 and y-122<r['y']+r['h']-.1 for r in EXPANSION_MAPS[p.room].get('solids',())):return 'solid-wall'
+    if p.room in EXPANSION_MAPS and EXPANSION_MAPS[p.room].get('caveContours') and climb is None and contour_overlaps(EXPANSION_MAPS[p.room],x,y):return 'solid-wall'
     expected=p.move_shadow or movement_capture(p)
     ex,ey,evx,evy,eground,eclimb=expected[:6]
     moving_dash=p.action=='dash' and p.action_at<=.32 and p.cool>0
@@ -1539,10 +1542,12 @@ def movement_validate(p,m,tick_now):
         if p.room in EXPANSION_MAPS:
             gy=expansion_ground_y(EXPANSION_MAPS[p.room],x)
             if gy is not None:supported=abs(y-gy)<=2 or any(not q.get('contourGround') and q['x']+8<x<q['x2']-8 and abs(y-q['y'])<=2 for q in EXPANSION_MAPS[p.room]['platforms'])
+        if p.room in EXPANSION_MAPS and EXPANSION_MAPS[p.room].get('caveContours'):
+            supported=any(q['x']+8<x<q['x2']-8 and abs(y-contour_platform_y(q,x))<=2 for q in EXPANSION_MAPS[p.room]['platforms'])
         if not supported:return 'invalid-ground'
     # Crossing a one-way solid from above to below (descending) is not legal.
     if y>p.y+2 and vy>=0 and not climb:
-        collision_lanes=([(q['x'],q['x2'],q['y']) for q in EXPANSION_MAPS[p.room]['platforms'] if not q.get('contourGround')] if p.room in EXPANSION_MAPS else active_ground())
+        collision_lanes=([(q['x'],q['x2'],contour_platform_y(q,x)) for q in EXPANSION_MAPS[p.room]['platforms'] if not q.get('contourGround')] if p.room in EXPANSION_MAPS else active_ground())
         for lo,hi,top in collision_lanes:
             if lo+8<min(x,p.x) and max(x,p.x)<hi-8 and p.y<=top+2<y-2:
                 return 'platform-through'
@@ -2179,7 +2184,7 @@ def snapshot():
     # actors are forest guests there is no foreign room to filter in 100 per-
     # client AOI views. Existing in-flight snapshots stay safe on disconnect.
     forest_only=all(p.room=='forest' for p in players.values())
-    world=SharedSnapshot({'t':'snapshot','tick':server_step,'minimap':minimap_snapshot(moment),
+    world=SharedSnapshot({'t':'snapshot','tick':server_step,**({'caveIceTime':round(moment,4)} if current_world().room in cave_ice.SITES else {}),'minimap':minimap_snapshot(moment),
             'players':_reuse_snapshot_entities('players',[{**actor_json(p),'avatar':p.avatar} for p in players.values()]),
             'mobs':_reuse_snapshot_entities('mobs',[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
                      'biteAge':round(max(0,moment-m.bite_started_at),3) if m.bite_started_at>0 else -1,
@@ -2315,6 +2320,7 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
         _writer_delta_start=time.perf_counter_ns()
     full=previous is None or world['tick']-last_full_tick>=DELTA_REFRESH_TICKS
     result={'t':'snapshot','tick':world['tick']}
+    if 'caveIceTime' in world:result['caveIceTime']=world['caveIceTime']
     # Per-sample shared cache; no recalculation of lookup or isinstance inside
     # each per-kind/per-entity iteration. Cache pins old/new dict references.
     cache=world.entity_patch_cache if isinstance(world,SharedSnapshot) else None
@@ -2725,6 +2731,7 @@ async def game_loop():
                         p.last_input=tick_now
                     _prof_move_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                     movement_tick(p,DT,tick_now)
+                    cave_ice.tick_player(p,tick_now,DT,event)
                     if ENABLE_PERFORMANCE_PROFILER:_profile_add('player.movement',time.perf_counter_ns()-_prof_move_start)
                 if profile_tick:
                     stage_end=time.perf_counter_ns()
@@ -3103,13 +3110,14 @@ async def handle_connection(ws):
         # City V8 uses flat roads; old two-tier handshake retired
         features.append(WORLD_V56['feature'])
         features.append('minimap-v69-mapwide-v1')
+        features.append(cave_ice.FEATURE)
         features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks','granite-ascent-v64-single-map','granite-wall-chain-v64-single-ascent-link'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
-        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'guest': True, 'features':features,'mapVersion':'beast-v80bq',**map_payload('forest'),'room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
+        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'caveIceTime':round(time.monotonic(),4), 'guest': True, 'features':features,'mapVersion':'beast-v80bq',**map_payload('forest'),'room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         if ENABLE_FAST_SELF_30HZ:
             p.fast_self_task=asyncio.create_task(fast_self_writer(p),name='fastself-'+guest_id)
