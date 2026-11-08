@@ -1,0 +1,9 @@
+{
+  "frontend": "V175 FULL",
+  "backend": "V175 FULL (base V156 + V175 changed files)",
+  "world": "Frontend V175 / Backend World V52",
+  "feature": "world-maps-v175-cave-air-head-v1",
+  "basis": "V173 FULL + cumulative V175 exact bytes",
+  "visual_verified": false,
+  "archive_format": "3 independent ZIPs; extract into same directory"
+}

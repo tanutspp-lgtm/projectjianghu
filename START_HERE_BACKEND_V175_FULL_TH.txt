@@ -1,0 +1,9 @@
+Project Jianghu — Backend V175 FULL
+ตัวเต็มจากBackendV156รวมการแก้V175แล้ว มีserver.pyและไฟล์ประกอบครบ
+ใช้คู่FrontendV175 / World52
+แตกZIPลงroot backendที่มีserver.pyตามวิธีเดิม แล้วrestartprocess/serviceเดิม
+ไม่ต้องลงแพตช์V174/V175ซ้ำ ไม่ต้องใช้backendชุดเก่า
+ใช้Git/HostAtomตามเดิม ไม่เปลี่ยนวิธีdeploy
+รวมแก้กรอบหัวท่าลอยตัวในถ้ำและข้อมูลวาร์ปเกาะหิมะ
+ค่าEnvironment/ฐานข้อมูล/ข้อมูลเซฟของเครื่องจริงให้ใช้ชุดเดิมของคุณ
+ไม่มีการdeploy/restartเครื่องจริงโดยผู้ช่วยในขั้นตอนแพ็กไฟล์นี้

@@ -1509,7 +1509,7 @@ def movement_validate(p,m,tick_now):
         soil_y=expansion_ground_y(EXPANSION_MAPS[p.room],x)
         if soil_y is not None and y>soil_y+.25:return 'terrain-through'
     if p.room in EXPANSION_MAPS and any(x+19>r['x'] and x-19<r['x']+r['w'] and y>r['y']+.1 and y-122<r['y']+r['h']-.1 for r in EXPANSION_MAPS[p.room].get('solids',())):return 'solid-wall'
-    if p.room in EXPANSION_MAPS and EXPANSION_MAPS[p.room].get('caveContours') and climb is None and contour_overlaps(EXPANSION_MAPS[p.room],x,y):return 'solid-wall'
+    if p.room in EXPANSION_MAPS and EXPANSION_MAPS[p.room].get('caveContours') and climb is None and contour_overlaps(EXPANSION_MAPS[p.room],x,y,grounded):return 'solid-wall'
     expected=p.move_shadow or movement_capture(p)
     ex,ey,evx,evy,eground,eclimb=expected[:6]
     moving_dash=p.action=='dash' and p.action_at<=.32 and p.cool>0
