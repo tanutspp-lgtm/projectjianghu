@@ -17,6 +17,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from typing import Optional
+from types import SimpleNamespace
 
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
@@ -53,6 +54,7 @@ import monster_hp_def_v80bu as monster_balance
 import cave_ice_v156 as cave_ice
 import character_classes_v181 as classes181
 import combat_collision_v184 as combat184
+import martial_combat_v187 as martial187
 from cave_contours_v145 import intervals as combat_intervals184
 import farm_auto_v80bu as farm_auto
 from urllib.request import Request, urlopen  # v8.0BO AUTHORITATIVE COMBAT
@@ -524,6 +526,7 @@ class Guest(Actor):
     qi_shield_until: float = 0
     qi_shield_cd: float = 0
     auto_state: farm_auto.State = field(default_factory=farm_auto.State)
+    martial_enabled187:bool=False
     manual_guard:bool=False
     manual_guard_at:float=0.0
     # v8.0DF: visual facing during an accepted cast, independent from walk velocity.
@@ -1179,6 +1182,8 @@ def physics(actor, dt):
 
 def hurt(victim, damage, x, y, kind,critical=False,owner=None,shot_dir=None):
     if victim.dead > 0 or victim.inv > 0: return
+    if isinstance(victim,Guest) and victim.martial_enabled187 and kind=='monster':
+        if martial_world187().incoming(victim,damage,x,source_id=owner):return
     if isinstance(victim, Guest) and victim.guard and victim.broken <= 0:
         event('block', victim.x, victim.y - 82, victim=victim.id)
         return
@@ -1241,7 +1246,43 @@ def combat_geometry184():
 
 def class_hit_allowed184(shot,victim):return combat184.can_hit(shot,victim,combat_geometry184())
 
+
+def martial_world187():
+    w=current_world()
+    if not hasattr(w,'martial187'):
+        def blocked(x,y,x2,y2,a,b):
+            if b is not None:return not combat184.can_reach(x,y,a.y,b,combat_geometry184())
+            return combat184.blocked(x,y,x2,y2,combat_geometry184())
+        def scale(p):
+            rolled=prog.roll_attack(p,'attack',hp_reference)
+            p.martial_crit187=bool(rolled and rolled[1])
+            return rolled[0]/85 if rolled else 1.
+        def apply_damage(c,v,amount):
+            a=players.get(c['actor']);is_mob=isinstance(v,Monster)
+            if not is_mob and c['actor'] not in monsters:return # no public-world PvP
+            actual=max(0,mitigate(prog.jsround(amount),v.defense) if is_mob else prog.jsround(amount))
+            if not is_mob and v.qi_shield>0:
+                absorbed=min(v.qi_shield,actual);v.qi_shield-=absorbed;actual-=absorbed
+            old_hp=v.hp;v.hp=max(0,v.hp-actual)
+            if not is_mob:try_qi_shield(v)
+            if is_mob:
+                if a is not None:v.retaliate_target=a.id;v.retaliate_until=time.monotonic()+12
+                if actual>0 and v.hp>0 and not v.guard:register_monster_shove(v,players[c['actor']].x if c['actor'] in players else v.x,c['dir'] if c.get('melee') else c['dir']*500)
+            if old_hp>0 and v.hp<=0 and v.dead<=0:
+                v.dead=next_respawn_delay() if is_mob else 2.5;v.guard=False
+                event('defeat',v.x,v.y-80,victim=v.id)
+                if is_mob and a is not None:grant_monster_kill(SimpleNamespace(owner=a.id),v)
+            if is_mob and a is not None and actual>0 and v.hp>0:
+                shot=SimpleNamespace(owner=a.id,kind='attack' if c['role']=='basic' else 'break' if c['role']=='break' else 'aoe',damage=amount,critical=bool(c.get('critical')),x=a.x,y=a.y-43,facing=c['dir'],vx=c['dir']*500,mode='melee' if c.get('melee') else 'ranged')
+                apply_qi_on_primary_hit(shot,v,actual)
+            return actual
+        w.martial187=martial187.World(blocked,apply_damage,event,scale,physics,city_world_width(w.room))
+    w.martial187.sync(players,monsters)
+    return w.martial187
+
 def perform_action(p: Guest, action: str):
+    if p.martial_enabled187 and action in ('attack','aoe','break'):
+        martial_world187().cast(p,{'attack':'basic','aoe':'first','break':'break'}[action]);return
     if p.dead > 0 or p.down > 0 or p.stun > 0 or p.broken > 0: return
     if p.room=='movement_lab' and action not in ('jump','dash','lock'): return  # training-only movement lab has no combat
     if action == 'jump':
@@ -1436,7 +1477,7 @@ def update_guest(p: Guest, dt, tick_now):
         p.guard = False
         physics(p, dt)
         return
-    p.guard = bool(p.buttons & 16) and p.broken <= 0 and p.stun <= 0 and p.climb is None
+    if not p.martial_enabled187:p.guard = bool(p.buttons & 16) and p.broken <= 0 and p.stun <= 0 and p.climb is None
     near = next((c for c in active_climbs() if abs(c[0] - p.x) < 36 and c[1] - 8 <= p.y <= c[2] + 12), None)
     axis = int(bool(p.buttons & 8)) - int(bool(p.buttons & 4))
     if city_stair_step(p,dt,axis): return
@@ -1549,6 +1590,19 @@ def movement_change_mode(p,mode):
 
 
 def movement_tick(p,dt,tick_now):
+    if p.martial_enabled187:
+        mw=martial_world187();st=martial187.state(p);restricted=mw.before_move(p);old_buttons=p.buttons
+        if restricted:p.buttons&=~31
+        motion=st.get('motion')
+        oldx=p.x
+        update_guest(p,dt,tick_now)
+        p.buttons=old_buttons
+        if restricted and not motion and p.kb_time<=0:p.x=oldx;p.vx=0
+        if motion and motion['until']>tick_now and not any(martial187.active(p,k,tick_now) for k in ('root','sleep','stun','down')) and st['hit_until']<=tick_now:
+            p.vx=motion['speed'];p.x=max(28,min(mw.width-28,oldx+p.vx*dt));physics(p,0)
+        if martial187.active(p,'slow',tick_now):p.x=oldx+(p.x-oldx)*.7;p.vx*=.7
+        return
+
     if p.room in ('city_proto_1','city_inner_1') and p.movement_mode!='server':
         movement_change_mode(p,'server')
     if p.movement_mode!='client' or p.auto_state.enabled:
@@ -1706,7 +1760,7 @@ def update_squirrel(m,dt,p,t):
             lo,hi=monster_attack_range(m.level,m.zone_mode,False)
             damage=max(1,prog.jsround((lo+hi)*.39))  # ranged early-map tuning; victim DEF still applies
             current_world().peaches.append({'id':f'peach:{m.id}:{server_step}',
-                'x':m.x+m.bite_dir*22,'y':m.y-57.0,'vx':m.bite_dir*255.0,
+                'owner':m.id,'x':m.x+m.bite_dir*22,'y':m.y-57.0,'vx':m.bite_dir*255.0,
                 'life':1.55,'damage':damage})
         if age>=.52:
             m.bite_started_at=-1e9;m.bite_hit_done=False
@@ -1747,7 +1801,7 @@ def update_peach_shots(dt):
                 if player.inv<=0:
                     dodge=derived_for_snapshot(player)['dodgeVsMonsters']
                     if random.random()*100<dodge:event('miss',player.x,player.y-80,victim=player.id)
-                    else:hurt(player,mitigate(peach['damage'],player.defense),px,peach['y'],'monster')
+                    else:hurt(player,mitigate(peach['damage'],player.defense),px,peach['y'],'monster',owner=peach.get('owner'))
                 hit=True
                 break
         if hit:
@@ -1790,6 +1844,13 @@ def step_monster_shove(m,dt):
 
 def update_mob(m,dt,player_grid=None):
     t=time.monotonic()
+    st=getattr(m,'martial187',None)
+    if st and m.dead<=0:
+        if any(st['status'].get(k,0)>t for k in ('sleep','stun','down')) or st['hit_until']>t:
+            m.vx=0;m.bite_started_at=-1e9;m.bite_hit_done=False;physics(m,dt);return
+        if st['status'].get('root',0)>t:
+            m.mob_kb_left=0
+
     if m.dead>0:
         m.dead=max(0,m.dead-dt)
         if m.dead==0:
@@ -1891,7 +1952,7 @@ def update_mob(m,dt,player_grid=None):
             # .88 source beast bite coefficient is retained from v8.0BQ test map.
             dodge=derived_for_snapshot(p)['dodgeVsMonsters']
             if random.random()*100<dodge:event('miss',p.x,p.y-80,victim=p.id)
-            else:hurt(p,mitigate(prog.jsround(raw*.88),p.defense),m.x,m.y-80,'monster')
+            else:hurt(p,mitigate(prog.jsround(raw*.88),p.defense),m.x,m.y-80,'monster',owner=m.id)
 
 
 def spawn_loot_for(killer,m):
@@ -2284,7 +2345,7 @@ def snapshot():
     # actors are forest guests there is no foreign room to filter in 100 per-
     # client AOI views. Existing in-flight snapshots stay safe on disconnect.
     forest_only=all(p.room=='forest' for p in players.values())
-    world=SharedSnapshot({'t':'snapshot','tick':server_step,**({'caveIceTime':round(moment,4)} if current_world().room in cave_ice.SITES else {}),'minimap':minimap_snapshot(moment),
+    world=SharedSnapshot({'t':'snapshot','tick':server_step,**({'caveIceTime':round(moment,4)} if current_world().room in cave_ice.SITES else {}),'minimap':minimap_snapshot(moment),**({'martial187':martial_world187().snapshot()} if any(p.martial_enabled187 for p in players.values()) else {}),
             'players':_reuse_snapshot_entities('players',[{**actor_json(p),'avatar':p.avatar} for p in players.values()]),
             'mobs':_reuse_snapshot_entities('mobs',[{**actor_json(m),'name':m.name,'hum':m.hum,'species':m.species,
                      'biteAge':round(max(0,moment-m.bite_started_at),3) if m.bite_started_at>0 else -1,
@@ -2460,6 +2521,12 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
             result[kind]=changed
             missing=[key for key in before if key not in entities]
             if missing:result['removed'+kind.capitalize()]=missing
+    if p.martial_enabled187 and 'martial187' in world:
+        martial=world['martial187'];visible=set(current['players'])|set(current['mobs'])|{p.id}
+        cursor=getattr(p,'martial_cursor187',0) if getattr(p,'martial_epoch187',None)==martial['epoch'] else 0
+        result['martial187']={**martial,'actors':[a for a in martial['actors'] if a['id'] in visible],
+            'shots':[shot for shot in martial['shots'] if abs(shot['x']-p.x)<1500],
+            'events':[e for e in martial['events'] if e['id']>cursor and (e.get('actor') in visible or e.get('owner') in visible)]}
     # A positional event from another room is never allowed to bleed across rooms.
     # Events without actor IDs belong to the original forest world only.
     def visible_room_event(e):
@@ -2672,6 +2739,8 @@ async def snapshot_writer(p: Guest):
                 perf_out_bytes += len(packet)
                 previous,last_full_tick=current,full_tick
                 p.event_cursor=event_cursor
+                if p.martial_enabled187 and 'martial187' in world:
+                    p.martial_cursor187=world['martial187']['eventHighwater'];p.martial_epoch187=world['martial187']['epoch']
                 prev_private,prev_inventory=priv,inv
                 p.writer_inventory_revision=encoded_inventory_revision
                 if p.view_mode=='active':
@@ -2843,7 +2912,11 @@ async def game_loop():
                 grid=index_players_by_x()
                 if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.player_grid',time.perf_counter_ns()-_prof_substage)
                 _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
-                for m in monsters.values():update_mob(m,DT,grid)
+                for m in monsters.values():
+                    oldx=m.x;update_mob(m,DT,grid);st=getattr(m,'martial187',None)
+                    if st and st['status'].get('root',0)>tick_now:m.x=oldx;m.vx=0
+                    elif st and st['status'].get('slow',0)>tick_now:m.x=oldx+(m.x-oldx)*.7;m.vx*=.7
+                if any(p.martial_enabled187 for p in players.values()):martial_world187().step(DT)
                 if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.phase_total',time.perf_counter_ns()-_prof_substage)
                 _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 if profile_tick:
@@ -3224,6 +3297,7 @@ async def handle_connection(ws):
         features.append('classes-v182-combo-v1')
         features.append('classes-v183-combat-v1')
         features.append('combat-layers-v184-v1')
+        features.append(martial187.FEATURE)
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3238,6 +3312,32 @@ async def handle_connection(ws):
                 await ws.close(code=1008,reason='Invalid message');break
             # RTT probe is display-only: bounded, rate-limited, never used by
             # movement, damage, rewind or anti-cheat decisions.
+            if m.get('t')=='martial_view':
+                if set(m)!={'t','w','h'} or any(type(m.get(k)) not in (int,float) or not math.isfinite(m[k]) for k in ('w','h')) or not 120<=m['w']<=1400 or not 120<=m['h']<=850 or not check_rate(p.action_times,12):
+                    await ws.close(code=1008,reason='Invalid martial view');break
+                p.martial_view187=(float(m['w']),float(m['h']));continue
+            if m.get('t')=='martial_enable':
+                if set(m)!={'t'} or p.avatar not in classes181.AVATARS:
+                    await ws.close(code=1008,reason='Invalid martial handshake');break
+                p.martial_enabled187=True;p.pending_class_cast=None;p.buttons&=~16
+                if p.movement_mode!='server':
+                    await ws.send(json.dumps(movement_change_mode(p,'server'),separators=(',',':')))
+                await ws.send(json.dumps({'t':'martial_ready','version':187}))
+                continue
+            if m.get('t') in ('martial_cast','martial_guard','martial_lock'):
+                typ=m['t'];key={'martial_cast':'role','martial_guard':'held','martial_lock':'target'}[typ]
+                valid=(p.martial_enabled187 and set(m)=={'t',key} and
+                    (type(m.get(key)) is str and m[key] in martial187.ROLES if typ=='martial_cast' else
+                     type(m.get(key)) is bool if typ=='martial_guard' else
+                     m.get(key) is None or type(m.get(key)) is str and len(m[key])<80))
+                if not valid or not check_rate(p.action_times,12):
+                    await ws.close(code=1008,reason='Invalid martial command');break
+                mw=martial_world187()
+                if typ=='martial_cast':
+                    ok,reason=mw.cast(p,m['role']);await ws.send(json.dumps({'t':'martial_ack','ok':ok,'role':m['role'],'message':reason}))
+                elif typ=='martial_guard':mw.guard(p,m['held'])
+                else:mw.lock(p,m['target'])
+                continue
             if m.get('t')=='ping':
                 nonce=m.get('nonce')
                 if set(m)!={'t','nonce'} or type(nonce) is not int or not 0<=nonce<2**31:
@@ -3442,6 +3542,7 @@ async def handle_connection(ws):
                 if not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='Movement toggle rate');break
                 requested=m['mode']
+                if p.martial_enabled187:requested='server'
                 if requested=='client' and (not ENABLE_CLIENT_MOVEMENT_AB or p.auto_state.enabled or p.room in ('city_proto_1','city_inner_1')):
                     await ws.send(json.dumps({'t':'movement_mode_ack','mode':p.movement_mode,'ok':False,'reason':'unavailable'}))
                 else:
@@ -3579,7 +3680,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V184 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V187 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3587,7 +3688,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
-    print('JIANGHU_BACKEND_V184 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V187 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)

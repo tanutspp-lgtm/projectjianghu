@@ -1,0 +1,2 @@
+อ่าน README_V187_TH.txt
+รัน bash RESTART_AND_VERIFY_V187.sh จากโฟลเดอร์backendเดิมหลังคัดลอกไฟล์ครบ

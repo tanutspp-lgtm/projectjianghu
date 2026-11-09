@@ -2,15 +2,9 @@
   "frontend": 184,
   "backend": 184,
   "world": 52,
-  "base": "V181_FULL",
+  "base": "V183_FULL",
   "classFeature": "classes-v183-combat-v1",
   "collisionFeature": "combat-layers-v184-v1",
   "snowRaster": 184,
-  "qa": "Native renderer/controller + local real WebSockets + browser maps. No physical Android/iOS or live VPS verification.",
-  "cumulativeBackendPatch": true,
-  "includedBackendUpdates": [
-    182,
-    183,
-    184
-  ]
+  "qa": "Native renderer/controller + local real WebSockets + browser maps. No physical Android/iOS or live VPS verification."
 }

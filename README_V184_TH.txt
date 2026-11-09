@@ -36,10 +36,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downlo
 ทั้ง3PARTเป็น ZIPอิสระ ไม่ใช่ไฟล์แบ่งไบต์ อย่าต่อไบต์ไฟล์
 
 Backend จำเป็นต้องอัปด้วย เพราะมีการแก้ authoritative combat:
-JIANGHU_BACKEND_V184_FROM_V181_CHANGED_ONLY.zip มีเฉพาะไฟล์เพิ่ม/เปลี่ยนเทียบ Backend V181 FULL
-รวมการเปลี่ยนฝั่ง Backend ของ V182+V183+V184 ครบ ไม่ต้องลงแพทช์กลาง
-แตกทับ Backend V181 เดิม เก็บ .env/.venv/ข้อมูลผู้เล่น/service เดิม ไม่มีไฟล์ที่ต้องลบ
-อ่าน START_HERE_V184_FROM_V181.txt สำหรับขั้นตอนของแพทช์สะสมนี้
+JIANGHU_BACKEND_V184_FROM_V183_CHANGED_ONLY.zip มีเฉพาะไฟล์เปลี่ยนเทียบV183
+แตกทับ Backend V183 เดิม เก็บ .env/.venv/ข้อมูลผู้เล่น/service เดิม ไม่มีไฟล์ที่ต้องลบ
+ถ้ายังใช้Backend182 ต้องติดตั้ง delta V183_FROM_V182 ที่ส่งรอบก่อนก่อน แล้วค่อยV184
 อัปไฟล์เข้าrepoเดิมที่VPSใช้งาน แล้วที่โฟลเดอร์repoบนVPS:
 git pull --ff-only
 bash RESTART_AND_VERIFY_V184.sh
