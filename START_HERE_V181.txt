@@ -1,0 +1,3 @@
+Frontend V181 + Backend V181 ต้องใช้คู่กัน
+อ่าน README_V181_TH.txt ก่อนติดตั้ง
+World V52 เดิม ไม่มี migration ฐานข้อมูล

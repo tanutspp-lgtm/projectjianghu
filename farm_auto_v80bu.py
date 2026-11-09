@@ -174,7 +174,7 @@ class Navigation:
                     # No mob chasing and no face changes while idle. Turn only
                     # for a real cast; use target lock + a brief turn cooldown
                     # so nearby left/right mobs cannot twitch the idle sprite.
-                    if allow_cast and distance<=265 and t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
+                    if allow_cast and distance<=getattr(p,'class_attack_reach',265) and t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:
                         facing=(1 if dx>0 else -1) if abs(dx)>12 else p.face
                         if facing==p.face or t-state.last_face_turn>=.45:
                             if facing!=p.face:
@@ -184,7 +184,7 @@ class Navigation:
                     # Fall through to navigation: a displaced Stay bot keeps
                     # returning while shooting reachable monsters along the way.
                 else:
-                    if distance>265:return (2 if dx>0 else 1),[]
+                    if distance>getattr(p,'class_attack_reach',265):return (2 if dx>0 else 1),[]
                     # Never twitch while waiting for skill cooldown. Turn to
                     # the committed target only when an actual cast can occur.
                     if allow_cast and t-state.last_attack>=.37 and p.cool<=0 and p.sp>=0:

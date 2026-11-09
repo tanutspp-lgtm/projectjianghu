@@ -51,6 +51,7 @@ import combat_progression_v80bs as prog
 import sandbox_loadouts_v80bt as loadouts
 import monster_hp_def_v80bu as monster_balance
 import cave_ice_v156 as cave_ice
+import character_classes_v181 as classes181
 import farm_auto_v80bu as farm_auto
 from urllib.request import Request, urlopen  # v8.0BO AUTHORITATIVE COMBAT
 
@@ -409,6 +410,7 @@ COLORS = {'black', 'white', 'brown', 'red', 'gold'}
 
 def valid_avatar(s):
     if not isinstance(s, str) or len(s) > 24: return False
+    if s in classes181.AVATARS:return True
     bits = s.split('_')
     return len(bits) == 4 and bits[0] in ('male', 'female') and bits[1] == 'hair' and bits[2] in ('01', '02', '03') and bits[3] in COLORS
 
@@ -464,6 +466,8 @@ class Guest(Actor):
     # Map selector requests have their OWN budget; refreshing/changing channels cannot consume it.
     map_request_times: deque = field(default_factory=deque)
     avatar: str = 'male_hair_01_black'
+    pending_class_cast: Optional[dict] = None
+    class_attack_reach: float = 265
     buttons: int = 0
     last_input: float = field(default_factory=time.monotonic)
     last_seq: int = -1
@@ -606,6 +610,10 @@ class Shot:
     # First-tick swept collision starts at the caster center, not the +52 visual muzzle.
     # Used only for first update; never supplied/trusted from the browser.
     origin_x: Optional[float] = None
+    profession: str = ""
+    mode: str = "ranged"
+    facing: int = 1
+    reach: float = 0
 
 
 # EE: fixed, administrator-owned channels. A guest can never create a world.
@@ -1231,11 +1239,12 @@ def perform_action(p: Guest, action: str):
         return
     if action == 'lock': return  # Lock targets never dictate damage on server.
     if action not in ATTACKS or p.cool > 0 or p.climb is not None or p.guard: return
+    class_cfg=classes181.spec(classes181.profession(p.avatar),action) if p.avatar in classes181.AVATARS else None
     if p.sp < prog.SKILL_SP[action]: return
     # Second independent server clock check; rejects spoofed burst commands even
     # when the animation/cool timer is accidentally changed. No queued attacks.
     server_now=time.monotonic()
-    if server_now-p.last_attack_at+0.000001 < ATTACKS[action][0]: return
+    if server_now-p.last_attack_at+0.000001 < (class_cfg['cool'] if class_cfg else ATTACKS[action][0]): return
     p.last_attack_at=server_now
     # v8.0DF: Match Offline's nearest-monster auto-facing on manual casts.
     # AUTO AI already owns its target/facing. Direction is computed from server
@@ -1256,6 +1265,16 @@ def perform_action(p: Guest, action: str):
             shot_dir=1 if candidate.x>p.x else -1
     p.cast_face=shot_dir
     global shot_seq
+    if class_cfg:
+        damage,critical=prog.roll_attack(p,action,hp_reference)
+        p.sp-=prog.SKILL_SP[action]
+        p.cool=class_cfg['cool']
+        set_action(p,action,class_cfg['duration'])
+        p.pending_class_cast={'cfg':class_cfg,'action':action,'dir':shot_dir,
+                              'damage':damage,'critical':critical,'left':class_cfg['windup']}
+        event('cast',p.x,p.y-64,kind=action,owner=p.id,profession=classes181.profession(p.avatar),
+              duration=class_cfg['duration'],shotDir=shot_dir,classStart=True)
+        return
     cooldown, duration, speed, _, lifespan, pierce = ATTACKS[action]
     damage,critical=prog.roll_attack(p,action,hp_reference)
     p.sp-=prog.SKILL_SP[action]
@@ -1270,6 +1289,39 @@ def perform_action(p: Guest, action: str):
           shotX=round(p.x+shot_dir*52,1),shotY=round(y,1),shotDir=shot_dir,
           shotSpeed=speed)
 
+
+
+def advance_class_cast181(p,dt):
+    """One bounded pending cast per actor; accepted input never carries HP/damage."""
+    global shot_seq
+    pending=p.pending_class_cast
+    if not pending:return
+    if p.hp<=0 or p.dead>0 or p.down>0 or p.stun>.02 or p.broken>0 or p.climb or p.guard:
+        p.pending_class_cast=None
+        return
+    pending['left']-=dt
+    if pending['left']>0:return
+    p.pending_class_cast=None
+    cfg=pending['cfg'];kind=pending['action'];direction=pending['dir'];cls=classes181.profession(p.avatar)
+    if cfg['mode']=='heal':
+        eligible=[a for a in players.values() if a.hp>0 and a.dead<=0 and a.hp<a.max_hp
+                  and abs(a.x-p.x)<=cfg['reach'] and abs(a.y-p.y)<120]
+        target=min(eligible,key=lambda a:(a.hp/a.max_hp,abs(a.x-p.x),a.id),default=p)
+        amount=max(0,min(target.max_hp-target.hp,prog.jsround(target.max_hp*cfg['healPct']/100)))
+        target.hp+=amount
+        event('class_release',p.x,p.y-64,kind=kind,owner=p.id,profession=cls,mode='heal',
+              shotDir=direction,target=target.id,targetX=target.x,targetY=target.y-64)
+        if amount:event('heal',target.x,target.y-84,victim=target.id,owner=p.id,amount=amount)
+        return
+    shot_seq+=1
+    x=p.x+direction*(cfg['reach']/2 if cfg['mode']=='melee' else 36)
+    y=p.y-(64 if cls=='flute' else 50)
+    shots.append(Shot(shot_seq,p.id,kind,x,y,direction*cfg['speed'],pending['damage'],
+                      cfg['life'],cfg['pierce'],critical=pending['critical'],origin_x=p.x,
+                      profession=cls,mode=cfg['mode'],facing=direction,reach=cfg['reach']))
+    event('class_release',p.x,y,kind=kind,owner=p.id,profession=cls,mode=cfg['mode'],
+          shotId=str(shot_seq),shotX=round(x,1),shotY=round(y,1),shotDir=direction,
+          shotSpeed=cfg['speed'])
 
 # Never grant extra casts or reduce cooldown. A manual spell pressed during AUTO
 # waits for the next legal cast window instead of being lost to AUTO spam.
@@ -1995,7 +2047,7 @@ def update_shots(dt):
         # Original exact swept collision: do NOT change strict comparisons,
         # height, wall edge rules, multi-target pierce or first-tick origin.
         lo, hi = min(old_x, s.x), max(old_x, s.x)
-        radius = 60 if s.kind == 'aoe' else 36
+        radius = s.reach/2 if s.mode=='melee' else 60 if s.kind == 'aoe' else 36
         if grid is None:
             victims = [v for v in monsters.values() if v.dead <= 0 and
                        abs(v.y - s.y - 78) < 95 and lo-radius < v.x < hi+radius]
@@ -2011,6 +2063,7 @@ def update_shots(dt):
                         ranked.append(((v.x-old_x)*(1 if s.vx >= 0 else -1), order, v))
             ranked.sort(key=lambda x: (x[0], x[1]))
             victims = [item[2] for item in ranked]
+        if s.mode=='melee':victims=[v for v in victims if -12<=(v.x-(s.origin_x if s.origin_x is not None else s.x-s.facing*s.reach/2))*s.facing<=s.reach]
         consumed = False
         for v in victims:
             if apply_shot(s, v, isinstance(v, Monster)):
@@ -2021,6 +2074,9 @@ def update_shots(dt):
 
 
 def actor_frame(a, tick):
+    if isinstance(a,Guest) and a.avatar in classes181.AVATARS:
+        if a.room=='city_proto_1' and a.climb in CITY_STAIR_CLIMBS:return 4+int(a.climb_dist/18)%8
+        return classes181.actor_frame(a,tick)
     if a.dead > 0: return 18 if a.ground else 16
     if a.down > 0: return 17 if a.ground else 16
     if isinstance(a,Guest) and a.room=='city_proto_1' and a.climb in CITY_STAIR_CLIMBS:
@@ -2193,8 +2249,8 @@ def snapshot():
                      'ownerId':d['ownerId'],'privateFor':round(max(0,d['privateUntil']-moment),1),
                      'expiresIn':round(max(0,d['expiresAt']-moment),1)} for d in loot_drops]),
             'shots':_reuse_snapshot_entities('shots',
-                [{'id':str(s.id),'kind':s.kind,'x':round(s.x,1),'y':round(s.y,1),
-                  'dir':1 if s.vx>=0 else -1} for s in shots] +
+                [{'id':str(s.id),'kind':(s.profession+'/'+s.kind if s.profession else s.kind),'x':round(s.x,1),'y':round(s.y,1),
+                  'dir':s.facing if s.profession else 1 if s.vx>=0 else -1} for s in shots if s.mode!='melee'] +
                 [{'id':s['id'],'kind':'peach','x':round(s['x'],1),'y':round(s['y'],1),
                   'dir':1 if s['vx']>=0 else -1} for s in current_world().peaches]),
             'events':events[:80]})
@@ -2731,6 +2787,7 @@ async def game_loop():
                         p.last_input=tick_now
                     _prof_move_start=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                     movement_tick(p,DT,tick_now)
+                    advance_class_cast181(p,DT)
                     cave_ice.tick_player(p,tick_now,DT,event)
                     if ENABLE_PERFORMANCE_PROFILER:_profile_add('player.movement',time.perf_counter_ns()-_prof_move_start)
                 if profile_tick:
@@ -2857,6 +2914,7 @@ async def switch_channel(p, target):
     old=p.world_ref
     # Atomic slot claim before ANY await: two simultaneous transfers can never
     # both pass the 10-player hard cap. Current actor is moved, never copied.
+    p.pending_class_cast=None
     old.shots[:]=[shot for shot in old.shots if shot.owner!=p.id]
     record_world_event(old, {'t':'leave','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
     old.players.pop(p.id,None)
@@ -2969,6 +3027,7 @@ async def switch_map(p, target, via='selector'):
         return {'t':'map_ack','ok':False,'reason':'busy','map':p.room}
     for nav in SWAMP_RECOVERY.values():nav.reset(p.id)
     origin=p.world_ref
+    p.pending_class_cast=None
     origin.shots[:]=[shot for shot in origin.shots if shot.owner!=p.id]
     record_world_event(origin, {'t':'leave','x':round(p.x,1),'y':round(p.y,1),'victim':p.id})
     origin.players.pop(p.id,None)
@@ -3084,6 +3143,9 @@ async def handle_connection(ws):
         guest_hp=prog.base_hp_for_level(guest_level,hp_reference)
         p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp, room=hello.get('room','forest'),
                   avatar=hello['avatar'], ws=ws, level=guest_level, channel=channel, world_ref=world_ref, stress_test=stress_test)
+        if p.avatar in classes181.AVATARS:
+            basic=classes181.spec(classes181.profession(p.avatar),'attack')
+            if basic['mode']=='melee':p.class_attack_reach=basic['reach']*.82
         prog.apply_derived_resources(p,hp_reference,full=True)
         p.protocol_delta=(hello.get('protocol') in ('aoi-delta-v80by','aoi-binary-v80du') or p.room=='movement_lab')
         p.protocol_binary=hello.get('protocol')=='aoi-binary-v80du'
@@ -3114,6 +3176,7 @@ async def handle_connection(ws):
         features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks','granite-ascent-v64-single-map','granite-wall-chain-v64-single-ascent-link'))
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
+        features.append('classes-v181-36frames-v1')
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
