@@ -1,0 +1,14 @@
+{
+  "version": "187.5",
+  "base": "187.4",
+  "backendFeature": "martial-rebalance-v1875-v1",
+  "world": 52,
+  "guardMax": 150,
+  "guardReductionAll": 0.85,
+  "blockRageReference": 10,
+  "jianReturn": "single-bound-target water pool; blocked=no knockdown",
+  "tangRangeVolleys": 3,
+  "jianDashSweptDamage": 60,
+  "mouthNotesChanged": false,
+  "deployed": false
+}

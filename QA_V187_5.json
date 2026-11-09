@@ -1,0 +1,89 @@
+{
+  "version": "187.5",
+  "regressions": [
+    {
+      "name": "test_combat.cjs",
+      "code": 0,
+      "output": "PASS six real roles per class\nPASS sticky last attacker never replaces an existing lock\nPASS out of range keeps SP rage cooldown and lock unchanged\nPASS ordinary hit locks for complete incoming multihit move\nPASS successful block maintains only same cast after finger release\nPASS blocked CC does not knock down but does chip damage\nPASS counter may retaliate into armored ultimate but cannot knock yellow down\nPASS break allows movement while sealing skills\nPASS root allows guard and attacks but prevents dash and closer\nPASS sleep initial hit applies sleep and next damage wakes\nPASS stun is not removed by damage\nPASS yellow escapes knockdown but never stun/sleep\nPASS guard energy has a ceiling\nPASS healing cap combined across doctors and same party only\nPASS rolling healing window, overheal and max HP swaps\nPASS heal snapshot gives entire cast the same stack bonus\nPASS healer ultimate emits exactly 3 left and 3 right and heals visible party\nPASS tang thrown dual knives split normal damage and stop at first enemy\nPASS flute basic stops first enemy, skill pierces both\nPASS physical platform blocks melee and projectiles across floors\nPASS skill wall blocks piercing flute waves\nPASS range ordering flute > tang and sword > dagger melee\nPASS bots use class-specific abilities and complete a fight\nPASS auto guard after release does not cover a different incoming cast\nPASS unguarded exchange grants reduced rage under V187.5\nPASS ultimate cannot regenerate its own attacker rage\nPASS released guard still covers the second knife of the same flight\nPASS healer may attack after healing animation while heal stays on cooldown\n28 combat tests passed\n"
+    },
+    {
+      "name": "test_hotfix.cjs",
+      "code": 0,
+      "output": "PASS all classes ordinary mob hit never locks far target\nPASS retaliation reference cannot drag zones or gate facing casts\nPASS manual lock sticky and out-of-range rejects without resource loss\nPASS lock cycle includes unlock after last target and clears dead\nPASS Tang targeted ult still rejects distant retaliation\nPASS all ultimates yellow, take HP damage, resist hitstun/down/push then expire\nPASS ultimate yellow escapes down/hit lock but never stun or sleep\nPASS hard CC cancels yellow ultimate and gold ends immediately\nPASS runtime online -> arena survives cleanup and draws; exit -> world repeated\n  input casts checked 17280\nPASS 480 layouts x two pages: delegated pointer/click/keyboard resolve current role\nPASS save releases held pointers, preserves actual cooldown/status/rage\nPASS BLOCK metal once, no flesh; transient grey meter hides after delay\nPASS online BLOCK + meter and yellow visual state from server\nPASS ultimate percent includes 100, aura follows full rage and moved position\n14 hotfix groups passed\n"
+    },
+    {
+      "name": "test_playflow.cjs",
+      "code": 0,
+      "output": "PASS basic attacks all four: no cooldown entry and immediate next animation\nPASS one buffered basic starts without an extra idle period or spam casts\nPASS queued attack discarded by hard CC or deliberate guard\nPASS Jian break reaches both sides165; outside body padding remains safe\nPASS radial break does not cross platforms or enlarge basic attacks\nPASS hold basic repeats but pointer release stops; no cooldown text\nPASS music emits small notes at mouth, drifts upwards, fades, has no combat actors\nPASS music stays bounded and cannot appear on other classes/guard/dead\nPASS wave interpolation uses two neighboring frames, mirrored only on left\n9 playflow groups passed\n"
+    },
+    {
+      "name": "test_guard360.cjs",
+      "code": 0,
+      "output": "PASS 104 guard360 cases:4classes,both facings,5sides,melee/projectile,break/release/same-cast\n"
+    },
+    {
+      "name": "test_facing.cjs",
+      "code": 0,
+      "output": "PASS 37 facing cases + actual runtime input and byte-identical cosmetic notes\n"
+    },
+    {
+      "name": "test_visuals.cjs",
+      "code": 0,
+      "output": "PASS 1536 orientation/frame comparisons, both facings.\n"
+    },
+    {
+      "name": "test_loadout.cjs",
+      "code": 0,
+      "output": "PASS 24 skills, four unique complete innate sets\nPASS all 120 permutations in each set accepted, no duplicate or basic allowed\nPASS mixed-class and mixed-set injection rejected\nPASS save, restore, fixed-center and action lookup\nPASS two page selections and profession profiles remain independent\nPASS draft changes do not mutate saved layout\nPASS malformed persisted state is normalized without accepting foreign skills\nPASS blocked storage still permits current-session edits and reports no persistence\nPASS heal cap contract 40 percent rolling 60s and all doctors\nPASS unknown and prototype IDs rejected\n{\"groups\":10,\"permutations\":480}\n"
+    },
+    {
+      "name": "test_rebalance.cjs",
+      "code": 0,
+      "output": "PASS all four guards equal85%, capacity150 and correct ten/block rage\nPASS unguarded hit4/hurt2, shared multi-target attacker cap8\nPASS blocking ten reference hits fills ult first with real chip, meter70\nPASS guard regen caps at150, release immediate and guard break still works\nPASS Tang grants3, doubles manual range, consumes once per two-knife volley; melee free\nPASS Tang rejected/cancelled/buffered casts never spend a range charge before release\nPASS Jian swept dash contacts once, both directions; no shot; root expires\nPASS Jian respects blocked/other-floor targets and wall-stopped movement\nPASS guarded dash deals chip but no root; generic stamina dash no damage\nPASS interrupted dash does not hit later targets\nPASS AI reaction distribution identical for break/basic; no reaction before observed delay\nPASS approved flute attack/notes unchanged and sleep helper unmirrored\n12 rebalance groups passed\n"
+    },
+    {
+      "name": "test_return.cjs",
+      "code": 0,
+      "output": "PASS three distinct moves earn6s, bind attacker, reset first only, never reset dash\nPASS stationary ground counter reaches600 both sides, only bound target, no projectile/lunge\nPASS guard at impact blocks pool knockdown and reduces damage\nPASS later attacks cannot retarget an earned return\nPASS dead, out-of-range, other-floor and occluded marked target reject with no resource loss\nPASS expiry restores normal145 melee; ready pool obeys stun/sleep and gold victim immunity\nPASS hardCC cancels return gold and untriggered first stays melee\nPASS bot uses the ranged return when ready instead of walking or trying a short dash\n8 single-target water return groups passed\n"
+    },
+    {
+      "name": "test_rebalance_runtime.cjs",
+      "code": 0,
+      "output": "PASS runtime readiness cue, world carry, Tang count, online sleep/meter/ready and idle lock facing\n"
+    },
+    {
+      "name": "test_backend.py",
+      "code": 0,
+      "output": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.032s\n\nOK\n"
+    },
+    {
+      "name": "test_backend_hotfix.py",
+      "code": 0,
+      "output": "..................\n----------------------------------------------------------------------\nRan 18 tests in 0.037s\n\nOK\n"
+    },
+    {
+      "name": "test_playflow.py",
+      "code": 0,
+      "output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.038s\n\nOK\n"
+    },
+    {
+      "name": "test_guard360.py",
+      "code": 0,
+      "output": "..............\n----------------------------------------------------------------------\nRan 14 tests in 0.038s\n\nOK\n"
+    },
+    {
+      "name": "test_facing.py",
+      "code": 0,
+      "output": ".............\n----------------------------------------------------------------------\nRan 13 tests in 0.022s\n\nOK\n"
+    },
+    {
+      "name": "test_rebalance.py",
+      "code": 0,
+      "output": "..............................\n----------------------------------------------------------------------\nRan 30 tests in 0.076s\n\nOK\n"
+    }
+  ],
+  "localWebsocketClasses": 4,
+  "nativeRuntimePreview": true,
+  "vpsOrDeviceTested": false,
+  "deployed": false
+}

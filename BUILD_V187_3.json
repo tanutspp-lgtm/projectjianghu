@@ -1,0 +1,9 @@
+{
+  "version": "187.3",
+  "base": "187.2",
+  "world": 52,
+  "guardDirections": "360",
+  "backendFeature": "martial-guard360-v1873-v1",
+  "noTimedAutoGuardAdded": true,
+  "deployed": false
+}

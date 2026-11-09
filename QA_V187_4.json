@@ -1,0 +1,39 @@
+{
+  "version": "187.4",
+  "facingJS37AndRuntimeInput": true,
+  "facingPython3Groups": true,
+  "hotfix14Groups": true,
+  "inputChecks": 17280,
+  "playflow9Groups": true,
+  "combatJS28": true,
+  "guardJS104": true,
+  "localWebsocketClasses": 4,
+  "notesAssetAndCodeByteIdentical": true,
+  "newFxCoverageByRow": [
+    {
+      "row": 0,
+      "gain": 4.309460103133349
+    },
+    {
+      "row": 1,
+      "gain": 4.668902875184118
+    },
+    {
+      "row": 2,
+      "gain": 4.122366778914442
+    },
+    {
+      "row": 3,
+      "gain": 4.2545119451496864
+    },
+    {
+      "row": 4,
+      "gain": 3.458316778062332
+    },
+    {
+      "row": 5,
+      "gain": 4.559396561401691
+    }
+  ],
+  "liveVPSVerified": false
+}

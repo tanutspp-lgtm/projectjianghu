@@ -11,13 +11,21 @@ RULES=json.loads(Path(__file__).with_name('combat_rules_v187.json').read_text())
 FEATURE='martial-combat-v187-v1'
 LOCK_FEATURE='martial-lock-state-v1871-v1'
 FLOW_FEATURE='martial-playflow-v1872-v1'
+GUARD_FEATURE='martial-guard360-v1873-v1'
+TURN_FEATURE='martial-turn-v1874-v1'
+COMBO_FEATURE='martial-rebalance-v1875-v1'
 ROLES=('basic','guard','break','first','second','ultimate')
 
 def state(a):
     if not hasattr(a,'martial187'):
-        a.martial187=dict(cd={},status={},rage=0.,meter=100.,held_until=0.,auto_guard=None,guard_queue=False,
+        a.martial187=dict(cd={},status={},rage=0.,meter=float(RULES['guardMax']),held_until=0.,auto_guard=None,guard_queue=False,
             counter=0.,energy=0.,block_hits={},slow_proc={},heal_stacks=0,heal_progress=0.,ledger=[],cast=None,
             combo=0,lock=None,lock_source=None,last_attacker=None,shield=0.,shield_until=0.,hit_until=0.,motion=None,guard_recovery=0.)
+    a.martial187.setdefault('tang_range_shots',0)
+    a.martial187.setdefault('jian_guard_chains',0)
+    a.martial187.setdefault('jian_guard_seen',[])
+    a.martial187.setdefault('jian_return_ready',0.)
+    a.martial187.setdefault('jian_return_target',None)
     a.martial187.setdefault('lock_source',None)
     a.martial187.setdefault('basic_queue_until',0.)
     return a.martial187
@@ -41,14 +49,17 @@ class World:
     def party(self,a):return getattr(a,'party_id',None) or ('solo:'+a.id if a.id in self.players else 'mobs')
     def enemies(self,a):return [m for m in self.mobs.values() if alive(m)] if a.id in self.players else [p for p in self.players.values() if alive(p)]
     def ally(self,a,b):return a.id in self.players and b.id in self.players and self.party(a)==self.party(b)
-    def spec(self,a,role):return RULES['classes'][self.cls(a)][role]
+    def spec(self,a,role):
+        s=RULES['classes'][self.cls(a)][role]
+        if self.cls(a)=='jian' and role=='first' and state(a)['jian_return_ready']>self.time:return dict(s,range=750,melee=False,returnReady=True,waterCounter=True,ccTime=2)
+        return dict(s,range=s['range']*2) if self.cls(a)=='tang' and role=='basic' and state(a)['tang_range_shots']>0 else s
     def reachable(self,a,b,reach,front=True):
         return alive(b) and abs(a.x-b.x)<=reach+18 and abs(a.y-b.y)<95 and (not front or (b.x-a.x)*a.face>=-15) and not self.blocked(a.x,a.y-43,b.x,b.y-43,a,b)
     def cancel(self,a):
         state(a)['basic_queue_until']=0
         c=state(a)['cast']
         if c:
-            if c['role']=='ultimate':state(a)['status'].pop('yellow',None)
+            if c['role']=='ultimate' or c['s'].get('returnReady'):state(a)['status'].pop('yellow',None)
             c['cancelled']=True;self.emit('cancel',actor=a.id,cast=c['id'])
         state(a)['cast']=None
     def cc(self,a,kind,seconds):
@@ -84,17 +95,18 @@ class World:
         if st['cast'] and st['cast']['end']<=self.time:st['cast']=None
         if role=='basic' and st['cast'] and st['cast']['role']=='basic' and st['cast']['end']-self.time<=.12 and st['hit_until']<=self.time and not any(active(p,k,self.time) for k in ('sleep','down','stun','seal')):
             st['basic_queue_until']=self.time+.22;return True,None
-        s=dict(self.spec(p,role));counter=st['counter']>self.time;yellow=role=='ultimate' or cls=='jian' and role=='first' and counter and st['energy']>=180
+        s=dict(self.spec(p,role));counter=st['counter']>self.time or bool(s.get('returnReady'));yellow=role=='ultimate' or bool(s.get('returnReady'))
         checks=((not alive(p),'หมดสติ'),(bool(p.climb),'อยู่บนเชือก'),(active(p,'sleep',self.time) or active(p,'stun',self.time),'ติดสถานะควบคุม'),
             ((active(p,'down',self.time) or st['hit_until']>self.time) and not yellow and not (counter and not active(p,'down',self.time)),'ยังอยู่ในกระบวนท่าศัตรู'),
             (active(p,'seal',self.time),'ถูกผนึกสกิล'),(st['cast'] is not None,'กำลังออกท่า'),(role!='basic' and st['cd'].get(role,0)>self.time,'คูลดาวน์'),
             (active(p,'root',self.time) and bool(s.get('move') or s.get('lunge')),'ถูกตรึงเท้า'),(p.sp<s['sp'],'SP ไม่พอ'),(role=='ultimate' and st['rage']<100,'เรจยังไม่เต็ม'))
         for condition,error in checks:
             if condition:return False,error
-        target=self.actors.get(st['lock'])
+        target=self.actors.get(st['jian_return_target'] if s.get('waterCounter') else st['lock'])
+        if s.get('waterCounter') and not alive(target):return False,'ไม่มีเป้าหมายสวนกลับ'
         if target and not alive(target):st['lock']=None;st['lock_source']=None;target=None
         needs_target=not (cls=='healer' and role in ('second','ultimate') or cls=='jian' and role=='second')
-        if target and needs_target and (st['lock_source']!='retaliation' or cls=='tang' and role=='ultimate') and not self.reachable(p,target,s['range'],False):return False,'นอกระยะ'
+        if target and needs_target and (s.get('waterCounter') or st['lock_source']!='retaliation' or cls=='tang' and role=='ultimate') and not self.reachable(p,target,s['range'],False):return False,'นอกระยะ'
         if counter:st['hit_until']=0
         if yellow:
             st['status'].pop('down',None);p.down=0;p.kb_time=0;p.kb_dir=0;st['hit_until']=0;st['status']['yellow']=self.time+s['duration']
@@ -110,7 +122,11 @@ class World:
         if role=='basic' and (cls=='jian' or close):st['combo']+=1
         cast_scale=self.damage_scale(p)
         self.serial+=1;c=dict(critical=getattr(p,'martial_crit187',False),id='c'+str(self.serial),actor=p.id,profession=cls,role=role,dir=direction,start=self.time,end=self.time+s['duration'],next=self.time+s['windup'],index=0,s=s,target=None if st['lock_source']=='retaliation' and not(cls=='tang' and role=='ultimate') else st['lock'],variant=variant,melee=s.get('melee',False) or close,cancelled=False,counter=counter and not(cls=='jian' and role=='second'),healBonus=1.,scale=cast_scale)
+        c['waterCounter']=bool(s.get('waterCounter'))
+        if s.get('waterCounter'):c['target']=st['jian_return_target']
         if close:s['range']=s['meleeRange'];s['count']=1
+        if s.get('rangeShots'):st['tang_range_shots']=s['rangeShots']
+        if s.get('contactMove'):c['hit']=set()
         if cls=='healer' and s.get('heal'):
             c['healBonus']=1+min(5,int(st['heal_stacks']))*.1;st['heal_stacks']=st['heal_progress']=0
             self.heal(p,p,p.max_hp*s['heal']*c['healBonus'],c['id'])
@@ -124,9 +140,10 @@ class World:
         if counter and not(cls=='jian' and role=='second'):st['counter']=0
         if s.get('move'):st['motion']=dict(until=self.time+s['duration'],speed=s['move']/s['duration']*direction)
         if s.get('lunge'):
-            b=target or next((b for b in sorted(self.enemies(p),key=lambda b:abs(b.x-p.x)) if self.reachable(p,b,s['range'])),None)
+            b=self.actors.get(c['target']) or next((b for b in sorted(self.enemies(p),key=lambda b:abs(b.x-p.x)) if self.reachable(p,b,s['range'])),None)
             if b:
                 c['dir']=1 if b.x>=p.x else -1;c['target']=b.id;st['motion']=dict(until=self.time+.16,speed=max(0,min(s['lunge'],abs(b.x-p.x)-65))/.16*c['dir'])
+        if s.get('returnReady'):st['jian_return_ready']=0;st['jian_return_target']=None
         p.face=direction;p.cast_face=c['dir'];p.action='attack';p.action_at=0;p.action_duration=s['duration'];p.attack_variant182=2 if cls=='tang' and not c['melee'] else variant;p.cool=s['duration'];p.pending_class_cast=None
         st['cast']=c;self.casts.append(c);self.emit('cast',actor=p.id,cast=c['id'],role=role,profession=cls,dir=c['dir'],variant=variant,counter=c['counter']);return True,None
     def budget(self,p):
@@ -147,11 +164,18 @@ class World:
         def grant(kind):
             if c['role']=='ultimate':return
             gain=max(0,min(RULES['rage']['attackerPerCastCap']-c.get('rage_granted',0),RULES['rage'][kind]*rage_scale));ats['rage']=min(100,ats['rage']+gain);c['rage_granted']=c.get('rage_granted',0)+gain
-        blocking=self.capable(v) and v.guard and (vs['held_until']>self.time or not vs['auto_guard'] or vs['auto_guard']==c['id']) and not active(v,'seal',self.time) and ((a.x-v.x)*v.face>=-18 or vs['auto_guard']==c['id'])
+        blocking=self.capable(v) and v.guard and (vs['held_until']>self.time or not vs['auto_guard'] or vs['auto_guard']==c['id']) and not active(v,'seal',self.time)
         if blocking and c['role']=='break':
             v.guard=False;vs['auto_guard']=None;vs['held_until']=0;vs['meter']=max(0,vs['meter']-25);self.cc(v,'seal',1.25);self.emit('break',actor=v.id,owner=a.id,cast=c['id'])
         elif blocking:
             reduction=RULES['classes'][self.cls(v)]['guardReduction'];prevented=amount*c.get('scale',1)*reduction;amount*=1-reduction;vs['meter']=max(0,vs['meter']-s.get('guardCost',8));vs['counter']=self.time+3;vs['auto_guard']=c['id'];vs['energy']=min(260,vs['energy']+prevented);vs['rage']=min(100,vs['rage']+RULES['rage']['block']*rage_scale);grant('intoGuard')
+            guard_move_key=str(c['actor'])+':'+c['id']+':'+str(c.get('start',c['end']))
+            if self.cls(v)=='jian' and guard_move_key not in vs['jian_guard_seen']:
+                vs['jian_guard_seen']=(vs['jian_guard_seen']+[guard_move_key])[-32:]
+                if vs['jian_return_ready']<=self.time:
+                    vs['jian_guard_chains']+=1
+                    if vs['jian_guard_chains']>=3:
+                        vs['jian_guard_chains']=0;vs['jian_return_ready']=self.time+6;vs['cd'].pop('first',None);vs['jian_return_target']=a.id;self.emit('returnReady',actor=v.id)
             if self.cls(v)=='healer':vs['heal_stacks']=min(5,vs['heal_stacks']+1)
             if self.cls(v)=='jian' and self.capable(a):
                 vs['block_hits'][a.id]=vs['block_hits'].get(a.id,0)+1
@@ -189,7 +213,12 @@ class World:
     def release(self,c):
         a=self.actors.get(c['actor']);s=c['s']
         if not a or c['cancelled']:return
-        if s.get('move') and not s['damage']:return
+        if s.get('contactMove') or s.get('move') and not s['damage']:return
+        if s.get('waterCounter'):
+            b=self.actors.get(c['target'])
+            if b and self.reachable(a,b,s['range'],False):
+                self.emit('waterCounter',actor=a.id,target=b.id,profession='jian',role='first',x=b.x,y=b.y,dir=c['dir'],cast=c['id']);self.hit(c,b,s['damage'])
+            return
         if s.get('zone'):
             target=self.actors.get(c['target']);x=c.setdefault('zone_x',max(28,min(self.width-28,target.x if target else a.x+c['dir']*300)))
             self.emit('zone',actor=a.id,profession=c['profession'],role=c['role'],x=x,y=a.y,dir=c['dir'],cast=c['id'])
@@ -202,10 +231,20 @@ class World:
             self.emit('slash',radial=bool(s.get('radial')),range=s['range'],duration=s.get('interval',.27),actor=a.id,profession=c['profession'],role=c['role'],variant=c['index']%2 if c['role']=='ultimate' else c['variant'],x=a.x if s.get('radial') else a.x+c['dir']*(55 if c['profession']=='tang' else 68),y=a.y-48,dir=c['dir'],cast=c['id'])
             for b in targets:self.hit(c,b,s['damage']*(s.get('finisher',1) if c['index']==s.get('hits',1)-1 else 1))
             return
+        if c['profession']=='tang' and c['role']=='basic' and not c['melee'] and not c.get('range_consumed'):
+            c['range_consumed']=True;state(a)['tang_range_shots']=max(0,state(a)['tang_range_shots']-1)
         count=s.get('count',1)
         for k in range(count):
             direction=(-1 if k<3 else 1) if c['profession']=='healer' and c['role']=='ultimate' else c['dir'];self.serial+=1
             self.shots.append(dict(id='s'+str(self.serial),cast=c,owner=a.id,profession=c['profession'],role=c['role'],dir=direction,x=a.x+direction*(54 if c['profession']=='flute' else 36),y=a.y-43+([-16,0,16][k%3] if count==6 else 0),launch_x=a.x,launch_y=a.y-43,launch_foot=a.y,traveled=0.,age=-k*.095 if count==2 else 0.,speed=s.get('speed',500),range=s['range'],hit=set(),heal=set(),damage=s['damage']/(count if c['profession']=='tang' and c['role']=='basic' else 1),dead=False,fade=0.))
+    def contact_move(self,a,old_x,old_y):
+        c=state(a)['cast']
+        if not c or not c['s'].get('contactMove') or c['cancelled'] or not alive(a) or state(a)['hit_until']>self.time or any(active(a,k,self.time) for k in ('root','sleep','down','stun')) or abs(a.x-old_x)<1e-8:return
+        for b in self.enemies(a):
+            if b.id in c['hit'] or not min(old_x,a.x)-28<=b.x<=max(old_x,a.x)+28:continue
+            u=max(0,min(1,(b.x-old_x)/(a.x-old_x)));foot=old_y+(a.y-old_y)*u
+            if abs(b.y-foot)>=95 or self.blocked(old_x,old_y-43,b.x,b.y-43,SimpleNamespace(y=foot),b):continue
+            c['hit'].add(b.id);self.hit(c,b,c['s']['damage'])
     def before_move(self,a):
         st=state(a);now=self.time
         if st['auto_guard']:
@@ -215,6 +254,8 @@ class World:
         if st['guard_queue'] and st['hit_until']<=now and not any(active(a,k,now) for k in ('sleep','down','stun','seal')):st['guard_queue']=False;a.guard=st['held_until']>now
         if st['held_until']<=now and not st['auto_guard']:a.guard=False
         if st['cast'] and st['cast']['end']<=now:st['cast']=None
+        axis=int(bool(getattr(a,'buttons',0)&2))-int(bool(getattr(a,'buttons',0)&1))
+        if alive(a) and axis and not st['cast'] and not getattr(a,'climb',None) and not getattr(a,'kb_time',0) and st['hit_until']<=now and not any(active(a,k,now) for k in ('sleep','down','stun')) and not (st['motion'] and st['motion']['until']>now):a.face=axis
         if st['basic_queue_until']:
             queued=st['basic_queue_until'];st['basic_queue_until']=0
             if queued>=now and not st['cast']:self.cast(a,'basic')
@@ -229,7 +270,7 @@ class World:
             st=state(a)
             if alive(a):
                 if a.guard:st['guard_recovery']=self.time+2
-                elif st['guard_recovery']<self.time:st['meter']=min(100,st['meter']+10*dt)
+                elif st['guard_recovery']<self.time:st['meter']=min(RULES['guardMax'],st['meter']+10*dt)
             self.before_move(a)
         for c in self.casts:
             a=self.actors.get(c['actor'])
@@ -262,6 +303,6 @@ class World:
         for a in self.actors.values():
             st=state(a);c=st['cast']
             if a.id not in self.players and not any(until>self.time for until in st['status'].values()):continue
-            actors.append(dict(id=a.id,isPlayer=a.id in self.players,profession=self.cls(a),capable=self.capable(a),guard=bool(a.guard),rage=round(st['rage'],2),guardMeter=round(st['meter'],2),counterUntil=st['counter'],blockedEnergy=st['energy'],healStacks=st['heal_stacks'],healRemaining=round(self.budget(a),2) if a.id in self.players else 0,cd=st['cd'],status=st['status'],lock=st['lock'],lockSource=st['lock_source'],cast={k:c[k] for k in ('id','role','start','end','dir','variant','melee','counter')} if c else None))
+            actors.append(dict(id=a.id,isPlayer=a.id in self.players,profession=self.cls(a),capable=self.capable(a),guard=bool(a.guard),rage=round(st['rage'],2),guardMeter=round(st['meter'],2),guardMax=RULES['guardMax'],tangRangeShots=st['tang_range_shots'],jianGuardChains=st['jian_guard_chains'],jianReturnReadyUntil=st['jian_return_ready'],jianReturnTarget=st['jian_return_target'],counterUntil=st['counter'],blockedEnergy=st['energy'],healStacks=st['heal_stacks'],healRemaining=round(self.budget(a),2) if a.id in self.players else 0,cd=st['cd'],status=st['status'],lock=st['lock'],lockSource=st['lock_source'],cast={k:c[k] for k in ('id','role','start','end','dir','variant','melee','counter','waterCounter')} if c else None))
         shots=[{k:p[k] for k in ('id','owner','profession','role','dir','x','y','speed','range','traveled','age','dead','fade')} for p in self.shots]
         return dict(version=187,epoch=self.epoch,eventHighwater=self.events[-1]['id'] if self.events else 0,time=self.time,actors=actors,shots=shots,events=self.events[-80:])

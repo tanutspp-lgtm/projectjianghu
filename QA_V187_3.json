@@ -1,0 +1,13 @@
+{
+  "version": "187.3",
+  "guardJS104": true,
+  "guardPython4Groups": true,
+  "combatJS28": true,
+  "playflowJS9": true,
+  "backendHotfixCore18": true,
+  "guard360": true,
+  "guardInputChanged": false,
+  "liveVPSVerified": false,
+  "localWebsocketClasses": 4,
+  "runningHealthGuardFeatureVerified": true
+}

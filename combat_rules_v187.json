@@ -1,22 +1,22 @@
 {
   "version": 187,
-  "revision": "martial-playflow-v1872-v1",
+  "revision": "martial-rebalance-v1875-v1",
   "balance": "starter-playtest-1",
   "fixedStep": 0.016666666666666666,
   "healWindow": 60,
   "healCap": 0.4,
   "rage": {
-    "block": 16,
-    "hit": 12,
-    "hurt": 3,
-    "intoGuard": 0.2,
+    "block": 10,
+    "hit": 4,
+    "hurt": 2,
+    "intoGuard": 0.1,
     "referenceDamage": 85,
     "referenceMaxHp": 1200,
-    "attackerPerCastCap": 18
+    "attackerPerCastCap": 8
   },
   "classes": {
     "jian": {
-      "guardReduction": 0.72,
+      "guardReduction": 0.85,
       "basic": {
         "cd": 0,
         "duration": 0.46,
@@ -54,7 +54,10 @@
         "sp": 16,
         "range": 330,
         "move": 330,
-        "damage": 0
+        "damage": 60,
+        "contactMove": true,
+        "cc": "root",
+        "ccTime": 1.2
       },
       "ultimate": {
         "cd": 15,
@@ -70,7 +73,7 @@
       }
     },
     "tang": {
-      "guardReduction": 0.62,
+      "guardReduction": 0.85,
       "basic": {
         "cd": 0,
         "duration": 0.5,
@@ -111,7 +114,8 @@
         "damage": 88,
         "speed": 580,
         "count": 1,
-        "move": -170
+        "move": -170,
+        "rangeShots": 3
       },
       "ultimate": {
         "cd": 18,
@@ -128,7 +132,7 @@
       }
     },
     "flute": {
-      "guardReduction": 0.6,
+      "guardReduction": 0.85,
       "basic": {
         "cd": 0,
         "duration": 0.6,
@@ -191,7 +195,7 @@
       }
     },
     "healer": {
-      "guardReduction": 0.64,
+      "guardReduction": 0.85,
       "basic": {
         "cd": 0,
         "duration": 0.55,
@@ -248,5 +252,6 @@
         "count": 6
       }
     }
-  }
+  },
+  "guardMax": 150
 }

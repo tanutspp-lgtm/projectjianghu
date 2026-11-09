@@ -1,0 +1,10 @@
+{
+  "version": "187.4",
+  "base": "187.3",
+  "backendFeature": "martial-turn-v1874-v1",
+  "world": 52,
+  "expiredPushFacingFixed": true,
+  "fluteSkillContrastIncreased": true,
+  "mouthNotesChanged": false,
+  "deployed": false
+}

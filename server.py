@@ -1594,13 +1594,15 @@ def movement_tick(p,dt,tick_now):
         mw=martial_world187();st=martial187.state(p);restricted=mw.before_move(p);old_buttons=p.buttons
         if restricted:p.buttons&=~31
         motion=st.get('motion')
-        oldx=p.x
+        oldx=p.x;oldy=p.y
         update_guest(p,dt,tick_now)
         p.buttons=old_buttons
         if restricted and not motion and p.kb_time<=0:p.x=oldx;p.vx=0
         if motion and motion['until']>tick_now and not any(martial187.active(p,k,tick_now) for k in ('root','sleep','stun','down')) and st['hit_until']<=tick_now:
-            p.vx=motion['speed'];p.x=max(28,min(mw.width-28,oldx+p.vx*dt));physics(p,0)
+            p.vx=motion['speed']
+            p.x=max(28,min(mw.width-28,oldx+p.vx*dt));physics(p,0)
         if martial187.active(p,'slow',tick_now):p.x=oldx+(p.x-oldx)*.7;p.vx*=.7
+        mw.contact_move(p,oldx,oldy)
         return
 
     if p.room in ('city_proto_1','city_inner_1') and p.movement_mode!='server':
@@ -3297,7 +3299,7 @@ async def handle_connection(ws):
         features.append('classes-v182-combo-v1')
         features.append('classes-v183-combat-v1')
         features.append('combat-layers-v184-v1')
-        features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE))
+        features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE))
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3680,7 +3682,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V187_2 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V187_5 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3688,7 +3690,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
-    print('JIANGHU_BACKEND_V187_2 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V187_5 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
