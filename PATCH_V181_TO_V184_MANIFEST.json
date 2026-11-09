@@ -1,0 +1,119 @@
+{
+  "fromBackend": 181,
+  "toBackend": 184,
+  "baseArchive": "JIANGHU_BACKEND_V181_FULL.zip",
+  "baseArchiveSHA256": "e8bc972785ca092e34e1a064f1e78b9c8f296f44a5120f017c1c142c9365b573",
+  "removedFiles": [],
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "bbf079d41b4a292481ac19691b63d817a9835fef9d39c880952a3ef826c028be",
+      "new": true
+    },
+    {
+      "path": "BUILD_V182.json",
+      "sha256": "a93c70663558eb1fe664434aadbe0c67bbabde53888c61a8800337d4992d21e2",
+      "new": true
+    },
+    {
+      "path": "BUILD_V183.json",
+      "sha256": "230a41745fc2b9e13d3acf919cf0be79cb7767752fe778dd2a02265d7fce7a01",
+      "new": true
+    },
+    {
+      "path": "BUILD_V184.json",
+      "sha256": "20a1610620ff8a5a2bc1936854ae172dccf1682a7239d8c3703c92726ec02533",
+      "new": true
+    },
+    {
+      "path": "CHECK_BEFORE_RESTART.py",
+      "sha256": "21810baf2ade0ed5b31c1d76175aeb3d825258251173fa5b472d96105fa4282d",
+      "new": false
+    },
+    {
+      "path": "README_V182_TH.txt",
+      "sha256": "6a9a90b621204ffdef859019f39d2fc370f81fcc08ec94893a18f3aae1f11d91",
+      "new": true
+    },
+    {
+      "path": "README_V183_TH.txt",
+      "sha256": "518e20d6506b941bf6f5a015c9a3f81d36338c440071d922d7dbb7f71f0ca04e",
+      "new": true
+    },
+    {
+      "path": "README_V184_TH.txt",
+      "sha256": "24e7980be1de7ef4e3c38fbf19b62e82e86a92575e07df797bab03751b5c3f02",
+      "new": true
+    },
+    {
+      "path": "RESTART_AND_VERIFY_V182.sh",
+      "sha256": "42cb354b8c16a8bd04aceab3924ef826aaee15b7940f6e2637714fdf396c5c8e",
+      "new": true
+    },
+    {
+      "path": "RESTART_AND_VERIFY_V183.sh",
+      "sha256": "477ff6ba28be1547cc92b47191cf5db805bc15f26cdccb8f33ff5f2dca120340",
+      "new": true
+    },
+    {
+      "path": "RESTART_AND_VERIFY_V184.sh",
+      "sha256": "fd202497fb812966aa94868c9f8381541619231f489a5e1a63d8f4e6f1e7c1bf",
+      "new": true
+    },
+    {
+      "path": "START_HERE_FULL_TH.txt",
+      "sha256": "4782f4144030320f92a00826c0756770b62180cdb3df49b59a1048efb9bd10b9",
+      "new": false
+    },
+    {
+      "path": "START_HERE_V182.txt",
+      "sha256": "024829de078a1e0612fec32453d196eaa54fcef4ec86d13a3b3ef6e6838143a5",
+      "new": true
+    },
+    {
+      "path": "START_HERE_V183.txt",
+      "sha256": "7356b7469633d1af75bf237d8529d09260244243f68e11082aac901fe606f9d4",
+      "new": true
+    },
+    {
+      "path": "START_HERE_V184.txt",
+      "sha256": "486a7a93bbc367f44b407306f324c99b75888318aef6f55e903236881d6ecaa9",
+      "new": true
+    },
+    {
+      "path": "START_HERE_V184_FROM_V181.txt",
+      "sha256": "22619c75fe0a009ad5f53c5de1f58eff0692c76be83ebbf9428ad510cefd00ba",
+      "new": true
+    },
+    {
+      "path": "VERIFY_RUNNING_V182.py",
+      "sha256": "abf255c399c877498c5c4583c61075adff257f8903836b357214a435fb1fb9b1",
+      "new": true
+    },
+    {
+      "path": "VERIFY_RUNNING_V183.py",
+      "sha256": "5c60df208b0e92c9a9d3afcd293a1064d572aff1df2bca6a3b39e33609b600e1",
+      "new": true
+    },
+    {
+      "path": "VERIFY_RUNNING_V184.py",
+      "sha256": "0265a40e58b67eaee2e22aef95564c46ca2a695005383eeb43b97f0a9862b371",
+      "new": true
+    },
+    {
+      "path": "character_classes_v181.py",
+      "sha256": "64194179508c28eeaf473ee44ddc67fd8f998be6799873ca62ce99bb77daf091",
+      "new": false
+    },
+    {
+      "path": "combat_collision_v184.py",
+      "sha256": "3a5a91519449afe1bc36f5295f9e4b975f6947412136f96cfff3b6ea89a53eef",
+      "new": true
+    },
+    {
+      "path": "server.py",
+      "sha256": "b77a4927e17389a9de4675f55c30b38834fa83564c49f23bee03d0cbf1866efa",
+      "new": false
+    }
+  ]
+}

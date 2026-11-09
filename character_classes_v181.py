@@ -8,15 +8,16 @@ BASE={'attack':dict(cool=.34,duration=.32,speed=520,life=1.45,pierce=1),
 def profession(avatar):
     return avatar.split('_')[0] if avatar in AVATARS else 'flute'
 
-def spec(cls,action):
+def spec(cls,action,attack_mode='melee'):
     b=BASE[action];s=dict(b,mode='ranged',reach=0,windup=b['duration']*.5,healPct=0)
-    if cls=='jian' or (cls=='tang' and action=='attack'):
+    if cls=='jian' or (cls=='tang' and action=='attack' and attack_mode!='ranged'):
         s.update(mode='melee',speed=0,life=.10,reach=(145 if action=='aoe' else 134) if cls=='jian' else 102)
-    if cls=='tang' and action=='aoe':s.update(speed=550,pierce=1)
+    if cls=='tang' and (action=='aoe' or (action=='attack' and attack_mode=='ranged')):s.update(speed=550,pierce=1)
     if cls=='healer' and action=='aoe':s.update(mode='heal',cool=3,duration=.60,windup=.30,speed=0,life=.01,pierce=0,reach=300,healPct=15)
     return s
 
 def row_for(cls,action,variant=0):
+    if cls=='tang' and action=='attack' and variant==2:return 30
     if action=='attack' and variant==1 and cls in ('jian','tang'):return 30 if cls=='jian' else 36
     return 24 if action=='attack' or (cls=='healer' and action=='break') else 30
 

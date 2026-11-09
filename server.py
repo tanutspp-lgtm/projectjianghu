@@ -52,6 +52,8 @@ import sandbox_loadouts_v80bt as loadouts
 import monster_hp_def_v80bu as monster_balance
 import cave_ice_v156 as cave_ice
 import character_classes_v181 as classes181
+import combat_collision_v184 as combat184
+from cave_contours_v145 import intervals as combat_intervals184
 import farm_auto_v80bu as farm_auto
 from urllib.request import Request, urlopen  # v8.0BO AUTHORITATIVE COMBAT
 
@@ -483,6 +485,9 @@ class Guest(Actor):
     last_damage_at: float = -1e9
     # DJ: Keep firing the same living target until it dies or leaves legal range.
     manual_target_id: Optional[str] = None
+    aim_assist183: bool = False
+    heal_ready183: float = 0.0
+    last_cast_cool183: float = 0.0
     # DK: Single-slot manual spell intent overrides automatic basic attacks.
     manual_auto_skill: Optional[str] = None
     manual_auto_until: float = 0.0
@@ -616,6 +621,9 @@ class Shot:
     mode: str = "ranged"
     facing: int = 1
     reach: float = 0
+    launch_x184: Optional[float] = None
+    launch_y184: Optional[float] = None
+    launch_foot184: Optional[float] = None
 
 
 # EE: fixed, administrator-owned channels. A guest can never create a world.
@@ -1169,7 +1177,7 @@ def physics(actor, dt):
             hurt(actor, 100, actor.x, actor.y - 70, 'fall')
 
 
-def hurt(victim, damage, x, y, kind,critical=False,owner=None):
+def hurt(victim, damage, x, y, kind,critical=False,owner=None,shot_dir=None):
     if victim.dead > 0 or victim.inv > 0: return
     if isinstance(victim, Guest) and victim.guard and victim.broken <= 0:
         event('block', victim.x, victim.y - 82, victim=victim.id)
@@ -1204,6 +1212,7 @@ def hurt(victim, damage, x, y, kind,critical=False,owner=None):
             victim.climb_cd=max(.5,victim.climb_cd)
     if isinstance(victim,Guest):victim.last_damage_at=time.monotonic()
     event('hit', victim.x, victim.y - 78, victim=victim.id, damage=damage, kind=kind,critical=critical,
+          **({'shotDir':shot_dir} if shot_dir in (-1,1) else {}),
           **({'owner':owner,'profession':classes181.profession(players[owner].avatar)} if owner in players else ({'owner':owner} if owner is not None else {})))
     if victim.hp <= 0 and victim.dead <= 0:
         victim.dead = next_respawn_delay() if isinstance(victim, Monster) else 2.5
@@ -1219,6 +1228,18 @@ def try_qi_shield(p):
     if value<=0:return
     now=time.monotonic();p.qi_shield=value;p.qi_shield_until=now+30;p.qi_shield_cd=now+120
     event('qi_shield',p.x,p.y-110,victim=p.id,amount=value)
+
+_combat_geometries184={}
+def combat_geometry184():
+    room=current_world().room
+    if room not in _combat_geometries184:
+        m=EXPANSION_MAPS.get(room,{})
+        platforms=m.get('platforms') or [dict(x=a,x2=b,y=y) for a,b,y in active_ground()]
+        contains=(lambda x,y:any(a+.2<y<b-.2 for a,b in combat_intervals184(m,x))) if m.get('caveContours') else None
+        _combat_geometries184[room]=combat184.compile_geometry(platforms,m.get('profile'),m.get('solids',()),contains)
+    return _combat_geometries184[room]
+
+def class_hit_allowed184(shot,victim):return combat184.can_hit(shot,victim,combat_geometry184())
 
 def perform_action(p: Guest, action: str):
     if p.dead > 0 or p.down > 0 or p.stun > 0 or p.broken > 0: return
@@ -1246,13 +1267,12 @@ def perform_action(p: Guest, action: str):
     # Second independent server clock check; rejects spoofed burst commands even
     # when the animation/cool timer is accidentally changed. No queued attacks.
     server_now=time.monotonic()
-    if server_now-p.last_attack_at+0.000001 < (class_cfg['cool'] if class_cfg else ATTACKS[action][0]): return
-    p.last_attack_at=server_now
     # v8.0DF: Match Offline's nearest-monster auto-facing on manual casts.
     # AUTO AI already owns its target/facing. Direction is computed from server
     # monster coordinates, never from an untrusted client-supplied aim/position.
     shot_dir=p.face
-    if not p.auto_state.enabled and p.room in PUBLIC_MAP_IDS:
+    if not p.auto_state.enabled and (p.buttons & 3) in (1,2):shot_dir=1 if p.buttons & 2 else -1
+    if not p.auto_state.enabled and p.aim_assist183 and p.room in PUBLIC_MAP_IDS:
         # DJ: Re-select ONLY after death or truly invalid position. Never
         # retarget mid-combat just because the other mob takes one step closer.
         def legal_aim(m):
@@ -1265,13 +1285,28 @@ def perform_action(p: Guest, action: str):
             p.manual_target_id=candidate.id if candidate else None
         if candidate is not None and abs(candidate.x-p.x)>12:
             shot_dir=1 if candidate.x>p.x else -1
+    if class_cfg and classes181.profession(p.avatar)=='tang' and action=='attack':
+        origin=classes181.muzzle('tang',p.ground and not p.climb)
+        close=any(m.dead<=0 and m.hp>0 and abs(m.y-p.y-origin['y']-78)<95 and
+                  -12<=(m.x-p.x)*shot_dir<class_cfg['reach'] and
+                  class_hit_allowed184(Shot(0,p.id,'attack',p.x,p.y+origin['y'],0,0,.1,1,profession='tang',mode='melee',launch_foot184=p.y),m) for m in monsters.values())
+        if not close:class_cfg=classes181.spec('tang','attack','ranged')
+    is_heal=bool(class_cfg and class_cfg['mode']=='heal')
+    if is_heal and server_now<p.heal_ready183:return
+    required_cool=p.last_cast_cool183 if classes181.profession(p.avatar)=='healer' else class_cfg['cool'] if class_cfg else ATTACKS[action][0]
+    if server_now-p.last_attack_at+0.000001<required_cool:return
+    p.last_attack_at=server_now
+    p.last_cast_cool183=class_cfg['duration'] if is_heal else class_cfg['cool'] if class_cfg else ATTACKS[action][0]
+    if is_heal:p.heal_ready183=server_now+class_cfg['cool']
     p.cast_face=shot_dir
     global shot_seq
     if class_cfg:
         damage,critical=prog.roll_attack(p,action,hp_reference)
         p.sp-=prog.SKILL_SP[action]
-        p.cool=class_cfg['cool']
-        if action=='attack' and classes181.profession(p.avatar) in ('jian','tang'):
+        p.cool=p.last_cast_cool183
+        if action=='attack' and classes181.profession(p.avatar)=='tang' and class_cfg['mode']=='ranged':
+            p.attack_variant182=2
+        elif action=='attack' and classes181.profession(p.avatar) in ('jian','tang'):
             p.attack_variant182=p.class_combo182%2;p.class_combo182+=1
         else:p.attack_variant182=0
         set_action(p,action,class_cfg['duration'])
@@ -1324,7 +1359,7 @@ def advance_class_cast181(p,dt):
     y=p.y+origin['y']
     shots.append(Shot(shot_seq,p.id,kind,x,y,direction*cfg['speed'],pending['damage'],
                       cfg['life'],cfg['pierce'],critical=pending['critical'],origin_x=p.x,
-                      profession=cls,mode=cfg['mode'],facing=direction,reach=cfg['reach']))
+                      profession=cls,mode=cfg['mode'],facing=direction,reach=cfg['reach'],launch_x184=p.x,launch_y184=y,launch_foot184=p.y))
     event('class_release',p.x,y,kind=kind,owner=p.id,profession=cls,mode=cfg['mode'],
           shotId=str(shot_seq),shotX=round(x,1),shotY=round(y,1),shotDir=direction,
           shotSpeed=cfg['speed'],variant=pending.get('variant',0))
@@ -1938,9 +1973,10 @@ def hit_by_shot(s,victim,damage,is_mob):
     previous_alive=victim.hp>0 and victim.dead<=0
     previous_hp=victim.hp
     actual=mitigate(damage,victim.defense) if is_mob else damage
-    hurt(victim,actual,s.x,s.y,s.kind,critical=s.critical,owner=s.owner)
+    hurt(victim,actual,s.x,s.y,s.kind,critical=s.critical,owner=s.owner,
+         shot_dir=s.facing if s.mode=='melee' else 1 if s.vx>0 else -1 if s.vx<0 else None)
     if is_mob and victim.hp<previous_hp and victim.hp>0:
-        register_monster_shove(victim,s.x,s.vx)
+        register_monster_shove(victim,s.x,s.facing if s.mode=='melee' else s.vx)
     if previous_alive and is_mob and victim.hp<=0:grant_monster_kill(s,victim)
     return actual
 
@@ -1985,7 +2021,7 @@ def apply_qi_on_primary_hit(shot,victim,damage):
         else:victim.mark_stacks[killer.id]=(count+1,now+m['markExpireSeconds'])
     if loadouts.active_qi(killer,0) and shot.kind=='attack':
         m=loadouts.qi_mechanics(killer,'flute_echo')
-        candidates=[x for x in monsters.values() if x is not victim and x.dead<=0 and x.hp>0 and math.hypot(x.x-victim.x,(x.y-victim.y)*1.5)<=m['echoRange']]
+        candidates=[x for x in monsters.values() if x is not victim and x.dead<=0 and x.hp>0 and math.hypot(x.x-victim.x,(x.y-victim.y)*1.5)<=m['echoRange'] and combat184.can_reach(victim.x,victim.y-43,victim.y,x,combat_geometry184())]
         if candidates:
             target=min(candidates,key=lambda x:math.hypot(x.x-victim.x,x.y-victim.y))
             if not target.guard:bonus_hit(killer,target,damage*m['echoPct']/100,'qi_echo')
@@ -1995,7 +2031,7 @@ def apply_qi_on_primary_hit(shot,victim,damage):
 # do not allow player damage, crowd-control, guard-break or projectile consumption.
 def apply_shot(s, victim, is_mob):
     if not is_mob or not isinstance(victim, Monster): return False
-    if victim.id in s.hit or victim.dead > 0: return False
+    if victim.id in s.hit or victim.dead > 0 or not class_hit_allowed184(s,victim): return False
     if not is_mob and victim.id == s.owner: return False
     s.hit.add(victim.id)
     if s.kind == 'break':
@@ -2051,7 +2087,8 @@ def update_shots(dt):
         s.x += s.vx * dt
         if s.life <= 0: continue
         # Original exact swept collision: do NOT change strict comparisons,
-        # height, wall edge rules, multi-target pierce or first-tick origin.
+        # broadphase ordering, multi-target pierce or first-tick origin. V184 applies
+        # physical body-height and terrain visibility in apply_shot before damage.
         lo, hi = min(old_x, s.x), max(old_x, s.x)
         radius = s.reach/2 if s.mode=='melee' else 60 if s.kind == 'aoe' else 36
         if grid is None:
@@ -2075,6 +2112,7 @@ def update_shots(dt):
             if apply_shot(s, v, isinstance(v, Monster)):
                 consumed = True
                 break
+        if s.mode!='melee' and combat184.blocked(old_x,s.y,s.x,s.y,combat_geometry184()):continue
         if not consumed and -80 <= s.x <= city_world_width(current_world().room) + 80: active.append(s)
     shots[:] = active
 
@@ -3151,7 +3189,7 @@ async def handle_connection(ws):
                   avatar=hello['avatar'], ws=ws, level=guest_level, channel=channel, world_ref=world_ref, stress_test=stress_test)
         if p.avatar in classes181.AVATARS:
             basic=classes181.spec(classes181.profession(p.avatar),'attack')
-            if basic['mode']=='melee':p.class_attack_reach=basic['reach']*.82
+            if basic['mode']=='melee' and classes181.profession(p.avatar)!='tang':p.class_attack_reach=basic['reach']*.82
         prog.apply_derived_resources(p,hp_reference,full=True)
         p.protocol_delta=(hello.get('protocol') in ('aoi-delta-v80by','aoi-binary-v80du') or p.room=='movement_lab')
         p.protocol_binary=hello.get('protocol')=='aoi-binary-v80du'
@@ -3184,6 +3222,8 @@ async def handle_connection(ws):
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('classes-v181-36frames-v1')
         features.append('classes-v182-combo-v1')
+        features.append('classes-v183-combat-v1')
+        features.append('combat-layers-v184-v1')
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3371,6 +3411,13 @@ async def handle_connection(ws):
                     p.auto_state.next_step=0.0  # React on next simulation tick.
                 await ws.send(json.dumps({'t':'auto_stay_ack','ok':valid,'enabled':p.auto_state.stay_alert}))
                 continue
+            if m.get('t')=='combat_settings':
+                if set(m)!={'t','aimAssist'} or type(m.get('aimAssist')) is not bool:
+                    await ws.close(code=1008,reason='Invalid combat settings');break
+                ok=check_rate(p.action_times,12)
+                if ok:p.aim_assist183=m['aimAssist'];p.manual_target_id=None
+                await ws.send(json.dumps({'t':'combat_settings_ack','ok':ok,'aimAssist':p.aim_assist183}))
+                continue
             if m.get('t')=='self_stream_mode':
                 if set(m)!={'t','mode'} or m.get('mode') not in ('fast','classic'):
                     await ws.close(code=1008,reason='Invalid self stream mode');break
@@ -3532,7 +3579,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V182 classes-v182-combo-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V184 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3540,7 +3587,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
-    print('JIANGHU_BACKEND_V182 classes-v182-combo-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V184 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)

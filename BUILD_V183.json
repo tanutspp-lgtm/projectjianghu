@@ -1,0 +1,8 @@
+{
+  "frontend": 183,
+  "backend": 183,
+  "world": 52,
+  "classFeature": "classes-v183-combat-v1",
+  "base": "V182_FULL",
+  "qa": "VM/controller + local real WebSockets + browser Settings; not live VPS or physical iOS."
+}
