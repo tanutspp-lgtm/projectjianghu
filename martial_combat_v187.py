@@ -10,6 +10,7 @@ from types import SimpleNamespace
 RULES=json.loads(Path(__file__).with_name('combat_rules_v187.json').read_text())
 FEATURE='martial-combat-v187-v1'
 LOCK_FEATURE='martial-lock-state-v1871-v1'
+FLOW_FEATURE='martial-playflow-v1872-v1'
 ROLES=('basic','guard','break','first','second','ultimate')
 
 def state(a):
@@ -18,6 +19,7 @@ def state(a):
             counter=0.,energy=0.,block_hits={},slow_proc={},heal_stacks=0,heal_progress=0.,ledger=[],cast=None,
             combo=0,lock=None,lock_source=None,last_attacker=None,shield=0.,shield_until=0.,hit_until=0.,motion=None,guard_recovery=0.)
     a.martial187.setdefault('lock_source',None)
+    a.martial187.setdefault('basic_queue_until',0.)
     return a.martial187
 
 def active(a,key,now): return state(a)['status'].get(key,0)>now
@@ -43,6 +45,7 @@ class World:
     def reachable(self,a,b,reach,front=True):
         return alive(b) and abs(a.x-b.x)<=reach+18 and abs(a.y-b.y)<95 and (not front or (b.x-a.x)*a.face>=-15) and not self.blocked(a.x,a.y-43,b.x,b.y-43,a,b)
     def cancel(self,a):
+        state(a)['basic_queue_until']=0
         c=state(a)['cast']
         if c:
             if c['role']=='ultimate':state(a)['status'].pop('yellow',None)
@@ -65,6 +68,7 @@ class World:
         state(p)['lock']=a.id;state(p)['lock_source']='manual';return True
     def guard(self,p,held):
         st=state(p);st['held_until']=self.time+.6 if held else 0
+        if held:st['basic_queue_until']=0
         if not held:
             st['guard_queue']=False
             if not st['auto_guard']:p.guard=False
@@ -77,10 +81,13 @@ class World:
         self.time=time.monotonic();st=state(p);cls=self.cls(p)
         if role not in ROLES:return False,'สกิลไม่ถูกต้อง'
         if role=='guard':return self.guard(p,True),None
+        if st['cast'] and st['cast']['end']<=self.time:st['cast']=None
+        if role=='basic' and st['cast'] and st['cast']['role']=='basic' and st['cast']['end']-self.time<=.12 and st['hit_until']<=self.time and not any(active(p,k,self.time) for k in ('sleep','down','stun','seal')):
+            st['basic_queue_until']=self.time+.22;return True,None
         s=dict(self.spec(p,role));counter=st['counter']>self.time;yellow=role=='ultimate' or cls=='jian' and role=='first' and counter and st['energy']>=180
         checks=((not alive(p),'หมดสติ'),(bool(p.climb),'อยู่บนเชือก'),(active(p,'sleep',self.time) or active(p,'stun',self.time),'ติดสถานะควบคุม'),
             ((active(p,'down',self.time) or st['hit_until']>self.time) and not yellow and not (counter and not active(p,'down',self.time)),'ยังอยู่ในกระบวนท่าศัตรู'),
-            (active(p,'seal',self.time),'ถูกผนึกสกิล'),(st['cast'] is not None,'กำลังออกท่า'),(st['cd'].get(role,0)>self.time,'คูลดาวน์'),
+            (active(p,'seal',self.time),'ถูกผนึกสกิล'),(st['cast'] is not None,'กำลังออกท่า'),(role!='basic' and st['cd'].get(role,0)>self.time,'คูลดาวน์'),
             (active(p,'root',self.time) and bool(s.get('move') or s.get('lunge')),'ถูกตรึงเท้า'),(p.sp<s['sp'],'SP ไม่พอ'),(role=='ultimate' and st['rage']<100,'เรจยังไม่เต็ม'))
         for condition,error in checks:
             if condition:return False,error
@@ -91,7 +98,9 @@ class World:
         if counter:st['hit_until']=0
         if yellow:
             st['status'].pop('down',None);p.down=0;p.kb_time=0;p.kb_dir=0;st['hit_until']=0;st['status']['yellow']=self.time+s['duration']
-        p.guard=False;st['auto_guard']=None;st['held_until']=0;st['guard_queue']=False;p.sp-=s['sp'];st['cd'][role]=self.time+s['cd']
+        p.guard=False;st['auto_guard']=None;st['held_until']=0;st['guard_queue']=False;p.sp-=s['sp'];st['basic_queue_until']=0
+        if role=='basic':st['cd'].pop('basic',None)
+        else:st['cd'][role]=self.time+s['cd']
         if role=='ultimate':st['rage']=0
         direction=p.face
         if p.buttons&3 in (1,2):direction=1 if p.buttons&2 else -1
@@ -188,9 +197,9 @@ class World:
                 if abs(b.x-x)<s['radius'] and abs(b.y-a.y)<85 and not self.blocked(x,a.y-40,b.x,b.y-43,a,b):self.hit(c,b,s['damage'])
             return
         if c['melee']:
-            proxy=SimpleNamespace(**{**a.__dict__,'face':c['dir']});targets=[b for b in self.enemies(a) if self.reachable(proxy,b,s['range'])]
+            proxy=SimpleNamespace(**{**a.__dict__,'face':c['dir']});targets=[b for b in self.enemies(a) if self.reachable(proxy,b,s['range'],not s.get('radial',False))]
             if c['profession']=='tang':targets=sorted(targets,key=lambda b:abs(b.x-a.x))[:1]
-            self.emit('slash',duration=s.get('interval',.27),actor=a.id,profession=c['profession'],role=c['role'],variant=c['index']%2 if c['role']=='ultimate' else c['variant'],x=a.x+c['dir']*(55 if c['profession']=='tang' else 68),y=a.y-48,dir=c['dir'],cast=c['id'])
+            self.emit('slash',radial=bool(s.get('radial')),range=s['range'],duration=s.get('interval',.27),actor=a.id,profession=c['profession'],role=c['role'],variant=c['index']%2 if c['role']=='ultimate' else c['variant'],x=a.x if s.get('radial') else a.x+c['dir']*(55 if c['profession']=='tang' else 68),y=a.y-48,dir=c['dir'],cast=c['id'])
             for b in targets:self.hit(c,b,s['damage']*(s.get('finisher',1) if c['index']==s.get('hits',1)-1 else 1))
             return
         count=s.get('count',1)
@@ -206,6 +215,10 @@ class World:
         if st['guard_queue'] and st['hit_until']<=now and not any(active(a,k,now) for k in ('sleep','down','stun','seal')):st['guard_queue']=False;a.guard=st['held_until']>now
         if st['held_until']<=now and not st['auto_guard']:a.guard=False
         if st['cast'] and st['cast']['end']<=now:st['cast']=None
+        if st['basic_queue_until']:
+            queued=st['basic_queue_until'];st['basic_queue_until']=0
+            if queued>=now and not st['cast']:self.cast(a,'basic')
+            elif queued>=now:st['basic_queue_until']=queued
         a.guard=a.guard and not any(active(a,k,now) for k in ('sleep','down','stun','seal'))
         blocked=any(active(a,k,now) for k in ('root','sleep','down','stun')) or st['hit_until']>now or st['cast'] is not None
         if blocked:a.vx=0

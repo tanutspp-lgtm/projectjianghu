@@ -1,0 +1,31 @@
+{
+  "version": "187.2",
+  "passed": true,
+  "jsCombatTests": 28,
+  "jsHotfixGroups": 14,
+  "jsNewPlayflowGroups": 9,
+  "pythonHotfixAndCoreDistinct": 18,
+  "pythonAdditionalPlayflow": 5,
+  "layoutPermutations": 480,
+  "pages": 2,
+  "inputChecks": 17280,
+  "directionFrameComparisons": 1536,
+  "localWebsocketAvatars": 8,
+  "localWebsocketBasicBufferClasses": 4,
+  "browser": [
+    "offlineflute entry; basic click",
+    "basic panel says no cooldown and animation duration",
+    "Jian break panel says radial165 and generatedwater ring",
+    "newflute atlas decoded and shown in preview"
+  ],
+  "gif": "rendered with production avatar/VFX/Music code; not a live gameplay recording",
+  "notTested": [
+    "user liveVPS",
+    "physical iOS/Android device performance"
+  ],
+  "aspdStatAdded": false,
+  "newBasicCooldown": 0,
+  "newJianBreakRange": 165,
+  "musicNotesCosmeticOnly": true,
+  "sourceOriginal187Untouched": true
+}

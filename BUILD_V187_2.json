@@ -1,0 +1,12 @@
+{
+  "version": "187.2",
+  "base": "187.1",
+  "backendFeature": "martial-playflow-v1872-v1",
+  "world": 52,
+  "basicCooldown": 0,
+  "basicInputBufferSeconds": 0.12,
+  "jianBreakRadialRange": 165,
+  "noteGameplay": false,
+  "aspdStatAdded": false,
+  "deployed": false
+}

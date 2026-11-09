@@ -1,6 +1,6 @@
 {
   "version": 187,
-  "revision": "martial-combat-v187-v1",
+  "revision": "martial-playflow-v1872-v1",
   "balance": "starter-playtest-1",
   "fixedStep": 0.016666666666666666,
   "healWindow": 60,
@@ -18,7 +18,7 @@
     "jian": {
       "guardReduction": 0.72,
       "basic": {
-        "cd": 0.58,
+        "cd": 0,
         "duration": 0.46,
         "windup": 0.16,
         "sp": 0,
@@ -31,9 +31,10 @@
         "duration": 0.65,
         "windup": 0.3,
         "sp": 12,
-        "range": 140,
+        "range": 165,
         "damage": 100,
-        "melee": true
+        "melee": true,
+        "radial": true
       },
       "first": {
         "cd": 8,
@@ -71,7 +72,7 @@
     "tang": {
       "guardReduction": 0.62,
       "basic": {
-        "cd": 0.64,
+        "cd": 0,
         "duration": 0.5,
         "windup": 0.17,
         "sp": 0,
@@ -129,7 +130,7 @@
     "flute": {
       "guardReduction": 0.6,
       "basic": {
-        "cd": 0.72,
+        "cd": 0,
         "duration": 0.6,
         "windup": 0.23,
         "sp": 0,
@@ -192,7 +193,7 @@
     "healer": {
       "guardReduction": 0.64,
       "basic": {
-        "cd": 0.72,
+        "cd": 0,
         "duration": 0.55,
         "windup": 0.2,
         "sp": 0,
