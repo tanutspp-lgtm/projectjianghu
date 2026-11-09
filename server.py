@@ -467,6 +467,8 @@ class Guest(Actor):
     map_request_times: deque = field(default_factory=deque)
     avatar: str = 'male_hair_01_black'
     pending_class_cast: Optional[dict] = None
+    class_combo182: int = 0
+    attack_variant182: int = 0
     class_attack_reach: float = 265
     buttons: int = 0
     last_input: float = field(default_factory=time.monotonic)
@@ -1202,7 +1204,7 @@ def hurt(victim, damage, x, y, kind,critical=False,owner=None):
             victim.climb_cd=max(.5,victim.climb_cd)
     if isinstance(victim,Guest):victim.last_damage_at=time.monotonic()
     event('hit', victim.x, victim.y - 78, victim=victim.id, damage=damage, kind=kind,critical=critical,
-          **({'owner':owner} if owner is not None else {}))
+          **({'owner':owner,'profession':classes181.profession(players[owner].avatar)} if owner in players else ({'owner':owner} if owner is not None else {})))
     if victim.hp <= 0 and victim.dead <= 0:
         victim.dead = next_respawn_delay() if isinstance(victim, Monster) else 2.5
         victim.guard = False
@@ -1269,11 +1271,14 @@ def perform_action(p: Guest, action: str):
         damage,critical=prog.roll_attack(p,action,hp_reference)
         p.sp-=prog.SKILL_SP[action]
         p.cool=class_cfg['cool']
+        if action=='attack' and classes181.profession(p.avatar) in ('jian','tang'):
+            p.attack_variant182=p.class_combo182%2;p.class_combo182+=1
+        else:p.attack_variant182=0
         set_action(p,action,class_cfg['duration'])
         p.pending_class_cast={'cfg':class_cfg,'action':action,'dir':shot_dir,
-                              'damage':damage,'critical':critical,'left':class_cfg['windup']}
+                              'damage':damage,'critical':critical,'left':class_cfg['windup'],'variant':p.attack_variant182}
         event('cast',p.x,p.y-64,kind=action,owner=p.id,profession=classes181.profession(p.avatar),
-              duration=class_cfg['duration'],shotDir=shot_dir,classStart=True)
+              duration=class_cfg['duration'],shotDir=shot_dir,classStart=True,variant=p.attack_variant182)
         return
     cooldown, duration, speed, _, lifespan, pierce = ATTACKS[action]
     damage,critical=prog.roll_attack(p,action,hp_reference)
@@ -1314,14 +1319,15 @@ def advance_class_cast181(p,dt):
         if amount:event('heal',target.x,target.y-84,victim=target.id,owner=p.id,amount=amount)
         return
     shot_seq+=1
-    x=p.x+direction*(cfg['reach']/2 if cfg['mode']=='melee' else 36)
-    y=p.y-(64 if cls=='flute' else 50)
+    origin=classes181.muzzle(cls,p.ground and not p.climb)
+    x=p.x+direction*(cfg['reach']/2 if cfg['mode']=='melee' else origin['x'])
+    y=p.y+origin['y']
     shots.append(Shot(shot_seq,p.id,kind,x,y,direction*cfg['speed'],pending['damage'],
                       cfg['life'],cfg['pierce'],critical=pending['critical'],origin_x=p.x,
                       profession=cls,mode=cfg['mode'],facing=direction,reach=cfg['reach']))
     event('class_release',p.x,y,kind=kind,owner=p.id,profession=cls,mode=cfg['mode'],
           shotId=str(shot_seq),shotX=round(x,1),shotY=round(y,1),shotDir=direction,
-          shotSpeed=cfg['speed'])
+          shotSpeed=cfg['speed'],variant=pending.get('variant',0))
 
 # Never grant extra casts or reduce cooldown. A manual spell pressed during AUTO
 # waits for the next legal cast window instead of being lost to AUTO spam.
@@ -1997,14 +2003,14 @@ def apply_shot(s, victim, is_mob):
             victim.guard = False
             victim.broken = 1.15
             victim.stun = .85
-            event('guardbreak', victim.x, victim.y - 78, victim=victim.id)
+            event('guardbreak', victim.x, victim.y - 78, victim=victim.id,owner=s.owner,profession=s.profession,shotDir=s.facing)
             return True
         actual=hit_by_shot(s,victim,s.damage,is_mob)
         if is_mob and victim.hp>0:apply_qi_on_primary_hit(s,victim,actual)
         s.pierce -= 1
         return s.pierce <= 0
     if victim.guard and victim.broken <= 0:
-        event('block', victim.x, victim.y - 82, victim=victim.id)
+        event('block', victim.x, victim.y - 82, victim=victim.id,owner=s.owner,profession=s.profession,shotDir=s.facing)
         return True
     if not is_mob and victim.inv > 0: return False
     dmg = int(s.damage * (0.78 if not is_mob else 1))
@@ -3177,6 +3183,7 @@ async def handle_connection(ws):
         if stress_test: features.append('open-channel-stress-v80eh')
         if ENABLE_CHANNEL_STRESS: features.append('stress-occupancy-v80ei')
         features.append('classes-v181-36frames-v1')
+        features.append('classes-v182-combo-v1')
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3525,7 +3532,7 @@ async def handle_connection(ws):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'wuxia-online v8.0CR network writer stage profile + dense-world AOI index; cooperative-PvE; AOI/delta\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V182 classes-v182-combo-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3533,6 +3540,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
+    print('JIANGHU_BACKEND_V182 classes-v182-combo-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)

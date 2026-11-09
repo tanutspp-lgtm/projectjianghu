@@ -1,0 +1,8 @@
+{
+  "frontend": 182,
+  "backend": 182,
+  "world": 52,
+  "classFeature": "classes-v182-combo-v1",
+  "base": "V181_FULL",
+  "qa": "Local sockets and source/native-render checks; not live VPS or physical mobile."
+}

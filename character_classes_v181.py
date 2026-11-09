@@ -11,12 +11,13 @@ def profession(avatar):
 def spec(cls,action):
     b=BASE[action];s=dict(b,mode='ranged',reach=0,windup=b['duration']*.5,healPct=0)
     if cls=='jian' or (cls=='tang' and action=='attack'):
-        s.update(mode='melee',speed=0,life=.10,reach=(145 if action=='aoe' else 126) if cls=='jian' else 92)
+        s.update(mode='melee',speed=0,life=.10,reach=(145 if action=='aoe' else 134) if cls=='jian' else 102)
     if cls=='tang' and action=='aoe':s.update(speed=550,pierce=1)
     if cls=='healer' and action=='aoe':s.update(mode='heal',cool=3,duration=.60,windup=.30,speed=0,life=.01,pierce=0,reach=300,healPct=15)
     return s
 
-def row_for(cls,action):
+def row_for(cls,action,variant=0):
+    if action=='attack' and variant==1 and cls in ('jian','tang'):return 30 if cls=='jian' else 36
     return 24 if action=='attack' or (cls=='healer' and action=='break') else 30
 
 def actor_frame(a,tick):
@@ -27,7 +28,7 @@ def actor_frame(a,tick):
     if a.stun>.02:return 20
     if a.guard:return 24
     if a.action in BASE and a.action_at<a.action_duration:
-        return row_for(profession(a.avatar),a.action)+min(5,int(a.action_at/max(.001,a.action_duration)*6))
+        return row_for(profession(a.avatar),a.action,getattr(a,'attack_variant182',0))+min(5,int(a.action_at/max(.001,a.action_duration)*6))
     if a.action=='dash' and a.action_at<a.action_duration:return 16+int(a.action_at>a.action_duration*.5)
     if not a.ground:
         if a.action=='jump' and a.action_at<.055:return 12
@@ -35,3 +36,6 @@ def actor_frame(a,tick):
     if abs(a.vx)>25:return 4+int(a.walk_dist/18)%8
     phase=(tick/30)%4.2
     return 1 if 3.95<phase<4.08 else [0,2,3][int(tick/20)%3]
+
+def muzzle(cls,grounded=False):
+    return dict(x=54 if cls=='flute' else 36,y=-50+(7 if grounded else 0))

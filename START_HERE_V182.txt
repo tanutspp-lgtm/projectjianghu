@@ -1,0 +1,1 @@
+Read README_V182_TH.txt. Backend update AND service restart required.
