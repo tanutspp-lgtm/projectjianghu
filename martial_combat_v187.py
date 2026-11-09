@@ -9,13 +9,15 @@ from pathlib import Path
 from types import SimpleNamespace
 RULES=json.loads(Path(__file__).with_name('combat_rules_v187.json').read_text())
 FEATURE='martial-combat-v187-v1'
+LOCK_FEATURE='martial-lock-state-v1871-v1'
 ROLES=('basic','guard','break','first','second','ultimate')
 
 def state(a):
     if not hasattr(a,'martial187'):
         a.martial187=dict(cd={},status={},rage=0.,meter=100.,held_until=0.,auto_guard=None,guard_queue=False,
             counter=0.,energy=0.,block_hits={},slow_proc={},heal_stacks=0,heal_progress=0.,ledger=[],cast=None,
-            combo=0,lock=None,last_attacker=None,shield=0.,shield_until=0.,hit_until=0.,motion=None,guard_recovery=0.)
+            combo=0,lock=None,lock_source=None,last_attacker=None,shield=0.,shield_until=0.,hit_until=0.,motion=None,guard_recovery=0.)
+    a.martial187.setdefault('lock_source',None)
     return a.martial187
 
 def active(a,key,now): return state(a)['status'].get(key,0)>now
@@ -42,7 +44,9 @@ class World:
         return alive(b) and abs(a.x-b.x)<=reach+18 and abs(a.y-b.y)<95 and (not front or (b.x-a.x)*a.face>=-15) and not self.blocked(a.x,a.y-43,b.x,b.y-43,a,b)
     def cancel(self,a):
         c=state(a)['cast']
-        if c:c['cancelled']=True;self.emit('cancel',actor=a.id,cast=c['id'])
+        if c:
+            if c['role']=='ultimate':state(a)['status'].pop('yellow',None)
+            c['cancelled']=True;self.emit('cancel',actor=a.id,cast=c['id'])
         state(a)['cast']=None
     def cc(self,a,kind,seconds):
         st=state(a)
@@ -55,10 +59,10 @@ class World:
         if kind=='stun':a.stun=max(a.stun,seconds)
         if kind=='seal':a.broken=max(a.broken,seconds)
     def lock(self,p,target):
-        if target is None:state(p)['lock']=None;return True
+        if target is None:state(p)['lock']=None;state(p)['lock_source']=None;return True
         a=self.mobs.get(target)
         if not alive(a) or abs(p.x-a.x)>900:return False
-        state(p)['lock']=a.id;return True
+        state(p)['lock']=a.id;state(p)['lock_source']='manual';return True
     def guard(self,p,held):
         st=state(p);st['held_until']=self.time+.6 if held else 0
         if not held:
@@ -73,7 +77,7 @@ class World:
         self.time=time.monotonic();st=state(p);cls=self.cls(p)
         if role not in ROLES:return False,'สกิลไม่ถูกต้อง'
         if role=='guard':return self.guard(p,True),None
-        s=dict(self.spec(p,role));counter=st['counter']>self.time;yellow=cls=='jian' and role=='first' and counter and st['energy']>=180
+        s=dict(self.spec(p,role));counter=st['counter']>self.time;yellow=role=='ultimate' or cls=='jian' and role=='first' and counter and st['energy']>=180
         checks=((not alive(p),'หมดสติ'),(bool(p.climb),'อยู่บนเชือก'),(active(p,'sleep',self.time) or active(p,'stun',self.time),'ติดสถานะควบคุม'),
             ((active(p,'down',self.time) or st['hit_until']>self.time) and not yellow and not (counter and not active(p,'down',self.time)),'ยังอยู่ในกระบวนท่าศัตรู'),
             (active(p,'seal',self.time),'ถูกผนึกสกิล'),(st['cast'] is not None,'กำลังออกท่า'),(st['cd'].get(role,0)>self.time,'คูลดาวน์'),
@@ -81,11 +85,12 @@ class World:
         for condition,error in checks:
             if condition:return False,error
         target=self.actors.get(st['lock'])
-        if target and not alive(target):st['lock']=None;target=None
+        if target and not alive(target):st['lock']=None;st['lock_source']=None;target=None
         needs_target=not (cls=='healer' and role in ('second','ultimate') or cls=='jian' and role=='second')
-        if target and needs_target and not self.reachable(p,target,s['range'],False):return False,'นอกระยะ'
+        if target and needs_target and (st['lock_source']!='retaliation' or cls=='tang' and role=='ultimate') and not self.reachable(p,target,s['range'],False):return False,'นอกระยะ'
         if counter:st['hit_until']=0
-        if yellow:st['status'].pop('down',None);p.down=0;st['status']['yellow']=self.time+s['duration']
+        if yellow:
+            st['status'].pop('down',None);p.down=0;p.kb_time=0;p.kb_dir=0;st['hit_until']=0;st['status']['yellow']=self.time+s['duration']
         p.guard=False;st['auto_guard']=None;st['held_until']=0;st['guard_queue']=False;p.sp-=s['sp'];st['cd'][role]=self.time+s['cd']
         if role=='ultimate':st['rage']=0
         direction=p.face
@@ -95,7 +100,7 @@ class World:
         variant=st['combo']%2 if role=='basic' and (cls=='jian' or close) else 0
         if role=='basic' and (cls=='jian' or close):st['combo']+=1
         cast_scale=self.damage_scale(p)
-        self.serial+=1;c=dict(critical=getattr(p,'martial_crit187',False),id='c'+str(self.serial),actor=p.id,profession=cls,role=role,dir=direction,start=self.time,end=self.time+s['duration'],next=self.time+s['windup'],index=0,s=s,target=st['lock'],variant=variant,melee=s.get('melee',False) or close,cancelled=False,counter=counter and not(cls=='jian' and role=='second'),healBonus=1.,scale=cast_scale)
+        self.serial+=1;c=dict(critical=getattr(p,'martial_crit187',False),id='c'+str(self.serial),actor=p.id,profession=cls,role=role,dir=direction,start=self.time,end=self.time+s['duration'],next=self.time+s['windup'],index=0,s=s,target=None if st['lock_source']=='retaliation' and not(cls=='tang' and role=='ultimate') else st['lock'],variant=variant,melee=s.get('melee',False) or close,cancelled=False,counter=counter and not(cls=='jian' and role=='second'),healBonus=1.,scale=cast_scale)
         if close:s['range']=s['meleeRange'];s['count']=1
         if cls=='healer' and s.get('heal'):
             c['healBonus']=1+min(5,int(st['heal_stacks']))*.1;st['heal_stacks']=st['heal_progress']=0
@@ -128,7 +133,7 @@ class World:
         a=self.actors.get(c['actor'])
         if not a or not alive(v):return
         vs=state(v);ats=state(a);vs['last_attacker']=a.id
-        if not vs['lock'] and v.id in self.players:vs['lock']=a.id
+        if not vs['lock'] and v.id in self.players and self.capable(a):vs['lock']=a.id;vs['lock_source']='retaliation'
         vs['status'].pop('sleep',None);s=c['s'];rage_scale=min(2,amount*c.get('scale',1)*RULES['rage']['referenceMaxHp']/(RULES['rage']['referenceDamage']*v.max_hp))
         def grant(kind):
             if c['role']=='ultimate':return
@@ -161,7 +166,7 @@ class World:
         if not blocking:
             if s.get('cc'):self.cc(v,s['cc'],s['ccTime'])
             if s.get('weaken'):self.cc(v,'weaken',4)
-        self.emit('damage',actor=v.id,owner=a.id,amount=actual,blocked=blocking,cast=c['id'],dir=c['dir'],critical=bool(c.get('critical',False)))
+        self.emit('damage',actor=v.id,owner=a.id,amount=actual,blocked=blocking and c['role']!='break',cast=c['id'],dir=c['dir'],critical=bool(c.get('critical',False)))
     def incoming(self,v,damage,source_x,knock=False,source_id=None):
         if not alive(v):return False
         a=self.mobs.get(source_id) or min(self.mobs.values(),key=lambda m:abs(m.x-source_x),default=None)
@@ -169,7 +174,7 @@ class World:
         self.serial+=1;c=dict(id='mob'+str(self.serial),actor=a.id,role='basic',s=dict(cc='down',ccTime=.55) if knock else {},dir=1 if v.x>=a.x else -1,end=self.time+.3,melee=True,scale=1)
         self.hit(c,v,damage)
         hit=next((e for e in reversed(self.events) if e['type']=='damage' and e.get('cast')==c['id']),None)
-        if hit and not hit['blocked'] and alive(v):
+        if hit and not hit['blocked'] and alive(v) and not active(v,'yellow',self.time) and not active(v,'red',self.time):
             v.inv=1.12;v.kb_time=.28;v.kb_dir=1 if v.x>=a.x else -1;v.vx=v.kb_dir*300;v.vy=-240;v.ground=False;v.climb=None
         return True
     def release(self,c):
@@ -244,6 +249,6 @@ class World:
         for a in self.actors.values():
             st=state(a);c=st['cast']
             if a.id not in self.players and not any(until>self.time for until in st['status'].values()):continue
-            actors.append(dict(id=a.id,isPlayer=a.id in self.players,profession=self.cls(a),rage=round(st['rage'],2),guardMeter=round(st['meter'],2),counterUntil=st['counter'],blockedEnergy=st['energy'],healStacks=st['heal_stacks'],healRemaining=round(self.budget(a),2) if a.id in self.players else 0,cd=st['cd'],status=st['status'],lock=st['lock'],cast={k:c[k] for k in ('id','role','start','end','dir','variant','melee','counter')} if c else None))
+            actors.append(dict(id=a.id,isPlayer=a.id in self.players,profession=self.cls(a),capable=self.capable(a),guard=bool(a.guard),rage=round(st['rage'],2),guardMeter=round(st['meter'],2),counterUntil=st['counter'],blockedEnergy=st['energy'],healStacks=st['heal_stacks'],healRemaining=round(self.budget(a),2) if a.id in self.players else 0,cd=st['cd'],status=st['status'],lock=st['lock'],lockSource=st['lock_source'],cast={k:c[k] for k in ('id','role','start','end','dir','variant','melee','counter')} if c else None))
         shots=[{k:p[k] for k in ('id','owner','profession','role','dir','x','y','speed','range','traveled','age','dead','fade')} for p in self.shots]
         return dict(version=187,epoch=self.epoch,eventHighwater=self.events[-1]['id'] if self.events else 0,time=self.time,actors=actors,shots=shots,events=self.events[-80:])

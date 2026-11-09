@@ -1,0 +1,8 @@
+{
+  "version": "187.1",
+  "base": "187",
+  "backendFeature": "martial-lock-state-v1871-v1",
+  "aspdImplemented": false,
+  "world": 52,
+  "deploymentPerformed": false
+}

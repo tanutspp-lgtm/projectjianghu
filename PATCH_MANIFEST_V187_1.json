@@ -1,0 +1,54 @@
+{
+  "version": "187.1",
+  "base": "187",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "size": 3202,
+      "sha256": "349f1396ab0736eb8be114e5bc85eac52df45c984ef620294676bbe09fe0d609",
+      "baseSha256": "7704273c897e7312e2ffa6afd08a31b09d8baf6a4e4cfc8832b5f8b8303b58e3"
+    },
+    {
+      "path": "BUILD_V187_1.json",
+      "size": 168,
+      "sha256": "9462658a25b334079e36b82c86d5e1bd6e5ac9ea98b0ca46610ed995d3ec1c83",
+      "baseSha256": null
+    },
+    {
+      "path": "QA_V187_1.json",
+      "size": 761,
+      "sha256": "b396b6976e1860e6397d395a3b1fc416cba43dd610a806639d778fa6343bcabb",
+      "baseSha256": null
+    },
+    {
+      "path": "README_PATCH_V187_1_TH.txt",
+      "size": 6793,
+      "sha256": "d9a720163b7821b42f50a4e7473c9008ff6189e96156c287d926c9610d6e6bfd",
+      "baseSha256": null
+    },
+    {
+      "path": "RESTART_AND_VERIFY_V187_1.sh",
+      "size": 1483,
+      "sha256": "e5e2ba1115f2e7dffadc50bff224e74e63a33ff32992c511d108e0888fdc09d5",
+      "baseSha256": null
+    },
+    {
+      "path": "VERIFY_RUNNING_V187_1.py",
+      "size": 922,
+      "sha256": "d123a3287f4afa296909c86ad9849dddb414e9319c59759916c5abff1ebdec9f",
+      "baseSha256": null
+    },
+    {
+      "path": "martial_combat_v187.py",
+      "size": 20423,
+      "sha256": "0ec62970ffe975d525ca5c5daa672aae55cb598d2c3c9b3aba5557d054343622",
+      "baseSha256": "7365baa10c85bf57c31384ed4b1f8e4eb73f0f82c3a7e5068fb2e4c277e24a02"
+    },
+    {
+      "path": "server.py",
+      "size": 206442,
+      "sha256": "7098b839065a9a1a0081511816757cf387ec25343b03e261d34c9a35010722d5",
+      "baseSha256": "286ae993f31b9c4625032f6bf777f8e01ab795aaa76708a5d50d147d8e8417df"
+    }
+  ]
+}

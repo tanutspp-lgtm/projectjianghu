@@ -1,0 +1,26 @@
+{
+  "version": "187.1",
+  "passed": true,
+  "combatJS": 28,
+  "pythonDistinctTests": 18,
+  "hotfixRuntimeGroups": 14,
+  "layoutPermutations": 480,
+  "pagesPerLayout": 2,
+  "pointerClickKeyboardChecks": 17280,
+  "fxDirectionComparisons": 1536,
+  "websocketAvatars": 8,
+  "binaryClasses": 4,
+  "browser": [
+    "saved reorder then cast without reload; cooldown started",
+    "PvP arena avatars drawn and minimap loaded",
+    "no permanent guard/rage HUD node",
+    "ultimate100% class; production CSS aura display:block, gold border, pulse",
+    "ultimate cast accepted; rage consumed"
+  ],
+  "notVerified": [
+    "live user VPS",
+    "physical iOS/Android devices",
+    "physical audio listening"
+  ],
+  "ASPD": "deferred; unchanged V187 basic speed/cooldown"
+}
