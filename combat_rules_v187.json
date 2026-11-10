@@ -1,18 +1,21 @@
 {
   "version": 187,
-  "revision": "martial-rebalance-v1875-v1",
-  "balance": "starter-playtest-1",
+  "revision": "martial-tempo-v1876-v1",
+  "balance": "starter-playtest-187.6",
   "fixedStep": 0.016666666666666666,
   "healWindow": 60,
   "healCap": 0.4,
   "rage": {
     "block": 10,
-    "hit": 4,
-    "hurt": 2,
+    "hit": 8,
+    "hurt": 5,
     "intoGuard": 0.1,
     "referenceDamage": 85,
     "referenceMaxHp": 1200,
-    "attackerPerCastCap": 8
+    "attackerPerCastCap": 16,
+    "healPerTenPercent": 8,
+    "healPerCastCap": 12,
+    "combatWindow": 6
   },
   "classes": {
     "jian": {
@@ -241,17 +244,49 @@
       },
       "ultimate": {
         "cd": 22,
-        "duration": 1.2,
+        "duration": 0.5,
         "windup": 0.2,
         "sp": 28,
         "range": 560,
-        "damage": 48,
+        "damage": 24,
         "speed": 540,
         "pierce": true,
         "heal": 0.2,
-        "count": 6
+        "count": 6,
+        "cc": "stun",
+        "ccTime": 1.2,
+        "rageCost": 60,
+        "rageMax": 100,
+        "rageTiers": [
+          {
+            "at": 60,
+            "damage": 16,
+            "stun": 0.6
+          },
+          {
+            "at": 70,
+            "damage": 18,
+            "stun": 0.75
+          },
+          {
+            "at": 80,
+            "damage": 20,
+            "stun": 0.9
+          },
+          {
+            "at": 90,
+            "damage": 22,
+            "stun": 1.05
+          },
+          {
+            "at": 100,
+            "damage": 24,
+            "stun": 1.2
+          }
+        ]
       }
     }
   },
-  "guardMax": 150
+  "guardMax": 150,
+  "jianReturnWindow": 2.5
 }

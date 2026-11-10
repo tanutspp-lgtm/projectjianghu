@@ -1,0 +1,152 @@
+{
+  "version": "187.6",
+  "regressions": [
+    {
+      "command": [
+        "node",
+        "frontend187_6/tools/tests_v187/test_combat.cjs"
+      ],
+      "code": 0,
+      "output": "PASS six real roles per class\nPASS sticky last attacker never replaces an existing lock\nPASS out of range keeps SP rage cooldown and lock unchanged\nPASS ordinary hit locks for complete incoming multihit move\nPASS successful block maintains only same cast after finger release\nPASS blocked CC does not knock down but does chip damage\nPASS counter may retaliate into armored ultimate but cannot knock yellow down\nPASS break allows movement while sealing skills\nPASS root allows guard and attacks but prevents dash and closer\nPASS sleep initial hit applies sleep and next damage wakes\nPASS stun is not removed by damage\nPASS yellow escapes knockdown but never stun/sleep\nPASS guard energy has a ceiling\nPASS healing cap combined across doctors and same party only\nPASS rolling healing window, overheal and max HP swaps\nPASS heal snapshot gives entire cast the same stack bonus\nPASS healer ultimate emits exactly 3 left and 3 right and heals visible party\nPASS tang thrown dual knives split normal damage and stop at first enemy\nPASS flute basic stops first enemy, skill pierces both\nPASS physical platform blocks melee and projectiles across floors\nPASS skill wall blocks piercing flute waves\nPASS range ordering flute > tang and sword > dagger melee\nPASS bots use class-specific abilities and complete a fight\nPASS auto guard after release does not cover a different incoming cast\nPASS unguarded exchange has faster rage under V187.6\nPASS ultimate cannot regenerate its own attacker rage\nPASS released guard still covers the second knife of the same flight\nPASS healer may attack after healing animation while heal stays on cooldown\n28 combat tests passed\n"
+    },
+    {
+      "command": [
+        "node",
+        "frontend187_6/tools/tests_v187/test_loadout.cjs"
+      ],
+      "code": 0,
+      "output": "PASS 24 skills, four unique complete innate sets\nPASS all 120 permutations in each set accepted, no duplicate or basic allowed\nPASS mixed-class and mixed-set injection rejected\nPASS save, restore, fixed-center and action lookup\nPASS two page selections and profession profiles remain independent\nPASS draft changes do not mutate saved layout\nPASS malformed persisted state is normalized without accepting foreign skills\nPASS blocked storage still permits current-session edits and reports no persistence\nPASS heal cap contract 40 percent rolling 60s and all doctors\nPASS unknown and prototype IDs rejected\n{\"groups\":10,\"permutations\":480}\n"
+    },
+    {
+      "command": [
+        "node",
+        "frontend187_6/tools/tests_v187/test_return.cjs"
+      ],
+      "code": 0,
+      "output": "PASS three distinct moves earn2.5s, bind attacker, reset first only, never reset dash\nPASS stationary ground counter reaches600 both sides, only bound target, no projectile/lunge\nPASS guard at impact blocks pool knockdown and reduces damage\nPASS later attacks cannot retarget an earned return\nPASS dead, out-of-range, other-floor and occluded marked target reject with no resource loss\nPASS expiry restores normal145 melee; ready pool obeys stun/sleep and gold victim immunity\nPASS hardCC cancels return gold and untriggered first stays melee\nPASS bot uses the ranged return when ready instead of walking or trying a short dash\n8 single-target water return groups passed\n"
+    },
+    {
+      "command": [
+        "node",
+        "frontend187_6/tools/tests_v187/test_tempo.cjs"
+      ],
+      "code": 0,
+      "output": "PASS exact 2.5s return window, down remains2s and casts cannot arm at expiry\nPASS non-guarding classes reach their ultimate threshold before lethal in basic exchanges\nPASS support heal generates actual fraction rage, capped12 across one cast and party recipients\nPASS no rage from overheal, out-of-combat, enemy heal or ultimate heal; receiver40% unchanged\nPASS real attack opens combat; healer ally can gain support rage without attacking\nPASS healer ult interrupts Tang/Jian/Flute gold and permits retreat before stun ends\nPASS healer ult hits all targets in needle paths; gold stun, guard/red immunity, friend safe\nPASS healer cannot escape existing stun/sleep; can escape down and enemy hitlock\nPASS solo healer bot uses ult at low health, and counter reaction waits for visible gold\nPASS Tang bot throws root before ult; flute retreats from sleeping target without attacks\nPASS healer60 min and five tiers snapshot damage/stun, spend all, never alter shared rules\nPASS minimum-tier counter frees doctor in time to move before stun expires\nPASS doctor debuff weakens on normal hit and after successful guard break\nPASS needles of one ult deal all hits without stacking or refreshing stun beyond tier duration\nPASS solo doctor may use stun ultimate to escape even after the40% heal budget is exhausted\n15 tempo/support/counter groups passed\n"
+    },
+    {
+      "command": [
+        "node",
+        "frontend187_6/tools/tests_v187/test_tempo_ui.cjs"
+      ],
+      "code": 0,
+      "output": "PASS four classes actual runtime 50/100%, ready aura, rearranged slots, SET2 and online snapshots\n"
+    },
+    {
+      "command": [
+        "node",
+        "frontend187_6/tools/tests_v187/test_visuals.cjs"
+      ],
+      "code": 0,
+      "output": "PASS 1536 orientation/frame comparisons, both facings.\n"
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "backend187_6/tests_v187/test_backend.py"
+      ],
+      "code": 0,
+      "output": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.024s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "backend187_6/tests_v187/test_martial.py"
+      ],
+      "code": 0,
+      "output": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.037s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "backend187_6/tests_v187/test_rebalance.py"
+      ],
+      "code": 0,
+      "output": "..............................\n----------------------------------------------------------------------\nRan 30 tests in 0.058s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "backend187_6/tests_v187/test_tempo.py"
+      ],
+      "code": 0,
+      "output": "............................\n----------------------------------------------------------------------\nRan 28 tests in 0.071s\n\nOK\n"
+    }
+  ],
+  "rageComparison": [
+    {
+      "version": "187.5",
+      "class": "tang",
+      "exchanges": 15,
+      "ownHP": 0,
+      "enemyHP": 120,
+      "rage": 80.82352941176472,
+      "required": 100,
+      "ready": false
+    },
+    {
+      "version": "187.6",
+      "class": "tang",
+      "exchanges": 9,
+      "ownHP": 435,
+      "enemyHP": 552,
+      "rage": 100,
+      "required": 100,
+      "ready": true
+    },
+    {
+      "version": "187.5",
+      "class": "flute",
+      "exchanges": 15,
+      "ownHP": 0,
+      "enemyHP": 150,
+      "rage": 79.41176470588236,
+      "required": 100,
+      "ready": false
+    },
+    {
+      "version": "187.6",
+      "class": "flute",
+      "exchanges": 9,
+      "ownHP": 435,
+      "enemyHP": 570,
+      "rage": 100,
+      "required": 100,
+      "ready": true
+    },
+    {
+      "version": "187.5",
+      "class": "healer",
+      "exchanges": 15,
+      "ownHP": 0,
+      "enemyHP": 480,
+      "rage": 63.882352941176464,
+      "required": 100,
+      "ready": false
+    },
+    {
+      "version": "187.6",
+      "class": "healer",
+      "exchanges": 7,
+      "ownHP": 605,
+      "enemyHP": 864,
+      "rage": 66.62352941176471,
+      "required": 60,
+      "ready": true
+    }
+  ],
+  "duelSimulation": "16matchups x12seeds x60seconds ceiling; exploratory,notbalance guarantee",
+  "nativeRuntimePreview": true,
+  "serverProcessBootedThisPatch": false,
+  "liveDeviceOrVPSTested": false,
+  "deployed": false
+}

@@ -14,6 +14,7 @@ FLOW_FEATURE='martial-playflow-v1872-v1'
 GUARD_FEATURE='martial-guard360-v1873-v1'
 TURN_FEATURE='martial-turn-v1874-v1'
 COMBO_FEATURE='martial-rebalance-v1875-v1'
+TEMPO_FEATURE='martial-tempo-v1876-v1'
 ROLES=('basic','guard','break','first','second','ultimate')
 
 def state(a):
@@ -21,6 +22,7 @@ def state(a):
         a.martial187=dict(cd={},status={},rage=0.,meter=float(RULES['guardMax']),held_until=0.,auto_guard=None,guard_queue=False,
             counter=0.,energy=0.,block_hits={},slow_proc={},heal_stacks=0,heal_progress=0.,ledger=[],cast=None,
             combo=0,lock=None,lock_source=None,last_attacker=None,shield=0.,shield_until=0.,hit_until=0.,motion=None,guard_recovery=0.)
+    a.martial187.setdefault('combat_until',0.)
     a.martial187.setdefault('tang_range_shots',0)
     a.martial187.setdefault('jian_guard_chains',0)
     a.martial187.setdefault('jian_guard_seen',[])
@@ -45,6 +47,7 @@ class World:
         self.players=dict(players);self.mobs=dict(mobs);self.actors={**self.players,**self.mobs};self.time=time.monotonic()
         for p in self.players.values():state(p)
     def cls(self,a):return getattr(a,'avatar','jian_male').split('_')[0] if a.id in self.players else 'jian'
+    def rage_cap(self,a):return RULES['classes'][self.cls(a)]['ultimate'].get('rageMax',100)
     def capable(self,a):return a.id in self.players or bool(getattr(a,'hum',False) and getattr(a,'zone_mode','common')!='common')
     def party(self,a):return getattr(a,'party_id',None) or ('solo:'+a.id if a.id in self.players else 'mobs')
     def enemies(self,a):return [m for m in self.mobs.values() if alive(m)] if a.id in self.players else [p for p in self.players.values() if alive(p)]
@@ -99,7 +102,7 @@ class World:
         checks=((not alive(p),'หมดสติ'),(bool(p.climb),'อยู่บนเชือก'),(active(p,'sleep',self.time) or active(p,'stun',self.time),'ติดสถานะควบคุม'),
             ((active(p,'down',self.time) or st['hit_until']>self.time) and not yellow and not (counter and not active(p,'down',self.time)),'ยังอยู่ในกระบวนท่าศัตรู'),
             (active(p,'seal',self.time),'ถูกผนึกสกิล'),(st['cast'] is not None,'กำลังออกท่า'),(role!='basic' and st['cd'].get(role,0)>self.time,'คูลดาวน์'),
-            (active(p,'root',self.time) and bool(s.get('move') or s.get('lunge')),'ถูกตรึงเท้า'),(p.sp<s['sp'],'SP ไม่พอ'),(role=='ultimate' and st['rage']<100,'เรจยังไม่เต็ม'))
+            (active(p,'root',self.time) and bool(s.get('move') or s.get('lunge')),'ถูกตรึงเท้า'),(p.sp<s['sp'],'SP ไม่พอ'),(role=='ultimate' and st['rage']<s.get('rageCost',100),'เรจยังไม่เต็ม'))
         for condition,error in checks:
             if condition:return False,error
         target=self.actors.get(st['jian_return_target'] if s.get('waterCounter') else st['lock'])
@@ -110,6 +113,7 @@ class World:
         if counter:st['hit_until']=0
         if yellow:
             st['status'].pop('down',None);p.down=0;p.kb_time=0;p.kb_dir=0;st['hit_until']=0;st['status']['yellow']=self.time+s['duration']
+        committed_rage=st['rage']
         p.guard=False;st['auto_guard']=None;st['held_until']=0;st['guard_queue']=False;p.sp-=s['sp'];st['basic_queue_until']=0
         if role=='basic':st['cd'].pop('basic',None)
         else:st['cd'][role]=self.time+s['cd']
@@ -122,6 +126,9 @@ class World:
         if role=='basic' and (cls=='jian' or close):st['combo']+=1
         cast_scale=self.damage_scale(p)
         self.serial+=1;c=dict(critical=getattr(p,'martial_crit187',False),id='c'+str(self.serial),actor=p.id,profession=cls,role=role,dir=direction,start=self.time,end=self.time+s['duration'],next=self.time+s['windup'],index=0,s=s,target=None if st['lock_source']=='retaliation' and not(cls=='tang' and role=='ultimate') else st['lock'],variant=variant,melee=s.get('melee',False) or close,cancelled=False,counter=counter and not(cls=='jian' and role=='second'),healBonus=1.,scale=cast_scale)
+        c['rageTier']=0
+        if cls=='healer' and role=='ultimate' and s.get('rageTiers'):
+            tier=next(t for t in reversed(s['rageTiers']) if committed_rage>=t['at']);s['damage']=tier['damage'];s['ccTime']=tier['stun'];c['rageTier']=tier['at']
         c['waterCounter']=bool(s.get('waterCounter'))
         if s.get('waterCounter'):c['target']=st['jian_return_target']
         if close:s['range']=s['meleeRange'];s['count']=1
@@ -129,12 +136,12 @@ class World:
         if s.get('contactMove'):c['hit']=set()
         if cls=='healer' and s.get('heal'):
             c['healBonus']=1+min(5,int(st['heal_stacks']))*.1;st['heal_stacks']=st['heal_progress']=0
-            self.heal(p,p,p.max_hp*s['heal']*c['healBonus'],c['id'])
+            self.heal(p,p,p.max_hp*s['heal']*c['healBonus'],c)
             if role=='ultimate':
                 # Bounded server-owned reference viewport; no client zoom/position reports.
                 view=getattr(p,'martial_view187',(1000,650));vw=min(self.width,view[0]);left=max(0,min(self.width-vw,p.x-vw*.42));bottom=p.y+110
                 for b in self.players.values():
-                    if b is not p and left<=b.x<=left+vw and bottom-view[1]<=b.y and b.y-123<=bottom:self.heal(p,b,b.max_hp*s['heal']*c['healBonus'],c['id'])
+                    if b is not p and left<=b.x<=left+vw and bottom-view[1]<=b.y and b.y-123<=bottom:self.heal(p,b,b.max_hp*s['heal']*c['healBonus'],c)
         if cls=='jian' and role=='first' and counter:
             s['damage']+=min(120,st['energy']*.45);st['shield']=min(p.max_hp*.15,st['energy']*.6);st['shield_until']=self.time+5;st['energy']=0
         if counter and not(cls=='jian' and role=='second'):st['counter']=0
@@ -150,10 +157,14 @@ class World:
         st=state(p);st['ledger']=[v for v in st['ledger'] if v[0]>self.time-60]
         return max(0,.4-sum(v[1] for v in st['ledger']))*p.max_hp
     def heal(self,a,b,amount,cast):
-        if not alive(b) or not self.ally(a,b):return 0
+        if not alive(a) or not alive(b) or not self.ally(a,b):return 0
+        c=cast if isinstance(cast,dict) else next((c for c in self.casts if c['id']==cast and c['actor']==a.id),None);cast_id=c['id'] if c else cast
         amount=max(0,min(amount,b.max_hp-b.hp,self.budget(b)))
         if amount>1e-6:
-            b.hp+=amount;state(b)['ledger'].append((self.time,amount/b.max_hp));self.emit('heal',actor=b.id,owner=a.id,amount=amount,cast=cast)
+            b.hp+=amount;state(b)['ledger'].append((self.time,amount/b.max_hp))
+            if self.cls(a)=='healer' and c and c['role']=='second' and (state(a)['combat_until']>self.time or state(b)['combat_until']>self.time):
+                gain=max(0,min(RULES['rage']['healPerCastCap']-c.get('heal_rage_granted',0),amount/b.max_hp*10*RULES['rage']['healPerTenPercent']));state(a)['rage']=min(self.rage_cap(a),state(a)['rage']+gain);c['heal_rage_granted']=c.get('heal_rage_granted',0)+gain
+            self.emit('heal',actor=b.id,owner=a.id,amount=amount,cast=cast_id)
         return amount
     def hit(self,c,v,amount):
         a=self.actors.get(c['actor'])
@@ -163,19 +174,19 @@ class World:
         vs['status'].pop('sleep',None);s=c['s'];rage_scale=min(2,amount*c.get('scale',1)*RULES['rage']['referenceMaxHp']/(RULES['rage']['referenceDamage']*v.max_hp))
         def grant(kind):
             if c['role']=='ultimate':return
-            gain=max(0,min(RULES['rage']['attackerPerCastCap']-c.get('rage_granted',0),RULES['rage'][kind]*rage_scale));ats['rage']=min(100,ats['rage']+gain);c['rage_granted']=c.get('rage_granted',0)+gain
+            gain=max(0,min(RULES['rage']['attackerPerCastCap']-c.get('rage_granted',0),RULES['rage'][kind]*rage_scale));ats['rage']=min(self.rage_cap(a),ats['rage']+gain);c['rage_granted']=c.get('rage_granted',0)+gain
         blocking=self.capable(v) and v.guard and (vs['held_until']>self.time or not vs['auto_guard'] or vs['auto_guard']==c['id']) and not active(v,'seal',self.time)
         if blocking and c['role']=='break':
             v.guard=False;vs['auto_guard']=None;vs['held_until']=0;vs['meter']=max(0,vs['meter']-25);self.cc(v,'seal',1.25);self.emit('break',actor=v.id,owner=a.id,cast=c['id'])
         elif blocking:
-            reduction=RULES['classes'][self.cls(v)]['guardReduction'];prevented=amount*c.get('scale',1)*reduction;amount*=1-reduction;vs['meter']=max(0,vs['meter']-s.get('guardCost',8));vs['counter']=self.time+3;vs['auto_guard']=c['id'];vs['energy']=min(260,vs['energy']+prevented);vs['rage']=min(100,vs['rage']+RULES['rage']['block']*rage_scale);grant('intoGuard')
+            reduction=RULES['classes'][self.cls(v)]['guardReduction'];prevented=amount*c.get('scale',1)*reduction;amount*=1-reduction;vs['meter']=max(0,vs['meter']-s.get('guardCost',8));vs['counter']=self.time+3;vs['auto_guard']=c['id'];vs['energy']=min(260,vs['energy']+prevented);vs['rage']=min(self.rage_cap(v),vs['rage']+RULES['rage']['block']*rage_scale);grant('intoGuard')
             guard_move_key=str(c['actor'])+':'+c['id']+':'+str(c.get('start',c['end']))
             if self.cls(v)=='jian' and guard_move_key not in vs['jian_guard_seen']:
                 vs['jian_guard_seen']=(vs['jian_guard_seen']+[guard_move_key])[-32:]
                 if vs['jian_return_ready']<=self.time:
                     vs['jian_guard_chains']+=1
                     if vs['jian_guard_chains']>=3:
-                        vs['jian_guard_chains']=0;vs['jian_return_ready']=self.time+6;vs['cd'].pop('first',None);vs['jian_return_target']=a.id;self.emit('returnReady',actor=v.id)
+                        vs['jian_guard_chains']=0;vs['jian_return_ready']=self.time+RULES['jianReturnWindow'];vs['cd'].pop('first',None);vs['jian_return_target']=a.id;self.emit('returnReady',actor=v.id)
             if self.cls(v)=='healer':vs['heal_stacks']=min(5,vs['heal_stacks']+1)
             if self.cls(v)=='jian' and self.capable(a):
                 vs['block_hits'][a.id]=vs['block_hits'].get(a.id,0)+1
@@ -184,7 +195,7 @@ class World:
             if vs['meter']<=0:v.guard=False;vs['auto_guard']=None;self.cc(v,'seal',1.25)
             self.emit('block',actor=v.id,owner=a.id,cast=c['id'])
         else:
-            grant('hit');vs['rage']=min(100,vs['rage']+RULES['rage']['hurt']*rage_scale)
+            grant('hit');vs['rage']=min(self.rage_cap(v),vs['rage']+RULES['rage']['hurt']*rage_scale)
             if self.cls(v)=='healer':
                 vs['heal_progress']+=.25
                 if vs['heal_progress']>=1:vs['heal_progress']-=1;vs['heal_stacks']=min(5,vs['heal_stacks']+1)
@@ -196,9 +207,14 @@ class World:
             absorbed=min(amount,vs['shield']);vs['shield']-=absorbed;amount-=absorbed
         before_hp=v.hp;actual=self.damage(c,v,amount)
         if actual is None:actual=max(0,before_hp-v.hp)
+        if actual>0:ats['combat_until']=vs['combat_until']=self.time+RULES['rage']['combatWindow']
         if not blocking:
-            if s.get('cc'):self.cc(v,s['cc'],s['ccTime'])
-            if s.get('weaken'):self.cc(v,'weaken',4)
+            if s.get('cc'):
+                once=c.get('profession')=='healer' and c['role']=='ultimate';applied=c.setdefault('cc_hit',set()) if once else None
+                if not once or v.id not in applied:
+                    self.cc(v,s['cc'],s['ccTime'])
+                    if once:applied.add(v.id)
+        if s.get('weaken') and (not blocking or c['role']=='break'):self.cc(v,'weaken',4)
         self.emit('damage',actor=v.id,owner=a.id,amount=actual,blocked=blocking and c['role']!='break',cast=c['id'],dir=c['dir'],critical=bool(c.get('critical',False)))
     def incoming(self,v,damage,source_x,knock=False,source_id=None):
         if not alive(v):return False
@@ -289,7 +305,7 @@ class World:
             targets.sort(key=lambda b:b.x*p['dir'])
             for b in targets:
                 if self.ally(a,b):
-                    if p['profession']=='healer' and p['role']=='second' and b.id not in p['heal']:p['heal'].add(b.id);self.heal(a,b,b.max_hp*s['heal']*p['cast']['healBonus'],p['cast']['id'])
+                    if p['profession']=='healer' and p['role']=='second' and b.id not in p['heal']:p['heal'].add(b.id);self.heal(a,b,b.max_hp*s['heal']*p['cast']['healBonus'],p['cast'])
                     continue
                 if b.id not in self.mobs or b.id in p['hit']:continue
                 p['hit'].add(b.id);self.hit(p['cast'],b,p['damage'])
@@ -303,6 +319,6 @@ class World:
         for a in self.actors.values():
             st=state(a);c=st['cast']
             if a.id not in self.players and not any(until>self.time for until in st['status'].values()):continue
-            actors.append(dict(id=a.id,isPlayer=a.id in self.players,profession=self.cls(a),capable=self.capable(a),guard=bool(a.guard),rage=round(st['rage'],2),guardMeter=round(st['meter'],2),guardMax=RULES['guardMax'],tangRangeShots=st['tang_range_shots'],jianGuardChains=st['jian_guard_chains'],jianReturnReadyUntil=st['jian_return_ready'],jianReturnTarget=st['jian_return_target'],counterUntil=st['counter'],blockedEnergy=st['energy'],healStacks=st['heal_stacks'],healRemaining=round(self.budget(a),2) if a.id in self.players else 0,cd=st['cd'],status=st['status'],lock=st['lock'],lockSource=st['lock_source'],cast={k:c[k] for k in ('id','role','start','end','dir','variant','melee','counter','waterCounter')} if c else None))
+            actors.append(dict(id=a.id,isPlayer=a.id in self.players,profession=self.cls(a),capable=self.capable(a),guard=bool(a.guard),rage=math.floor(st['rage']*100)/100,rageMax=self.rage_cap(a),guardMeter=round(st['meter'],2),guardMax=RULES['guardMax'],tangRangeShots=st['tang_range_shots'],jianGuardChains=st['jian_guard_chains'],jianReturnReadyUntil=st['jian_return_ready'],jianReturnTarget=st['jian_return_target'],counterUntil=st['counter'],blockedEnergy=st['energy'],healStacks=st['heal_stacks'],healRemaining=round(self.budget(a),2) if a.id in self.players else 0,cd=st['cd'],status=st['status'],lock=st['lock'],lockSource=st['lock_source'],cast={k:c[k] for k in ('id','role','start','end','dir','variant','melee','counter','waterCounter','rageTier')} if c else None))
         shots=[{k:p[k] for k in ('id','owner','profession','role','dir','x','y','speed','range','traveled','age','dead','fade')} for p in self.shots]
         return dict(version=187,epoch=self.epoch,eventHighwater=self.events[-1]['id'] if self.events else 0,time=self.time,actors=actors,shots=shots,events=self.events[-80:])

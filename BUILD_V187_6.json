@@ -1,0 +1,38 @@
+{
+  "version": "187.6",
+  "base": "187.5",
+  "backendFeature": "martial-tempo-v1876-v1",
+  "world": 52,
+  "jianReturnWindow": 2.5,
+  "healerRageMin": 60,
+  "healerRageMax": 100,
+  "healerUltimateTiers": [
+    {
+      "at": 60,
+      "damage": 16,
+      "stun": 0.6
+    },
+    {
+      "at": 70,
+      "damage": 18,
+      "stun": 0.75
+    },
+    {
+      "at": 80,
+      "damage": 20,
+      "stun": 0.9
+    },
+    {
+      "at": 90,
+      "damage": 22,
+      "stun": 1.05
+    },
+    {
+      "at": 100,
+      "damage": 24,
+      "stun": 1.2
+    }
+  ],
+  "artChanged": false,
+  "deployed": false
+}
