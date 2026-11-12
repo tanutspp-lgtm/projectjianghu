@@ -80,6 +80,9 @@ def exp_for_kill(monster_level,character_level):
 def grant_kill_exp(p,monster_level):
     p.total_kills+=1
     award=exp_for_kill(monster_level,p.level)
+    return grant_exp_amount(p,award)
+
+def grant_exp_amount(p,award):
     remaining=award; gained_levels=0
     while remaining>0 and p.level<60:
         needed=exp_to_next(p.level)-p.exp
@@ -100,10 +103,13 @@ def derive_stats(p,hp_reference):
     """
     q=loadouts.qi_totals(p)
     gear=loadouts.gear_totals(p)
+    for key in q:
+        if key not in ('maxHp','maxSp'):q[key]+=gear.get(key,0)
     level=loadouts.effective_level(p)
     str_=p.stats['str']+q['str'];agi=p.stats['agi']+q['agi'];vit=p.stats['vit']+q['vit']
     dex=p.stats['dex']+q['dex'];int_=p.stats['int']+q['int']
     hp=base_hp_for_level(level,hp_reference)+vit*10+q['maxHp']+gear['maxHp']
+    if gear.get('hpPct'):hp=jsround(hp*(1+gear['hpPct']/100))
     sp=100+int_*3+q['maxSp']+gear['maxSp'];sta=100+str_+q['maxSta']
     flee=agi*1.3+q['flee']
     return dict(maxHp=hp,maxSp=sp,maxSta=sta,

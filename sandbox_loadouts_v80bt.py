@@ -8,7 +8,7 @@ CAT=json.loads(Path(__file__).with_name('EQUIPMENT_BASE_STATS_117_V1.json').read
 ROWS={10:(2,5),20:(5,15),30:(8,30),40:(12,40)}
 SLOTS=('head','top','bottom','wrist','shoes')
 QI_IDS=('flute_echo','flute_sustain','death_mark')
-QI_GATES=(20,40,60)
+QI_GATES=(10,25,40)
 
 
 def make_preset(level,def_row=0,atk_row=5,enhancement=5):
@@ -51,7 +51,9 @@ def qi_totals(p):
     return b
 
 def gear_totals(p):
-    if getattr(p,"gear_level",None) is None:return dict(attack=0,defense=0,maxHp=0,maxSp=0)
+    if getattr(p,"gear_level",None) is None:
+        import owned_equipment_v215 as owned215
+        return owned215.totals(p)
     return make_preset(p.gear_level,p.gear_def_row,p.gear_atk_row,p.gear_enhancement)['totals']
 
 def qi_mechanics(p,id):

@@ -15,6 +15,7 @@ GUARD_FEATURE='martial-guard360-v1873-v1'
 TURN_FEATURE='martial-turn-v1874-v1'
 COMBO_FEATURE='martial-rebalance-v1875-v1'
 TEMPO_FEATURE='martial-tempo-v1876-v1'
+FALLBACK_FEATURE='martial-lock-fallback-v213-v1'
 ROLES=('basic','guard','break','first','second','ultimate')
 
 def state(a):
@@ -109,7 +110,14 @@ class World:
         if s.get('waterCounter') and not alive(target):return False,'ไม่มีเป้าหมายสวนกลับ'
         if target and not alive(target):st['lock']=None;st['lock_source']=None;target=None
         needs_target=not (cls=='healer' and role in ('second','ultimate') or cls=='jian' and role=='second')
-        if target and needs_target and (s.get('waterCounter') or st['lock_source']!='retaliation' or cls=='tang' and role=='ultimate') and not self.reachable(p,target,s['range'],False):return False,'นอกระยะ'
+        if target and needs_target and (s.get('waterCounter') or st['lock_source']!='retaliation' or cls=='tang' and role=='ultimate') and not self.reachable(p,target,s['range'],False):
+            # A far manual lock stays selected; an ordinary cast may hit a legal nearby enemy.
+            if not s.get('waterCounter'):
+                direction=1 if p.buttons&3==2 else -1 if p.buttons&3==1 else p.face
+                source=SimpleNamespace(**{**p.__dict__,'face':direction})
+                candidates=[b for b in self.enemies(p) if self.reachable(source,b,s['range'],not(s.get('radial') or s.get('zone') or getattr(p,'aim_assist183',False)))]
+                target=min(candidates,key=lambda b:(abs(b.x-p.x),str(b.id))) if candidates else target
+            if not self.reachable(p,target,s['range'],False):return False,'นอกระยะ'
         if counter:st['hit_until']=0
         if yellow:
             st['status'].pop('down',None);p.down=0;p.kb_time=0;p.kb_dir=0;st['hit_until']=0;st['status']['yellow']=self.time+s['duration']
@@ -125,7 +133,7 @@ class World:
         variant=st['combo']%2 if role=='basic' and (cls=='jian' or close) else 0
         if role=='basic' and (cls=='jian' or close):st['combo']+=1
         cast_scale=self.damage_scale(p)
-        self.serial+=1;c=dict(critical=getattr(p,'martial_crit187',False),id='c'+str(self.serial),actor=p.id,profession=cls,role=role,dir=direction,start=self.time,end=self.time+s['duration'],next=self.time+s['windup'],index=0,s=s,target=None if st['lock_source']=='retaliation' and not(cls=='tang' and role=='ultimate') else st['lock'],variant=variant,melee=s.get('melee',False) or close,cancelled=False,counter=counter and not(cls=='jian' and role=='second'),healBonus=1.,scale=cast_scale)
+        self.serial+=1;c=dict(critical=getattr(p,'martial_crit187',False),id='c'+str(self.serial),actor=p.id,profession=cls,role=role,dir=direction,start=self.time,end=self.time+s['duration'],next=self.time+s['windup'],index=0,s=s,target=None if st['lock_source']=='retaliation' and not(cls=='tang' and role=='ultimate') else (target.id if target else None),variant=variant,melee=s.get('melee',False) or close,cancelled=False,counter=counter and not(cls=='jian' and role=='second'),healBonus=1.,scale=cast_scale)
         c['rageTier']=0
         if cls=='healer' and role=='ultimate' and s.get('rageTiers'):
             tier=next(t for t in reversed(s['rageTiers']) if committed_rage>=t['at']);s['damage']=tier['damage'];s['ccTime']=tier['stun'];c['rageTier']=tier['at']

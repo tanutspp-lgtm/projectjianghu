@@ -55,6 +55,9 @@ import cave_ice_v156 as cave_ice
 import character_classes_v181 as classes181
 import combat_collision_v184 as combat184
 import martial_combat_v187 as martial187
+import owned_equipment_v215 as owned215
+import social_v219 as social_v215
+social215=social_v215.Hub()
 from cave_contours_v145 import intervals as combat_intervals184
 import farm_auto_v80bu as farm_auto
 from urllib.request import Request, urlopen  # v8.0BO AUTHORITATIVE COMBAT
@@ -481,6 +484,8 @@ class Guest(Actor):
     movement_packet_times: deque = field(default_factory=deque)  # DZ: isolate 20Hz client_move from legacy input limiter
     movement_sync_times: deque = field(default_factory=deque)  # EA: forced recovery probes cannot consume action budget
     action_times: deque = field(default_factory=deque)
+    social_times215: deque = field(default_factory=deque)
+    chat_times215: deque = field(default_factory=deque)
     level: int = 5  # server-owned guest training level, not client-controlled
     armor_enhance: int = 5  # server-owned reference +5 armor
     last_attack_at: float = -1e9
@@ -706,7 +711,7 @@ LOOT_PICKUP_Y=75
 LOOT_OWNER_SEC=60
 LOOT_LIFETIME_SEC=180
 LOOT_INTRO_SEC=0.98
-LOOT_BAG_CAP=48
+LOOT_BAG_CAP=100
 events = WorldList('events')
 shot_seq = 0
 server_step = 0
@@ -2007,15 +2012,23 @@ def advance_loot():
 def grant_monster_kill(s,m):
     killer=players.get(s.owner)
     if killer is None or killer.room!=current_world().room:return
-    old_level=killer.level
-    award,levels=prog.grant_kill_exp(killer,m.level)
-    if levels:
-        # Match offline: maintain current HP fraction on level-up.
-        fraction=killer.hp/killer.max_hp if killer.max_hp>0 else 1
-        prog.apply_derived_resources(killer,hp_reference)
-        killer.hp=min(killer.max_hp,prog.jsround(killer.max_hp*fraction))
-        event('levelup',killer.x,killer.y-125,victim=killer.id,level=killer.level,levels=levels)
-    event('exp',killer.x,killer.y-90,victim=killer.id,amount=award,monsterLevel=m.level)
+    for i,q in enumerate(killer.qi_equipped):
+        if not q or killer.level<loadouts.QI_GATES[i]:continue
+        rank=killer.qi_ranks.setdefault(q,{'training':1,'enhance':0})
+        if rank['training']>=20:continue
+        goal=round(100*rank['training']**1.6)
+        rank['xp']=rank.get('xp',0)+20
+        if rank['xp']>=goal:rank['xp']-=goal;rank['training']+=1
+    killer.total_kills+=1
+    base=prog.exp_for_kill(m.level,killer.level)
+    for member,award in social215.awards(killer,base):
+        _,levels=prog.grant_exp_amount(member,award)
+        if levels:
+            fraction=member.hp/member.max_hp if member.max_hp>0 else 1
+            prog.apply_derived_resources(member,hp_reference)
+            member.hp=min(member.max_hp,prog.jsround(member.max_hp*fraction))
+            event('levelup',member.x,member.y-125,victim=member.id,level=member.level,levels=levels)
+        event('exp',member.x,member.y-90,victim=member.id,amount=award,monsterLevel=m.level)
     spawn_loot_for(killer,m)
     if loadouts.active_qi(killer,1):
         mechanic=loadouts.qi_mechanics(killer,'flute_sustain')
@@ -2229,14 +2242,14 @@ def derived_for_snapshot(p):
             if p.qi_ranks else ())
     sig=(p.level,p.test_level,tuple(p.stats[k] for k in prog.STAT_KEYS),
          tuple(p.qi_equipped),qi_sig,
-         p.gear_level,p.gear_def_row,p.gear_atk_row,p.gear_enhancement)
+         p.gear_level,p.gear_def_row,p.gear_atk_row,p.gear_enhancement,getattr(p,"equipment_revision215",0))
     if sig!=p.stable_stats_key:
         p.stable_stats_key=sig
         p.stable_derived_stats=prog.derive_stats(p,hp_reference)
     return p.stable_derived_stats
 
 def private_progression(p):
-    return {'expWithinLevel':p.exp,'expToNext':prog.exp_to_next(p.level),
+    return {**owned215.snapshot(p),'expWithinLevel':p.exp,'expToNext':prog.exp_to_next(p.level),
             'statPoints':p.stat_points,'skillPoints':p.skill_points,'totalKills':p.total_kills,
             'stats':p.stats,'skillRanks':p.skill_ranks,
             'sp':round(p.sp,2),'maxSp':p.max_sp,'sta':round(p.sta,2),'maxSta':p.max_sta,
@@ -2244,7 +2257,7 @@ def private_progression(p):
             'movementForced':bool(p.kb_time>0 or p.stun>0 or p.down>0 or p.dead>0 or p.hp<=0),
             'auto':p.auto_state.enabled,'autoRevision':p.auto_revision,'autoStay':p.auto_state.stay_alert,'autoAnchor':(dict(p.auto_state.anchor) if p.auto_state.stay_alert and p.auto_state.anchor else None),'autoTarget':(dict(p.auto_state.goal) if p.auto_state.enabled and p.auto_state.goal else None),
             'autoTargetSeconds':round(max(0,p.auto_state.goal_due-time.monotonic()),1) if p.auto_state.enabled else 0,
-            'sandboxAvailable':ENABLE_GUEST_SANDBOX,'inputAck':p.applied_input_seq,'performance':perf_data.copy(),**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
+            'qiEquipped':list(p.qi_equipped),'qiRanks':p.qi_ranks,'effectiveLevel':loadouts.effective_level(p),'sandboxAvailable':ENABLE_GUEST_SANDBOX,'inputAck':p.applied_input_seq,'performance':perf_data.copy(),**(loadouts.private_snapshot(p) if ENABLE_GUEST_SANDBOX else {})}
 
 
 # v8.0CR reuse the exact stdlib encoder config instead of constructing a
@@ -3265,6 +3278,7 @@ async def handle_connection(ws):
         if p.avatar in classes181.AVATARS:
             basic=classes181.spec(classes181.profession(p.avatar),'attack')
             if basic['mode']=='melee' and classes181.profession(p.avatar)!='tang':p.class_attack_reach=basic['reach']*.82
+        owned215.init(p)
         prog.apply_derived_resources(p,hp_reference,full=True)
         p.protocol_delta=(hello.get('protocol') in ('aoi-delta-v80by','aoi-binary-v80du') or p.room=='movement_lab')
         p.protocol_binary=hello.get('protocol')=='aoi-binary-v80du'
@@ -3279,6 +3293,7 @@ async def handle_connection(ws):
         p.event_cursor = world_ref.event_seq  # do not replay pre-join events
         players[guest_id] = p
         connected_players[guest_id] = p
+        social215.join(p,name)
         features=['beast-v80bq','progression-v80bs','monster-hpdef-v80bu','auto','auto-stay-v80dh','auto-manual-skills-v80dh','aoi-delta-v80by','input-ack-v80by','cooperative-pve-only-v80ca','responsive-walk-v80ca','jump-rope-visual-v80cb','cast-fx-reliable-v80cb','wire-shot-ids-v80cd','map-climb-verified-v80cd','rtt-probe-v80ce','ladder-ceiling-v80ce','client-perf-v80cl','view-mode-v80dp','view-mode-all-v80dr','bg-stagger-v80ds','aoi-binary-v80du']
         if ENABLE_GUEST_SANDBOX:features.append('sandbox-loadouts-v80bt')
         features.append('movement-lab-room-v80cz')
@@ -3299,7 +3314,8 @@ async def handle_connection(ws):
         features.append('classes-v182-combo-v1')
         features.append('classes-v183-combat-v1')
         features.append('combat-layers-v184-v1')
-        features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE,martial187.TEMPO_FEATURE))
+        features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE,martial187.TEMPO_FEATURE,martial187.FALLBACK_FEATURE))
+        features.append('hud-v219');features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3314,6 +3330,56 @@ async def handle_connection(ws):
                 await ws.close(code=1008,reason='Invalid message');break
             # RTT probe is display-only: bounded, rate-limited, never used by
             # movement, damage, rewind or anti-cheat decisions.
+            if m.get('t')=='stat_commit':
+                changes=m.get('changes')
+                ok=(set(m)=={'t','changes'} and isinstance(changes,dict) and bool(changes)
+                    and all(k in prog.STAT_KEYS and type(n)==int and 0<n<=100-p.stats[k] for k,n in changes.items())
+                    and sum(changes.values())<=p.stat_points and check_rate(p.action_times,12))
+                if ok:
+                    for key,n in changes.items():p.stats[key]+=n
+                    p.stat_points-=sum(changes.values());prog.apply_derived_resources(p,hp_reference)
+                await send215(p,{'t':'hud_ack','statCommit':True,'ok':ok,'message':'บันทึกสเตตัสแล้ว' if ok else 'แต้มไม่พอหรือค่าเปลี่ยนแล้ว'})
+                continue
+            if m.get('t') in ('item_equip','item_unequip','hud_qi'):
+                if not check_rate(p.action_times,12):
+                    await ws.send(json.dumps({'t':'hud_ack','ok':False,'message':'กดเร็วเกินไป'}));continue
+                if m['t']=='hud_qi':
+                    valid=set(m)=={'t','id','enabled'} and type(m.get('id')) is str and m['id'] in loadouts.QI_IDS and type(m.get('enabled')) is bool
+                    if valid:
+                        i=loadouts.QI_IDS.index(m['id']);valid=p.level>=loadouts.QI_GATES[i]
+                    if valid:p.qi_equipped[i]=m['id'] if m['enabled'] else None
+                    ok,message=valid,('เปลี่ยนปราณแล้ว' if valid else 'เลเวลไม่ถึงหรือปราณไม่ถูกต้อง')
+                else:ok,message=owned215.command(p,m)
+                if ok:
+                    prog.apply_derived_resources(p,hp_reference,full=False)
+                    if not loadouts.active_qi(p,0):p.qi_shield=0
+                    if not loadouts.active_qi(p,1):p.qi_heal_kills=0
+                async with p.ws_send_lock:
+                    await ws.send(json.dumps({'t':'hud_ack','ok':ok,'message':message}))
+                continue
+            if m.get('t')=='hud_social':
+                if not check_rate(p.social_times215,10,2):
+                    await send215(p,{'t':'hud_ack','ok':False,'message':'กดเร็วเกินไป'});continue
+                affected=social215.related(p.id)
+                target=m.get('target')
+                if isinstance(target,str):affected.add(target)
+                group=m.get('group')
+                if isinstance(group,str) and group in social215.parties:affected.add(social215.parties[group]['leader'])
+                ok,message,extra=social215.command(p,m)
+                await send215(p,{'t':'hud_ack','ok':ok,'message':message,**(extra or {})})
+                if m.get('action') in ('view','search'):await send215(p,social215.snapshot(p))
+                elif ok:await social_refresh215(affected|social215.related(p.id))
+                continue
+            if m.get('t')=='hud_chat':
+                if not check_rate(p.chat_times215,20,2):
+                    await send215(p,{'t':'hud_chat_ack','ok':False,'message':'ส่งข้อความเร็วเกินไป'});continue
+                ok,message,recipients,entry=social215.chat(p,m)
+                if ok:
+                    for target215 in recipients:
+                        peer215=connected_players.get(target215)
+                        if peer215:await send215(peer215,entry)
+                await send215(p,{'t':'hud_chat_ack','ok':ok,'message':message})
+                continue
             if m.get('t')=='martial_view':
                 if set(m)!={'t','w','h'} or any(type(m.get(k)) not in (int,float) or not math.isfinite(m[k]) for k in ('w','h')) or not 120<=m['w']<=1400 or not 120<=m['h']<=850 or not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='Invalid martial view');break
@@ -3672,6 +3738,8 @@ async def handle_connection(ws):
             for nav in SWAMP_RECOVERY.values():nav.reset(guest_id)
             p = players.pop(guest_id)
             connected_players.pop(guest_id,None)
+            social215.leave(p)
+            await social_refresh215(social215.related(p.id))
             event('leave', p.x, p.y, victim=guest_id)
             shots[:] = [shot for shot in shots if shot.owner != guest_id]
             hibernate_world(p.world_ref)
@@ -3680,9 +3748,19 @@ async def handle_connection(ws):
             hibernate_world(admitted_world)
 
 
+async def send215(p,payload):
+    try:
+        async with p.ws_send_lock:
+            await asyncio.wait_for(p.ws.send(json.dumps(payload,ensure_ascii=False,separators=(',',':'))),timeout=2)
+    except (ConnectionClosed,asyncio.TimeoutError):pass
+
+async def social_refresh215(ids):
+    recipients=[connected_players[i] for i in ids if i in connected_players and i in social215.people]
+    await asyncio.gather(*(send215(p,social215.snapshot(p)) for p in recipients))
+
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3690,7 +3768,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
-    print('JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
