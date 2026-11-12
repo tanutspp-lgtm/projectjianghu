@@ -56,8 +56,8 @@ import character_classes_v181 as classes181
 import combat_collision_v184 as combat184
 import martial_combat_v187 as martial187
 import owned_equipment_v215 as owned215
-import social_v219 as social_v215
-social215=social_v215.Hub()
+import party_agency_v220 as social_v215
+
 from cave_contours_v145 import intervals as combat_intervals184
 import farm_auto_v80bu as farm_auto
 from urllib.request import Request, urlopen  # v8.0BO AUTHORITATIVE COMBAT
@@ -322,6 +322,7 @@ from world_physics_v56 import step as expansion_physics, ground_y as expansion_g
 BAMBOO_MAPS.update({mid:{'name':m['name'],'platforms':[[p['x'],p['x2'],p['y']] for p in m['platforms']],'climbs':[[c['x'],c['top'],c['bottom'],c.get('type','rope')] for c in m['climbs']]} for mid,m in EXPANSION_MAPS.items()})
 
 PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS,*GRANITE_WALL_MAPS,*EXPANSION_MAPS)
+social215=social_v215.Hub(PUBLIC_MAP_IDS)
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
@@ -3315,7 +3316,7 @@ async def handle_connection(ws):
         features.append('classes-v183-combat-v1')
         features.append('combat-layers-v184-v1')
         features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE,martial187.TEMPO_FEATURE,martial187.FALLBACK_FEATURE))
-        features.append('hud-v219');features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
+        features.extend(('hud-v219','party-agency-v220'));features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3360,6 +3361,10 @@ async def handle_connection(ws):
             if m.get('t')=='hud_social':
                 if not check_rate(p.social_times215,10,2):
                     await send215(p,{'t':'hud_ack','ok':False,'message':'กดเร็วเกินไป'});continue
+                if m.get('action')=='agency_view':
+                    ok,message,extra=social215.command(p,m)
+                    await send215(p,{'t':'hud_ack','ok':ok,'message':message,**(extra or {})})
+                    continue
                 affected=social215.related(p.id)
                 target=m.get('target')
                 if isinstance(target,str):affected.add(target)
@@ -3760,7 +3765,7 @@ async def social_refresh215(ids):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3768,7 +3773,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
-    print('JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
