@@ -1,14 +1,7 @@
-ล่าสุดV187.6:อ่านREADME_V187_6_TH.txtและท้ายAGENTS.md
-หมอเกจ0–100,ขั้นต่ำ60กดได้,เพิ่มพลังทุก10,เต็ม100สตัน1.2วิ;วารีหวนคืนwindow2.5วิ
+V219 ใช้ Frontend และ Backend V219 คู่กัน กระเป๋า/สวมใส่ใช้รายละเอียดและออปชันชุดเดียวกัน สเตตัสยืนยันครั้งเดียว ปราณทดสอบสามขั้น 10/25/40 แชร์ EXP เฉพาะแมพและแชนแนลเดียวกัน 0/10/20/35/55/75% เพื่อน/กิลด์/ตี้เป็นข้อมูล Guest ของเซิร์ฟเวอร์รอบนั้น ข้อมูลสังคมข้ามการรีสตาร์ตยังต้องมีระบบบัญชี หลัก UI สำหรับอาชีพต่อไปให้อิงไฟล์ SKILL_WHEEL_GUIDELINES_TH.md และใช้รูปเดิมของเกม มีที่ว่างแยกปุ่มจากเมฆ ชื่อยาวตัดเฉพาะในแถวและเปิดดูชื่อเต็มได้
 
-ล่าสุด V187.5: อ่าน README_V187_5_TH.txt และ AGENTS.md ส่วนท้ายก่อนทำงานต่อ
-วารีหวนคืนเป็นบ่อน้ำใต้เท้าเป้าเดียว ไม่ใช่พุ่งไล่เป้า; การ์ดกันล้มได้
+# Project Jianghu — Backend V215 FULL
 
-# Current build: V67
-
-อ่าน README_V67_TH.txt ก่อนอัปเดต
-Frontend Vercel ตัวเต็ม; Backend GitHub → git pull → check → restart
-Feature: `world-maps-v67-late-regions-v1`
-เปลี่ยน 8 แมพช่วงท้าย พร้อม Geometry/Portal/AUTO ที่ตรงกัน
-ข้อกำหนดออกแบบ: MAP_DESIGN_START_HERE_TH.md และ docs/map_design
-ผลตรวจเครื่องทดสอบ: qa/v67; ยังไม่ได้ยืนยันการ Deploy จริง
+อ่าน README_V215_TH.txt และ HANDOFF_UI_V215_TH.md
+ฐานเต็ม181 + cumulative184 +187.6 +213 lock fallback +215 owned equipment/social/Qi gates10/25/40
+World52/geometry/30Hz self/10Hz peers unchanged. No account persistence or live deploy.

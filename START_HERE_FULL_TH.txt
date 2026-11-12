@@ -1,1 +1,27 @@
-Current release: Frontend184 / Backend184 / World52 unchanged. Read README_V184_TH.txt.
+Project Jianghu — FULL Frontend V170 + Backend V156
+
+ชุดตัวเต็ม ไม่ต้องใช้แพตช์ก่อนหน้า ไม่ต้องรวมไฟล์
+
+FRONTEND
+แตก JIANGHU_FRONTEND_V170_FULL.zip ไปยังโฟลเดอร์เว็บ จะมี index.html, assets/ และไฟล์เกมอยู่ที่ root
+ใช้แทน frontend เดิมทั้งโฟลเดอร์ (สำรองของเดิมก่อน)
+มีการตั้งค่า WSS เดิมในหน้าเข้าเกม ตรวจค่าให้ตรงเซิร์ฟเวอร์ของคุณตามที่ใช้อยู่
+
+BACKEND
+แตก JIANGHU_BACKEND_V156_FULL_FOR_FE170.zip ไปยังโฟลเดอร์ backend จะมี server.py, requirements.txt, world_v56.json และโมดูลครบที่ root
+Python 3.11+; ติดตั้ง dependency ด้วย python3 -m pip install -r requirements.txt ใน virtualenv เดิม
+คงค่า environment และ reverse proxy/TLS เดิม แล้ว restart service เดิม
+ไม่รวม virtualenv, secret, ฐานข้อมูล หรือข้อมูลผู้เล่นที่อยู่บนเซิร์ฟเวอร์จริง
+
+สิ่งที่รวมล่าสุด
+Frontend V170: HUD กลางล่าง, วงเดินใหญ่ขึ้นราว10%, ช่องไอเท็มข้าง Attack Wheel, เมนูใส
+Backend V156: ข้อมูลโลก World50 และน้ำแข็งถ้ำตกโดนล้ม/ดาเมจ15%MaxHP พร้อมช่วงกันล้มซ้ำ
+Frontend V157–170 เป็นงานภาพ/UI จึงไม่ต้องเปลี่ยนเลข Backend เป็น170
+
+ขอบเขตการตรวจ
+ตรวจข้อมูล world_v56.js + WORLD_V56_GEOMETRY.json + backend/world_v56.json ตรงกัน
+ตรวจ Python syntax และโมดูล backend ครบ; ตรวจความสมบูรณ์ ZIP
+V170 ยังไม่ได้ตรวจภาพในเกมจริง และตัวแก้ BG smoothing ในV169ยังไม่ได้จับภาพหลังแก้ เพราะหน้าทดสอบเดิมถูกปฏิเสธโดย browser policy
+ไม่ได้ deploy ไปยังเว็บ/VPS จริง
+
+ช่องสกิลใหม่/ช่องด่วนยังเป็น UI preview: ไม่ได้เพิ่มระบบวิชาสองเซ็ตจริงหรือคูลดาวน์ข้ามเซ็ต8วิ

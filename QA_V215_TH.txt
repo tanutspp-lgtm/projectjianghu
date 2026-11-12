@@ -1,0 +1,35 @@
+JIANGHU V215 — QA และข้อจำกัด (2026-11-11 UTC)
+
+ผ่านตรวจ source JS ใหม่/ที่เปลี่ยน และ inline scripts ทั้งหมดด้วย node --check
+Node owned gear model: 21 กลุ่ม / 936 กรณีระดับ-อาชีพ-อุปกรณ์ ผ่าน
+Python HUD/owned equipment/social: 10 tests ผ่าน
+Python regression combat V187: 101 tests ผ่าน
+CHECK_V215.py: import dependencies ครบ, catalog117, bag100, gates10/25/40, social6/24/50 ผ่าน
+3 actual local WebSocket clients: default class gear, authoritative ATK equip/unequip,
+forged UID rejection, level-1 Qi rejection, friend/party accept, whisper third-party isolation,
+guild invite/chat, friend offline presence ผ่าน (aoi-delta-v80by)
+2 actual Chromium browser game clients: ค้นหา/เพิ่มเพื่อน, เชิญและรับปาร์ตี้,
+เชิญและรับกิลด์, กระซิบสองทาง; รายชื่อมี online/offline ตาม session
+ทางเข้าปราณของอาชีพขลุ่ยเปิดแผงเดียวกันได้จริง
+สวม/ถอดของผ่านหน้าเกมและตัวเลขเปลี่ยนจริง ไม่ใช่ภาพม็อกอัพ
+
+Responsive Chromium: กระเป๋า/สเตตัส/สวมใส่/Social 28 กรณี 7 ขนาดจอ
+480x240,568x320,667x375,853x480,932x430,1024x768,1280x800
+และจอแคบ/แนวตั้ง 320x568,390x844,768x1024 ตรวจ 12 กรณี
+ฟอนต์ขยายจริง 24px ตรวจ 12 กรณี (4 หน้า x 3 ขนาด) ผ่าน text/button/frame bounds
+ปราณตรวจ 16/24px; รอบสุดท้ายพบ scrollbar ของแถบแท็บกินความสูงบน480x240
+แก้ซ่อนเฉพาะ scrollbar แต่ยังเลื่อนแนวนอนได้ แล้วตรวจซ้ำ24pxผ่าน
+กระเป๋า42px hit targets/38px art/36px icons ตรวจรอบสุดท้าย480x240และ320x568ผ่าน
+ไม่มี runtime error จาก QA capture ภาพใน screenshots เป็นหน้าเกมจริง
+
+World geometry Frontend/Backend byte-identical; catalog117ตรงกัน
+V214 page1/2 CSS คง byte-identical และรวมในชุดนี้
+อาร์ตหน้าต่างและปุ่มมิ้นท์ใหม่เป็น imagegen EDIT จากภาพเดิม มี provenance ในassets/ui_hud_v215
+ตัวหนังสือ Itim; quiet zones เมฆของกรอบคงไว้; รูปอาวุธ object-fit:contain
+
+ข้อจำกัด: เป็น viewport simulation ใน Chromium ไม่ใช่มือถือจริง Android/iOS/Safari
+ไม่ได้ทดสอบ Note10+ เครื่องจริง ไม่รับรองมือถือทุกรุ่นหรือ FPS จากระบบจำลองนี้
+ไม่ได้ push/deploy/restart Live VPS และไม่มีการเขียนฐานข้อมูลจริง
+Online social/inventory/equipment เป็น Guest session ยังไม่มี account persistence
+สวมมีผลค่าสเตตัสจริง แต่ยังไม่เปลี่ยน sprite เสื้อผ้า และไม่มี costume item ใหม่
+Lvเซ็ตยังไม่เพิ่มดาเมจตามสูตรใหม่; เก็บค่าปัจจุบันและอธิบายไว้ตรงหน้า
