@@ -4,6 +4,7 @@ index.html derivedStats/fireSkill, skill_mastery_v1.js. No account persistence y
 """
 import json, math, random
 import sandbox_loadouts_v80bt as loadouts
+from character_classes_v181 import profession
 from pathlib import Path
 from urllib.request import Request, urlopen
 
@@ -68,8 +69,8 @@ def load_exp_balance(base_url, publishable_key, timeout=4):
 
 def exp_to_next(level):return EXP_BALANCE['exp_to_next_level'][level-1]
 
-def exp_for_kill(monster_level,character_level):
-    if not all(isinstance(v,int) and 1<=v<=60 for v in (monster_level,character_level)) or character_level>=60:return 0
+def exp_for_kill(monster_level,character_level,training=False):
+    if not all(isinstance(v,int) and 1<=v<=60 for v in (monster_level,character_level)) or (character_level>=60 and not training):return 0
     b=EXP_BALANCE; delta=monster_level-character_level
     r=next((rule for rule in b['gap_rules'] if rule['min_delta']<=delta<=rule['max_delta']),None)
     if r is None:raise ValueError('missing EXP gap rule')
@@ -125,6 +126,7 @@ def derive_stats(p,hp_reference):
                 moveSpeedMultiplier=1+agi*.002+q['moveSpeedPct']/100,
                 healPowerBonus=int_*6,
                 defense=gear['defense'],weaponAttack=gear['attack'],
+                unarmed=hasattr(p,'owned_equipment215') and getattr(p,'gear_level',None) is None and not p.owned_equipment215.get('weapon'),
                 critDamageMultiplier=1.5+q['critDamagePct']/100,
                 qiBonus=q,effectiveStats=dict(str=str_,agi=agi,vit=vit,dex=dex,int=int_),
                 effectiveLevel=level)
@@ -158,12 +160,16 @@ def upgrade_skill(p,skill,amount):
 def preview_skill(p,kind,hp_reference,derived=None):
     if kind not in SKILL_BASE:return None
     d=derive_stats(p,hp_reference) if derived is None else derived
-    stat=d['magicDamageBonus']
+    job=profession(getattr(p,'avatar',None))
+    bonus_key={'jian':'meleeDamageBonus','tang':'rangedDamageBonus'}.get(job,'magicDamageBonus')
+    stat=d[bonus_key]
     stat_bonus=jsround(stat*.55) if kind=='break' else stat-12 if kind=='aoe' else stat
     rank=p.skill_ranks[kind]
     mx=max(1,jsround((SKILL_BASE[kind]+stat_bonus+d['weaponAttack'])*(1+(rank-1)*SKILL_STEP[kind])))
     mastery_pct=60+3*p.skill_ranks['mastery']
     mn=min(mx,max(1,math.ceil(mx*mastery_pct/100)))
+    if d.get('unarmed'):
+        return max(1,jsround(mn*.2)),max(1,jsround(mx*.2))
     return mn,mx
 
 def roll_attack(p,kind,hp_reference,rng=random):

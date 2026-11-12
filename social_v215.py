@@ -109,7 +109,7 @@ class Hub:
             g=self.group(p.id,channel)
             if not g:return False,'ยังไม่มีกลุ่มในช่องนี้',[],None
             recipients=[x['id'] for x in g['members'] if x['online']]
-        elif channel=='all':recipients=[k for k,v in self.people.items() if v['online'] and v['actor'].room==p.room and v['actor'].channel==p.channel]
+        elif channel=='all':recipients=[k for k,v in self.people.items() if v['online'] and v['actor'].room==p.room and v['actor'].channel==p.channel and (getattr(v['actor'],'x',0)-getattr(p,'x',0))**2+(getattr(v['actor'],'y',0)-getattr(p,'y',0))**2<=640**2]
         else:recipients=[k for k,v in self.people.items() if v['online']]
         self.counter+=1
         message=dict(t='hud_chat',id=self.counter,channel=channel,senderId=p.id,name=s['name'],text=text.strip(),target=m.get('target') if channel=='whisper' else None,targetName=self.people[m['target']]['name'] if channel=='whisper' else None,time=int(time.time()*1000))

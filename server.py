@@ -22,6 +22,7 @@ from types import SimpleNamespace
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
 import random
+import gm_announce_v223
 import compact_wire_v80du as packed_wire
 # EK: optional native accelerated JSON metadata serializer, fallback to exact
 # original DU encoder when orjson is not installed or cannot encode a value.
@@ -53,6 +54,7 @@ import sandbox_loadouts_v80bt as loadouts
 import monster_hp_def_v80bu as monster_balance
 import cave_ice_v156 as cave_ice
 import character_classes_v181 as classes181
+import training_xp_v221 as training221
 import combat_collision_v184 as combat184
 import martial_combat_v187 as martial187
 import owned_equipment_v215 as owned215
@@ -2013,16 +2015,12 @@ def advance_loot():
 def grant_monster_kill(s,m):
     killer=players.get(s.owner)
     if killer is None or killer.room!=current_world().room:return
-    for i,q in enumerate(killer.qi_equipped):
-        if not q or killer.level<loadouts.QI_GATES[i]:continue
-        rank=killer.qi_ranks.setdefault(q,{'training':1,'enhance':0})
-        if rank['training']>=20:continue
-        goal=round(100*rank['training']**1.6)
-        rank['xp']=rank.get('xp',0)+20
-        if rank['xp']>=goal:rank['xp']-=goal;rank['training']+=1
     killer.total_kills+=1
-    base=prog.exp_for_kill(m.level,killer.level)
+    base=prog.exp_for_kill(m.level,killer.level,training=True)
+    character_rewards_enabled=killer.level<60
     for member,award in social215.awards(killer,base):
+        training221.award(member,award,loadouts.QI_GATES)
+        if not character_rewards_enabled or member.level>=60:award=0
         _,levels=prog.grant_exp_amount(member,award)
         if levels:
             fraction=member.hp/member.max_hp if member.max_hp>0 else 1
@@ -2250,7 +2248,7 @@ def derived_for_snapshot(p):
     return p.stable_derived_stats
 
 def private_progression(p):
-    return {**owned215.snapshot(p),'expWithinLevel':p.exp,'expToNext':prog.exp_to_next(p.level),
+    return {**owned215.snapshot(p),'trainedSets':getattr(p,'trained_sets',{}),'expWithinLevel':p.exp,'expToNext':prog.exp_to_next(p.level),
             'statPoints':p.stat_points,'skillPoints':p.skill_points,'totalKills':p.total_kills,
             'stats':p.stats,'skillRanks':p.skill_ranks,
             'sp':round(p.sp,2),'maxSp':p.max_sp,'sta':round(p.sta,2),'maxSta':p.max_sta,
@@ -3316,7 +3314,7 @@ async def handle_connection(ws):
         features.append('classes-v183-combat-v1')
         features.append('combat-layers-v184-v1')
         features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE,martial187.TEMPO_FEATURE,martial187.FALLBACK_FEATURE))
-        features.extend(('hud-v219','party-agency-v220'));features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
+        features.extend(('hud-v219','party-agency-v220','training-v221'));features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3340,6 +3338,9 @@ async def handle_connection(ws):
                     for key,n in changes.items():p.stats[key]+=n
                     p.stat_points-=sum(changes.values());prog.apply_derived_resources(p,hp_reference)
                 await send215(p,{'t':'hud_ack','statCommit':True,'ok':ok,'message':'บันทึกสเตตัสแล้ว' if ok else 'แต้มไม่พอหรือค่าเปลี่ยนแล้ว'})
+                continue
+            if m.get('t')=='training_pages':
+                if check_rate(p.action_times,12) and set(m)=={'t','pages','bank'}:training221.configure(p,m['pages'],m['bank'])
                 continue
             if m.get('t') in ('item_equip','item_unequip','hud_qi'):
                 if not check_rate(p.action_times,12):
@@ -3759,13 +3760,20 @@ async def send215(p,payload):
             await asyncio.wait_for(p.ws.send(json.dumps(payload,ensure_ascii=False,separators=(',',':'))),timeout=2)
     except (ConnectionClosed,asyncio.TimeoutError):pass
 
+async def publish_announcement(text):
+    packet = {'t':'gm_announcement','text':gm_announce_v223.announcement(text),'time':int(time.time()*1000)}
+    recipients = tuple(connected_players.values())
+    await asyncio.gather(*(send215(p,packet) for p in recipients))
+    return len(recipients)
+
+
 async def social_refresh215(ids):
     recipients=[connected_players[i] for i in ids if i in connected_players and i in social215.people]
     await asyncio.gather(*(send215(p,social215.snapshot(p)) for p in recipients))
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3773,7 +3781,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
-    print('JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
@@ -3789,7 +3797,12 @@ async def main():
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
         print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EO public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
-        await game_loop()
+        console = asyncio.create_task(gm_announce_v223.listen(PORT,publish_announcement))
+        try:
+            await game_loop()
+        finally:
+            console.cancel()
+            await asyncio.gather(console,return_exceptions=True)
 
 if __name__ == '__main__':
     asyncio.run(main())
