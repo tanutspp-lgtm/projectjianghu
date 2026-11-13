@@ -23,6 +23,7 @@ from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
 import random
 import gm_announce_v223
+import roster_admission
 import compact_wire_v80du as packed_wire
 # EK: optional native accelerated JSON metadata serializer, fallback to exact
 # original DU encoder when orjson is not installed or cannot encode a value.
@@ -650,6 +651,8 @@ CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
 _pending_joins = 0
+active_roster_ids = set()
+ALLOW_LEGACY_GUESTS = os.environ.get("SW_ALLOW_LEGACY_GUESTS") == "1"
 
 @dataclass
 class WorldState:
@@ -1442,7 +1445,7 @@ def update_guest(p: Guest, dt, tick_now):
     p.applied_input_seq=p.last_seq  # ack only after simulation consumes this input
     # v8.0DV: preserve exact timer order, clamp and 30Hz duration while
     # avoiding six dynamic getattr/setattr operations per Guest per tick.
-    p.cool=max(0,p.cool-dt)
+    p.cool=0 if p.cool<=dt+1e-9 else p.cool-dt
     p.inv=max(0,p.inv-dt)
     p.stun=max(0,p.stun-dt)
     p.down=max(0,p.down-dt)
@@ -2535,6 +2538,11 @@ def encode_aoi_delta(world,p,previous,last_full_tick,prev_private=None,prev_inve
             result[kind]=changed
             missing=[key for key in before if key not in entities]
             if missing:result['removed'+kind.capitalize()]=missing
+    if getattr(p,'roster_display_name',None):
+        newcomers = current['players'].keys() if full else current['players'].keys() - previous['players'].keys()
+        names = {key:peer.roster_display_name for key in newcomers if key != p.id
+                 and (peer := players.get(key)) and getattr(peer,'roster_display_name',None)}
+        if names: result['rosterNames'] = names
     if p.martial_enabled187 and 'martial187' in world:
         martial=world['martial187'];visible=set(current['players'])|set(current['mobs'])|{p.id}
         cursor=getattr(p,'martial_cursor187',0) if getattr(p,'martial_epoch187',None)==martial['epoch'] else 0
@@ -3203,6 +3211,8 @@ async def switch_map(p, target, via='selector'):
 
 async def handle_connection(ws):
     guest_id = None
+    roster_id = None
+    record = None
     admitted_world = None
     global snapshot_join_sequence, _pending_joins, _em_auto_canceled
     if _pending_joins >= MAX_PENDING_JOINS:
@@ -3213,8 +3223,26 @@ async def handle_connection(ws):
         if ORIGINS and (ws.request.headers.get('Origin') not in ORIGINS):
             await ws.close(code=1008, reason='Origin not allowed');return
         raw = await asyncio.wait_for(ws.recv(), timeout=8)
-        _pending_joins -= 1;pending_held = False
         hello = strict_message(raw)
+        if isinstance(hello, dict) and hello.get('t') == 'roster_join':
+            if set(hello) != {'t','character','session','protocol','channel'} or hello['protocol'] != 'aoi-binary-v80du' or type(hello['channel']) is not int or hello['channel'] not in PUBLIC_CHANNEL_IDS:
+                await ws.close(code=1008, reason='Invalid character join');return
+            try:
+                record = await asyncio.to_thread(roster_admission.resolve, hello['character'], hello.pop('session'))
+            except roster_admission.Denied:
+                await ws.close(code=1008, reason='Character or agreement unavailable');return
+            except roster_admission.Unavailable:
+                await ws.close(code=1013, reason='Account service unavailable');return
+            finally:
+                del raw
+            if record['id'] in active_roster_ids:
+                await ws.close(code=1008, reason='Character already online');return
+            roster_id = record['id']
+            active_roster_ids.add(roster_id)
+            hello = {'t':'join', 'avatar':record['avatar'], 'protocol':hello['protocol'], 'channel':hello['channel']}
+        elif not ALLOW_LEGACY_GUESTS and not (isinstance(hello,dict) and hello.get('stressTest') is True and ENABLE_CHANNEL_STRESS):
+            await ws.close(code=1008, reason='Signed-in character required');return
+        _pending_joins -= 1;pending_held = False
         valid_joins=({'t','avatar'},{'t','avatar','protocol'},{'t','avatar','room'},
                      {'t','avatar','protocol','room'}, {'t','avatar','protocol','room','channel'},
                      {'t','avatar','channel'}, {'t','avatar','protocol','channel'}, {'t','avatar','room','channel'})
@@ -3236,7 +3264,7 @@ async def handle_connection(ws):
                 print('JIANGHU_STRESS_JOIN_REJECT disabled_or_bad_flag ch=',hello.get('channel'),flush=True)
                 await ws.close(code=1008,reason='Stress mode disabled');return
             stress_test = True
-        room=hello.get('room','forest')
+        room=hello.get('room','bamboo_1' if record else 'forest')
         channel=hello.get('channel',1)
         if not stress_test and channel not in PUBLIC_CHANNEL_IDS:
             await ws.close(code=1008,reason='Private stress channel');return
@@ -3267,13 +3295,14 @@ async def handle_connection(ws):
         _world_context.set(world_ref)
         wake_world(world_ref)
         guest_id = 'g-' + secrets.token_hex(8)
-        name = 'Guest-' + guest_id[-4:].upper()
+        name = record['name'] if record else 'Guest-' + guest_id[-4:].upper()
         # All legal spawn points are server-defined, never supplied by client.
-        spawn_x = 175 + (len(players) % 8) * 35
+        spawn_x = 150 if room=='bamboo_1' else 175 + (len(players) % 8) * 35
         guest_level=1  # same Lv1 start as Offline; ephemeral Guest, no DB character save
         guest_hp=prog.base_hp_for_level(guest_level,hp_reference)
-        p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp, room=hello.get('room','forest'),
+        p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp, room=room, face=1 if room=='bamboo_1' else -1,
                   avatar=hello['avatar'], ws=ws, level=guest_level, channel=channel, world_ref=world_ref, stress_test=stress_test)
+        p.roster_display_name = name if record else None
         if p.avatar in classes181.AVATARS:
             basic=classes181.spec(classes181.profession(p.avatar),'attack')
             if basic['mode']=='melee' and classes181.profession(p.avatar)!='tang':p.class_attack_reach=basic['reach']*.82
@@ -3315,15 +3344,18 @@ async def handle_connection(ws):
         features.append('combat-layers-v184-v1')
         features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE,martial187.TEMPO_FEATURE,martial187.FALLBACK_FEATURE))
         features.extend(('hud-v219','party-agency-v220','training-v221'));features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
+        if record: features.append('roster-v1')
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
-        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, 'tickRate': 30, 'snapshotRate': 10, 'caveIceTime':round(time.monotonic(),4), 'guest': True, 'features':features,'mapVersion':'beast-v80bq',**map_payload('forest'),'room':p.room,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
+        await ws.send(json.dumps({'t': 'welcome', 'id': guest_id, 'name': name, **({'characterId':roster_id, 'avatar':record['avatar']} if record else {}), 'tickRate': 30, 'snapshotRate': 10, 'caveIceTime':round(time.monotonic(),4), 'guest': True, 'features':features,'mapVersion':'beast-v80bq',**map_payload('forest' if room=='movement_lab' else room),'room':room,'spawnX':p.x,'spawnY':p.y,'spawnFace':p.face,'channel':p.channel,'channelCaps':{'forest':10,'city':70},'channels':channel_status(p.room),'stressOccupancy':stress_occupancy(p.room) if ENABLE_CHANNEL_STRESS else None,'monsterPresetLevel':MONSTER_PRESET_LEVEL,'expSource':prog.EXP_SOURCE}))
         p.snapshot_task=asyncio.create_task(snapshot_writer(p),name='snapshot-'+guest_id)
         if ENABLE_FAST_SELF_30HZ:
             p.fast_self_task=asyncio.create_task(fast_self_writer(p),name='fastself-'+guest_id)
         event('join', p.x, p.y, victim=p.id)
         async for raw in ws:
+            if len(raw) > 2048:
+                await ws.close(code=1009, reason='Message too large');break
             m = strict_message(raw)
             if not m:
                 await ws.close(code=1008,reason='Invalid message');break
@@ -3729,6 +3761,7 @@ async def handle_connection(ws):
               'guest=',guest_id,'type=',type(exc).__name__,'detail=',str(exc)[:200],flush=True)
         raise
     finally:
+        if roster_id is not None:active_roster_ids.discard(roster_id)
         if pending_held:_pending_joins -= 1
         if guest_id and players.get(guest_id) and players[guest_id].ws is ws:
             active=players[guest_id].snapshot_task
@@ -3773,7 +3806,7 @@ async def social_refresh215(ids):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V225 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3781,7 +3814,7 @@ def process_request(connection, request):
 
 async def main():
     load_from_supabase()
-    print('JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V225 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
@@ -3793,7 +3826,7 @@ async def main():
     from websockets.extensions.permessage_deflate import ServerPerMessageDeflateFactory
     ws_extensions=([ServerPerMessageDeflateFactory(compress_settings={'level':1,'memLevel':5})]
                    if WS_COMPRESSION=='deflate' else None)
-    async with serve(handle_connection, HOST, PORT, max_size=2048, max_queue=16,
+    async with serve(handle_connection, HOST, PORT, max_size=16384, max_queue=16,
                      ping_interval=20, ping_timeout=20, process_request=process_request,
                      compression=None, extensions=ws_extensions):
         print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EO public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)

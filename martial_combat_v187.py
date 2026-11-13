@@ -307,7 +307,11 @@ class World:
             if p['age']<0:continue
             a=self.actors.get(p['owner'])
             if not a:p['dead']=True;continue
-            s=p['cast']['s'];travel=min(p['speed']*dt,p['range']-p['traveled']);old=p['x'];nxt=old+p['dir']*travel;p['traveled']+=travel
+            s=p['cast']['s'];travel=min(p['speed']*dt,p['range']-p['traveled'])
+            # The flute wave is drawn at the instrument but must also touch a mob at the caster's feet.
+            first_wave = p['traveled']==0 and p['profession']=='flute' and p['role']=='basic'
+            old=p['launch_x'] if first_wave else p['x']
+            nxt=p['x']+p['dir']*travel;p['traveled']+=travel
             if self.blocked(old,p['y'],nxt,p['y'],a,None):p['dead']=True;continue
             targets=[b for b in self.actors.values() if alive(b) and b is not a and min(old,nxt)-18<=b.x<=max(old,nxt)+18 and b.y-(123 if getattr(b,'hum',b.id in self.players) else 90)-s.get('radius',8)<=p['y']<=b.y-5+s.get('radius',8) and not self.blocked(p['launch_x'],p['launch_y'],b.x,b.y-43,SimpleNamespace(y=p['launch_foot']),b)]
             targets.sort(key=lambda b:b.x*p['dir'])
