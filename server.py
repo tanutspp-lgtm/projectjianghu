@@ -24,6 +24,9 @@ from websockets.exceptions import ConnectionClosed
 import random
 import gm_announce_v223
 import roster_admission
+import roster_progress
+import game_mail
+import sqlite3
 import compact_wire_v80du as packed_wire
 # EK: optional native accelerated JSON metadata serializer, fallback to exact
 # original DU encoder when orjson is not installed or cannot encode a value.
@@ -2025,6 +2028,7 @@ def grant_monster_kill(s,m):
         training221.award(member,award,loadouts.QI_GATES)
         if not character_rewards_enabled or member.level>=60:award=0
         _,levels=prog.grant_exp_amount(member,award)
+        roster_progress.changed(member)
         if levels:
             fraction=member.hp/member.max_hp if member.max_hp>0 else 1
             prog.apply_derived_resources(member,hp_reference)
@@ -3242,6 +3246,12 @@ async def handle_connection(ws):
             hello = {'t':'join', 'avatar':record['avatar'], 'protocol':hello['protocol'], 'channel':hello['channel']}
         elif not ALLOW_LEGACY_GUESTS and not (isinstance(hello,dict) and hello.get('stressTest') is True and ENABLE_CHANNEL_STRESS):
             await ws.close(code=1008, reason='Signed-in character required');return
+        progress = None
+        if roster_id:
+            try:
+                progress = await roster_progress.load(roster_id)
+            except roster_progress.ProgressUnavailable:
+                await ws.close(code=1013, reason='Character progress unavailable');return
         _pending_joins -= 1;pending_held = False
         valid_joins=({'t','avatar'},{'t','avatar','protocol'},{'t','avatar','room'},
                      {'t','avatar','protocol','room'}, {'t','avatar','protocol','room','channel'},
@@ -3298,15 +3308,20 @@ async def handle_connection(ws):
         name = record['name'] if record else 'Guest-' + guest_id[-4:].upper()
         # All legal spawn points are server-defined, never supplied by client.
         spawn_x = 150 if room=='bamboo_1' else 175 + (len(players) % 8) * 35
-        guest_level=1  # same Lv1 start as Offline; ephemeral Guest, no DB character save
+        guest_level = progress['level'] if progress else 1
         guest_hp=prog.base_hp_for_level(guest_level,hp_reference)
         p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp, room=room, face=1 if room=='bamboo_1' else -1,
                   avatar=hello['avatar'], ws=ws, level=guest_level, channel=channel, world_ref=world_ref, stress_test=stress_test)
+        p.roster_id = roster_id
+        if progress:
+            roster_progress.restore(p, progress)
         p.roster_display_name = name if record else None
         if p.avatar in classes181.AVATARS:
             basic=classes181.spec(classes181.profession(p.avatar),'attack')
             if basic['mode']=='melee' and classes181.profession(p.avatar)!='tang':p.class_attack_reach=basic['reach']*.82
         owned215.init(p)
+        if roster_id:
+            game_mail.restore(p)
         prog.apply_derived_resources(p,hp_reference,full=True)
         p.protocol_delta=(hello.get('protocol') in ('aoi-delta-v80by','aoi-binary-v80du') or p.room=='movement_lab')
         p.protocol_binary=hello.get('protocol')=='aoi-binary-v80du'
@@ -3344,7 +3359,7 @@ async def handle_connection(ws):
         features.append('combat-layers-v184-v1')
         features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE,martial187.TEMPO_FEATURE,martial187.FALLBACK_FEATURE))
         features.extend(('hud-v219','party-agency-v220','training-v221'));features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
-        if record: features.append('roster-v1')
+        if record: features.extend(('roster-v1','gm-mail-v1'))
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3361,6 +3376,17 @@ async def handle_connection(ws):
                 await ws.close(code=1008,reason='Invalid message');break
             # RTT probe is display-only: bounded, rate-limited, never used by
             # movement, damage, rewind or anti-cheat decisions.
+            if m.get('t')=='game_mail':
+                if not roster_id or not check_rate(p.social_times215,12,2):
+                    await send215(p,{'t':'game_mail','error':'กรุณาลองอีกครั้ง'});continue
+                try:
+                    data=game_mail.command(p,m)
+                except ValueError as exc:
+                    data={'error':str(exc)}
+                except sqlite3.Error:
+                    data={'error':'เปิดกล่องจดหมายไม่ได้ กรุณาลองอีกครั้ง'}
+                await send215(p,{'t':'game_mail',**data})
+                continue
             if m.get('t')=='stat_commit':
                 changes=m.get('changes')
                 ok=(set(m)=={'t','changes'} and isinstance(changes,dict) and bool(changes)
@@ -3369,6 +3395,7 @@ async def handle_connection(ws):
                 if ok:
                     for key,n in changes.items():p.stats[key]+=n
                     p.stat_points-=sum(changes.values());prog.apply_derived_resources(p,hp_reference)
+                    roster_progress.changed(p)
                 await send215(p,{'t':'hud_ack','statCommit':True,'ok':ok,'message':'บันทึกสเตตัสแล้ว' if ok else 'แต้มไม่พอหรือค่าเปลี่ยนแล้ว'})
                 continue
             if m.get('t')=='training_pages':
@@ -3383,6 +3410,17 @@ async def handle_connection(ws):
                         i=loadouts.QI_IDS.index(m['id']);valid=p.level>=loadouts.QI_GATES[i]
                     if valid:p.qi_equipped[i]=m['id'] if m['enabled'] else None
                     ok,message=valid,('เปลี่ยนปราณแล้ว' if valid else 'เลเวลไม่ถึงหรือปราณไม่ถูกต้อง')
+                elif getattr(p,'has_mail_inventory',False):
+                    # Keep the inventory write and item swap consistent if storage fails.
+                    bag,gear=list(p.inventory),dict(p.owned_equipment215)
+                    ok,message=owned215.command(p,m)
+                    if ok:
+                        try:
+                            with game_mail.transaction() as db:
+                                game_mail.save_inventory(db,roster_id,p.inventory,p.owned_equipment215)
+                        except sqlite3.Error:
+                            p.inventory,p.owned_equipment215=bag,gear
+                            ok,message=False,'บันทึกอุปกรณ์ไม่ได้ กรุณาลองอีกครั้ง'
                 else:ok,message=owned215.command(p,m)
                 if ok:
                     prog.apply_derived_resources(p,hp_reference,full=False)
@@ -3533,6 +3571,7 @@ async def handle_connection(ws):
                 if not check_rate(p.action_times,12):
                     await ws.close(code=1008,reason='Action rate limit');break
                 ok=prog.allocate_stat(p,m.get('stat'),m.get('amount'),hp_reference) if t=='stat_add' else prog.upgrade_skill(p,m.get('skill'),m.get('amount'))
+                if ok:roster_progress.changed(p)
                 await ws.send(json.dumps({'t':'progression_ack','ok':ok,'kind':t}))
                 continue
             if m.get('t') in ('sandbox_level','gear_preset','gear_affix','gear_enhance','gear_clear','qi_equip','qi_unequip','qi_rank'):
@@ -3761,30 +3800,38 @@ async def handle_connection(ws):
               'guest=',guest_id,'type=',type(exc).__name__,'detail=',str(exc)[:200],flush=True)
         raise
     finally:
-        if roster_id is not None:active_roster_ids.discard(roster_id)
-        if pending_held:_pending_joins -= 1
-        if guest_id and players.get(guest_id) and players[guest_id].ws is ws:
-            active=players[guest_id].snapshot_task
-            if active:
-                active.cancel()
-                try:await active
-                except asyncio.CancelledError:pass
-            fast=players[guest_id].fast_self_task
-            if fast:
-                fast.cancel()
-                try:await fast
-                except asyncio.CancelledError:pass
-            for nav in SWAMP_RECOVERY.values():nav.reset(guest_id)
-            p = players.pop(guest_id)
-            connected_players.pop(guest_id,None)
-            social215.leave(p)
-            await social_refresh215(social215.related(p.id))
-            event('leave', p.x, p.y, victim=guest_id)
-            shots[:] = [shot for shot in shots if shot.owner != guest_id]
-            hibernate_world(p.world_ref)
-        elif admitted_world is not None and not admitted_world.players:
-            # E.g. socket died after first-world wake but before actor creation.
-            hibernate_world(admitted_world)
+        try:
+            if pending_held:_pending_joins -= 1
+            if guest_id and players.get(guest_id) and players[guest_id].ws is ws:
+                active=players[guest_id].snapshot_task
+                if active:
+                    active.cancel()
+                    try:await active
+                    except asyncio.CancelledError:pass
+                fast=players[guest_id].fast_self_task
+                if fast:
+                    fast.cancel()
+                    try:await fast
+                    except asyncio.CancelledError:pass
+                for nav in SWAMP_RECOVERY.values():nav.reset(guest_id)
+                p = players.pop(guest_id)
+                connected_players.pop(guest_id,None)
+                if roster_id in roster_progress.pending:
+                    try:
+                        await roster_progress.flush(roster_id)
+                    except roster_progress.ProgressUnavailable as exc:
+                        print('Character progress on disconnect:', str(exc), flush=True)
+                social215.leave(p)
+                await social_refresh215(social215.related(p.id))
+                event('leave', p.x, p.y, victim=guest_id)
+                shots[:] = [shot for shot in shots if shot.owner != guest_id]
+                hibernate_world(p.world_ref)
+            elif admitted_world is not None and not admitted_world.players:
+                # E.g. socket died after first-world wake but before actor creation.
+                hibernate_world(admitted_world)
+        finally:
+            if roster_id is not None:
+                active_roster_ids.discard(roster_id)
 
 
 async def send215(p,payload):
@@ -3806,15 +3853,16 @@ async def social_refresh215(ids):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V225 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V225 roster-progress-v1 gm-mail-v1 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
 
 
 async def main():
+    game_mail.initialize()
     load_from_supabase()
-    print('JIANGHU_BACKEND_V225 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V225 roster-progress-v1 gm-mail-v1 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
