@@ -1,0 +1,174 @@
+{
+  "version": "V239",
+  "baseline": "V219 FULL",
+  "previousRelease": "V235",
+  "files": [
+    {
+      "path": "ACTIVATE_ACCOUNTS_TH.md",
+      "sha256": "9633afe2c6c347dbb381600536a425f09ab2fa6c52ee581485293447398d3eb5",
+      "size": 4522
+    },
+    {
+      "path": "HANDOFF_GAME_ENTRY_TH.md",
+      "sha256": "03026cb9c657755cd0a42f7559c3fcb5caabebb84e31872a02da7bad5f655b43",
+      "size": 4241
+    },
+    {
+      "path": "HANDOFF_LATEST_TH.md",
+      "sha256": "e408eefb33bcdc252609eef626dce04e6c15de8d9b3c792dd8f9be551b257851",
+      "size": 7008
+    },
+    {
+      "path": "PATCH_V235_FROM_V219.json",
+      "sha256": "c69a5ee9a7b7ea2105210bf796a47216b58f6fd0d6bcc24c9d643c9c5428cc2f",
+      "size": 4658
+    },
+    {
+      "path": "README_V235_TH.txt",
+      "sha256": "04d61831ecb5678a2ab2444d674a44b493d3b5d27e65e91e718c26c2a4f27ab0",
+      "size": 3899
+    },
+    {
+      "path": "README_V239_TH.txt",
+      "sha256": "3373a453dda7b3d15563663df358f91a722bf33f2e246dd5b10e63818d2772aa",
+      "size": 5163
+    },
+    {
+      "path": "RESTART_AND_VERIFY_V235.sh",
+      "sha256": "e9575bc3af6612bf925b1730bbb223a24293bbd121231db8009e824918b56547",
+      "size": 1547
+    },
+    {
+      "path": "RESTART_AND_VERIFY_V239.sh",
+      "sha256": "ab61935188b6df76ddf417942c4cb255a48443fb016a5d95b75e49775db05685",
+      "size": 1821
+    },
+    {
+      "path": "START_HERE_FULL_TH.txt",
+      "sha256": "7384ddead285092ec1d8ed61d688a64c4cfbbaefd66108b92eb86889fbc0528a",
+      "size": 149
+    },
+    {
+      "path": "archived_maps/bamboo_legacy.json",
+      "sha256": "df4f9cd764faaddc0156af8101ee70b1cb6d1a1b03a73f064c59ecb22cfdeaa5",
+      "size": 3548
+    },
+    {
+      "path": "archived_maps/peach_before_v239.json",
+      "sha256": "163e1acd9142d39c2053aedc2d5a3141b7a5b3cb1fcd9f6aac74b7914e101eb1",
+      "size": 76754
+    },
+    {
+      "path": "cave_contours_v145.py",
+      "sha256": "b770d1297dd5141b4236e65654079947c0b23dfe9542e552d97831144f3b3b09",
+      "size": 4044
+    },
+    {
+      "path": "combat_progression_v80bs.py",
+      "sha256": "ff5f6e7b88c75e48488bd5245892501fb8636de6425a38ab9841388ec9be3352",
+      "size": 9754
+    },
+    {
+      "path": "database/character_deletion.sql",
+      "sha256": "580a746003c87439119c808f1edf3232aa9b4ee61b9eba48a1f5fc5433ff92d5",
+      "size": 1890
+    },
+    {
+      "path": "database/character_roster.sql",
+      "sha256": "c75ea291c74fb906ef7173893cc59d500b353c49ec4cb33bfbb8c53b8f3f5742",
+      "size": 2109
+    },
+    {
+      "path": "database/roster_level_and_name_spelling.sql",
+      "sha256": "ba30ac7220a79575dbda79aebe3ffde9ad932c64b2d5278f4bfe3c2fea40a464",
+      "size": 224
+    },
+    {
+      "path": "database/roster_progress.sql",
+      "sha256": "83a78e3fc2da16babec0f2afd15f35f972b3d4a9b383eb87d84cec2608119956",
+      "size": 526
+    },
+    {
+      "path": "database/terms_sw2.sql",
+      "sha256": "1da623a87ea3f9adb85cc56839c26edb17434c9bb481da479e62037ab415af1e",
+      "size": 717
+    },
+    {
+      "path": "database/terms_sw3.sql",
+      "sha256": "dda6d7ec59f92f76449a9645fa9f1505aab726abf8e785923a41fdcbd3e3f714",
+      "size": 1028
+    },
+    {
+      "path": "game_mail.py",
+      "sha256": "bff554e5837c89cdb6be1bb288530f9a31e1c6c49d59353614ae73d08a496c19",
+      "size": 6517
+    },
+    {
+      "path": "gm_announce_v223.py",
+      "sha256": "072e4624a98c9c0c62134051e2abb6d3a583c27d49c57f7504741694ee4689a9",
+      "size": 2839
+    },
+    {
+      "path": "martial_combat_v187.py",
+      "sha256": "6ad37e4bdae54c400b86ca4db53953f81b0cdf14bf5c3bf1e685d12eb649cbcd",
+      "size": 27513
+    },
+    {
+      "path": "medicine.py",
+      "sha256": "e960408b5ac1c249dc6ff4e1cc2ae1545bbb6e2c3e52d2439639e1b6d390dd0c",
+      "size": 2298
+    },
+    {
+      "path": "party_agency_v220.py",
+      "sha256": "084ce5b4ce74d3efaa0b0fc5d3a1e239c9d4a74fe48ea344f16346483cb66025",
+      "size": 5358
+    },
+    {
+      "path": "roster_admission.py",
+      "sha256": "9e9e47873983f2e59d2a243694da532a52b1cda46a4617e327bf07415ab1d7bb",
+      "size": 2850
+    },
+    {
+      "path": "roster_progress.py",
+      "sha256": "2a0d18ee2f5fd083d7b82c546d93cd53ba986c3102004ecf31a85913f10140ac",
+      "size": 5012
+    },
+    {
+      "path": "server.py",
+      "sha256": "691784bf4a007a23f1b9163f41c7bca3e467f1e01b3946f84ac38c5a7f8d8516",
+      "size": 220214
+    },
+    {
+      "path": "social_v215.py",
+      "sha256": "64904251b9956749d1cc4b1bb08a59f2911427a0194ac29b1bf846a0f4aec0d1",
+      "size": 9798
+    },
+    {
+      "path": "social_v219.py",
+      "sha256": "b90ab2a04e0e70081920d55e17947bd98cedd018b1752f154211e1e8714c8e4c",
+      "size": 17358
+    },
+    {
+      "path": "training_xp_v221.py",
+      "sha256": "6cf8919c44c7f3dad4817b09b6d57b12e40c0540124eece64f70ff3e46305a50",
+      "size": 1740
+    },
+    {
+      "path": "world_physics_v56.py",
+      "sha256": "271ace274948d1c14bc454002118f6df4594251f088020ab0b6016b381605287",
+      "size": 4024
+    },
+    {
+      "path": "world_v56.json",
+      "sha256": "6a77b360df8dd8f3204cfc0611506ab9222fd17941670b88784d49f6f68212f5",
+      "size": 367813
+    }
+  ],
+  "deleted": [],
+  "excludes": [
+    "secrets",
+    ".env",
+    "data",
+    "player databases"
+  ]
+}

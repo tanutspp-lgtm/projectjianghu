@@ -26,6 +26,7 @@ import gm_announce_v223
 import roster_admission
 import roster_progress
 import game_mail
+import medicine
 import sqlite3
 import compact_wire_v80du as packed_wire
 # EK: optional native accelerated JSON metadata serializer, fallback to exact
@@ -235,77 +236,7 @@ if CLIMBS != _EXPECTED_CLIMBS:
 FARM_NAV=farm_auto.Navigation(GROUND,CLIMBS)
 # BAMBOO REAL WORLDS: room-based, same 2060px server-owned coordinate envelope.
 # No bamboo mob/loot templates until the owner supplies cropped sprites and manifest.
-BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม',
-            'platforms': [[0, 2060, 550], [170, 850, 390], [1020, 1770, 390], [410, 1070, 235], [1210, 1970, 235]],
-            'climbs': [[510, 235, 550, 'rope'], [1170, 390, 550, 'ladder'], [1590, 235, 550, 'rope']]},
- 'bamboo_1': {'name': 'ทางเข้าดงไผ่',
-              'platforms': [[0, 2060, 550],
-                            [300, 710, 423],
-                            [890, 1280, 425],
-                            [1440, 1950, 425],
-                            [650, 1080, 300],
-                            [1340, 1770, 300]],
-              'climbs': [[850, 300, 550, 'rope'],
-                         [1550, 300, 550, 'ladder'],
-                         [470, 423, 550, 'ladder'],
-                         [1090, 425, 550, 'ladder'],
-                         [1775, 425, 550, 'ladder']]},
- 'bamboo_2': {'name': 'ทางเลียบดงไผ่',
-              'platforms': [[0, 2060, 550],
-                            [240, 660, 430],
-                            [840, 1240, 430],
-                            [1430, 1950, 430],
-                            [470, 890, 305],
-                            [1170, 1610, 305]],
-              'climbs': [[640, 305, 550, 'ladder'],
-                         [1410, 305, 550, 'rope'],
-                         [415, 430, 550, 'ladder'],
-                         [1040, 430, 550, 'ladder'],
-                         [1735, 430, 550, 'ladder']]},
- 'bamboo_3': {'name': 'ดงไผ่ริมสวนท้อ',
-              'platforms': [[0, 2060, 550],
-                            [230, 680, 427],
-                            [890, 1350, 425],
-                            [1490, 2000, 430],
-                            [460, 840, 300],
-                            [1130, 1550, 300],
-                            [1610, 2000, 180]],
-              'climbs': [[650, 300, 550, 'rope'],
-                         [1320, 300, 550, 'ladder'],
-                         [1810, 180, 430, 'rope'],
-                         [420, 427, 550, 'ladder'],
-                         [1080, 425, 550, 'ladder'],
-                         [1650, 430, 550, 'ladder']]},
- 'bamboo_4': {'name': 'ลานฝึกหุบไผ่',
-              'platforms': [[0, 2060, 550],
-                            [260, 715, 425],
-                            [850, 1300, 430],
-                            [1460, 1970, 425],
-                            [490, 905, 305],
-                            [1070, 1510, 305],
-                            [900, 1270, 180]],
-              'climbs': [[670, 305, 550, 'ladder'],
-                         [1170, 180, 550, 'rope'],
-                         [1710, 425, 550, 'ladder'],
-                         [425, 425, 550, 'ladder'],
-                         [1025, 430, 550, 'ladder'],
-                         [1620, 425, 550, 'ladder']]},
- 'outskirts_1': {'name': 'ทางออกดงไผ่ · ชานเมือง',
-               # V5: quiet forest exit and quiet town entrance. Three vertically
-               # staggered prefab floating islands only in the world center.
-               # Each rope connects adjacent platform heights, no continuous rope.
-               'platforms': [[0, 2060, 550], [725, 1380, 355], [825, 1355, 135], [865, 1215, -85]],
-               'climbs': [[830, 355, 550, 'rope'], [1190, 135, 355, 'rope'], [965, -85, 135, 'rope']]},
- 'suburb_gate_1': {'name':'ชุมชนหน้าประตูเมือง',
-                   # Map 7: peaceful town boundary, main floor only, no floating platforms.
-                   'platforms': [[0, 2060, 550]],
-                   'climbs': []},
- 'city_proto_1': {'name':'นครชั้นนอก · ตลาด',
-                  'platforms': [[0, 5100, 550]], 'climbs': []},
- 'city_inner_1': {'name':'นครชั้นใน · ราชการ',
-                  'platforms': [[0, 3700, 550]], 'climbs': []},
- 'peach_exit_1': {'name':'ทุ่งท้อเลียบธาร',
-                  'platforms': [[0, 2060, 550]], 'climbs': []}}
+BAMBOO_MAPS = {'forest': {'name': 'ป่าภูเขาเดิม', 'platforms': [[0, 2060, 550], [170, 850, 390], [1020, 1770, 390], [410, 1070, 235], [1210, 1970, 235]], 'climbs': [[510, 235, 550, 'rope'], [1170, 390, 550, 'ladder'], [1590, 235, 550, 'rope']]}, 'outskirts_1': {'name': 'ทางออกดงไผ่ · ชานเมือง', 'platforms': [[0, 2060, 550], [725, 1380, 355], [825, 1355, 135], [865, 1215, -85]], 'climbs': [[830, 355, 550, 'rope'], [1190, 135, 355, 'rope'], [965, -85, 135, 'rope']]}, 'suburb_gate_1': {'name': 'ชุมชนหน้าประตูเมือง', 'platforms': [[0, 2060, 550]], 'climbs': []}, 'city_proto_1': {'name': 'นครชั้นนอก · ตลาด', 'platforms': [[0, 5100, 550]], 'climbs': []}, 'city_inner_1': {'name': 'นครชั้นใน · ราชการ', 'platforms': [[0, 3700, 550]], 'climbs': []}, 'peach_exit_1': {'name': 'ทุ่งท้อเลียบธาร', 'platforms': [[0, 2060, 550]], 'climbs': []}}
 # Map 11 V21: server-authoritative tileset platform/rope geometry.
 # Must match the approved V21 frontend MAP11_GEOMETRY exactly (world width 2400).
 BAMBOO_MAPS['forest_fork_11'] = {'name':'ทางแยกป่าและเชิงเขา',
@@ -327,15 +258,13 @@ from cave_contours_v145 import platform_y as contour_platform_y, overlaps as con
 from world_physics_v56 import step as expansion_physics, ground_y as expansion_ground_y, portal_at as expansion_portal_at, dismount as expansion_dismount
 BAMBOO_MAPS.update({mid:{'name':m['name'],'platforms':[[p['x'],p['x2'],p['y']] for p in m['platforms']],'climbs':[[c['x'],c['top'],c['bottom'],c.get('type','rope')] for c in m['climbs']]} for mid,m in EXPANSION_MAPS.items()})
 
-PUBLIC_MAP_IDS = ('forest','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS,*GRANITE_WALL_MAPS,*EXPANSION_MAPS)
+BAMBOO_START_IDS = tuple(mid for mid in EXPANSION_MAPS if mid.startswith('BAM_START_'))
+START_MAP = 'BAM_START_01'
+PUBLIC_MAP_IDS = ('forest',*BAMBOO_START_IDS,'outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS,*GRANITE_WALL_MAPS,*(mid for mid in EXPANSION_MAPS if mid not in BAMBOO_START_IDS))
 social215=social_v215.Hub(PUBLIC_MAP_IDS)
 # Bamboo newbie monsters: 14 per map/channel (30% reduction from 20).
 # Map 1/2: spirit=9,rabbit=5; Map 3/4: spirit=5,rabbit=5,squirrel=4.
 BAMBOO_MONSTER_QUOTAS = {
-    'bamboo_1': {'bamboo_spirit':9,'bamboo_rabbit':5},
-    'bamboo_2': {'bamboo_spirit':9,'bamboo_rabbit':5},
-    'bamboo_3': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
-    'bamboo_4': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
     'outskirts_1': {'bamboo_spirit':5,'bamboo_rabbit':5,'brush_squirrel':4},
     'peach_exit_1': {'bamboo_spirit':4,'bamboo_rabbit':3,'brush_squirrel':3},
 }
@@ -359,6 +288,7 @@ def bamboo_spawn_slots(room):
     assert len(entries)==sum(quota.values()) and {k:sum(e['kind']==k for e in entries) for k in quota}==quota
     return tuple(entries)
 BAMBOO_MONSTER_SLOTS = {name:bamboo_spawn_slots(name) for name in BAMBOO_MONSTER_QUOTAS}
+BAMBOO_MONSTER_SLOTS.update({mid:tuple(EXPANSION_MAPS[mid]['monsterSlots']) for mid in BAMBOO_START_IDS})
 
 # Precomputed immutable geometry avoids allocating arrays every 30Hz tick.
 BAMBOO_GROUNDS = {mid: tuple((a,b,y) for a,b,y in data['platforms']) for mid,data in BAMBOO_MAPS.items()}
@@ -398,6 +328,11 @@ def farm_nav_for(room):
 
 def active_ground():
     return BAMBOO_GROUNDS.get(current_world().room, GROUND)
+def climb_lanes_at(x):
+    m=EXPANSION_MAPS.get(current_world().room)
+    if not m or not m.get('surfaceContours'):return active_ground()
+    return ((q['x'],q['x2'],contour_platform_y(q,x)) for q in m['platforms'] if q['x']<=x<=q['x2'])
+
 def active_climbs():
     # The diagonal city stairs are handled by a separate server-owned spline,
     # not by the rope/ladder movement or AUTO route logic.
@@ -511,6 +446,7 @@ class Guest(Actor):
     exp: int = 0
     stat_points: int = 0
     skill_points: int = 0
+    taels: int = 0
     total_kills: int = 0
     stats: dict = field(default_factory=lambda:dict.fromkeys(prog.STAT_KEYS,0))
     skill_ranks: dict = field(default_factory=lambda:{'attack':1,'aoe':1,'break':1,'mastery':0})
@@ -520,6 +456,7 @@ class Guest(Actor):
     max_sta: float = 100.0
     defense: int = 0
     inventory: list = field(default_factory=list)
+    medicine_ready: dict = field(default_factory=dict)
     inventory_revision: int = 0
     writer_inventory_revision: int = -1
     auto_command_seq: int = 0
@@ -610,8 +547,6 @@ class Monster(Actor):
     mark_stacks: dict = field(default_factory=dict)
     defense: int = 0
     # Newbie bamboo mobs are peaceful until struck by an actual player attack.
-    retaliate_target: str = ''
-    retaliate_until: float = 0.0
     mob_kb_left: float = 0.0
     mob_kb_dir: int = 0
 
@@ -644,7 +579,7 @@ class Shot:
 # EE: fixed, administrator-owned channels. A guest can never create a world.
 PUBLIC_CHANNEL_IDS = (1, 2, 3)
 CHANNEL_IDS = tuple(range(1,16))  # 4..15 exist ONLY for privileged stress sessions
-MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'bamboo_1': 10, 'bamboo_2': 10, 'bamboo_3': 10, 'bamboo_4': 10, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10, 'forest_fork_11':10}  # 10 player cap in Map11.
+MAP_HARD_CAPS = {'forest': 10, 'movement_lab': 10, 'city': 70, 'outskirts_1': 10, 'suburb_gate_1': 10, 'city_proto_1': 70, 'city_inner_1': 70, 'peach_exit_1': 10, 'forest_fork_11':10}  # 10 player cap in Map11.
 MAP_HARD_CAPS.update({room:10 for room in GRANITE_FOREST_MAPS})
 MAP_HARD_CAPS.update({room:10 for room in MOUNTAIN_MAPS})
 MAP_HARD_CAPS.update({room:10 for room in GRANITE_WALL_MAPS})
@@ -654,7 +589,71 @@ CHANNEL_SWITCH_COOLDOWN = 10.0
 CHANNEL_TOTAL_GUEST_CAP = min(MAX_GUESTS, int(os.environ.get('CHANNEL_TOTAL_GUEST_CAP', '30')))
 MAX_PENDING_JOINS = 16
 _pending_joins = 0
-active_roster_ids = set()
+active_roster_ids = {}
+
+@dataclass
+class RosterSession:
+    socket: object
+    released: asyncio.Event = field(default_factory=asyncio.Event)
+    player: object = None
+    probe: Optional[asyncio.Future] = None
+
+async def responds(session):
+    if session.player is None:
+        pong = await session.socket.ping()
+        await asyncio.wait_for(pong, 2)
+        return
+    # A browser can answer protocol pings while the game's JavaScript is suspended.
+    # New clients acknowledge this message through the active game's message loop.
+    if session.probe is None or session.probe.done():
+        session.probe = asyncio.get_running_loop().create_future()
+        await send215(session.player, {'t':'session_probe'})
+    await asyncio.wait_for(asyncio.shield(session.probe), 2)
+
+async def reserve_character(character, ws):
+    prior = active_roster_ids.get(character)
+    if prior:
+        try:
+            await responds(prior)
+            if not prior.released.is_set():
+                return False
+        except (ConnectionClosed, asyncio.TimeoutError):
+            if prior.player:
+                prior.player.auto_state.enabled = False
+                prior.player.buttons = 0
+            await prior.socket.close(code=1008, reason='Character session expired')
+        try:
+            await asyncio.wait_for(prior.released.wait(), 12)
+        except asyncio.TimeoutError:
+            return False
+    if character in active_roster_ids:
+        return False
+    active_roster_ids[character] = RosterSession(ws)
+    return True
+
+def migrate_bamboo_location(value):
+    if isinstance(value,dict) and value.get('room') in ('bamboo_1','bamboo_2','bamboo_3','bamboo_4'):
+        mid='BAM_START_'+value['room'][-1].zfill(2)
+        x,y=EXPANSION_MAPS[mid]['spawn']
+        return {'room':mid,'x':x,'y':y,'face':1}
+    return value
+
+def valid_location(value):
+    if not isinstance(value, dict):
+        return False
+    room = value.get('room')
+    return (isinstance(room,str) and (1,room) in worlds and room in BAMBOO_MAPS and room != 'movement_lab'
+            and all(type(value.get(k)) in (int,float) and math.isfinite(value[k]) for k in ('x','y'))
+            and 0 <= value['x'] <= city_world_width(room) and abs(value['y']) < 100000)
+
+def checkpoint_location(p):
+    if not getattr(p, 'roster_id', None):
+        return
+    loc = {'room':p.room,'x':round(p.x,1),'y':round(p.y,1),'face':1 if p.face == 1 else -1}
+    if valid_location(loc) and loc != getattr(p,'saved_location',None):
+        p.saved_location = loc
+        roster_progress.changed(p)
+
 ALLOW_LEGACY_GUESTS = os.environ.get("SW_ALLOW_LEGACY_GUESTS") == "1"
 
 @dataclass
@@ -682,7 +681,7 @@ class WorldState:
     minimap_sample: int = -1
     minimap_data: dict = field(default_factory=dict)
 
-worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in ('forest','movement_lab','bamboo_1','bamboo_2','bamboo_3','bamboo_4','outskirts_1','suburb_gate_1','city_proto_1','city_inner_1','peach_exit_1','forest_fork_11',*GRANITE_FOREST_MAPS,*MOUNTAIN_MAPS,*GRANITE_WALL_MAPS,*EXPANSION_MAPS)}
+worlds = {(ch, room): WorldState(ch, room) for ch in CHANNEL_IDS for room in (*PUBLIC_MAP_IDS,'movement_lab')}
 _world_context = ContextVar('jianghu_active_world', default=worlds[(1, 'forest')])
 connected_players = {}  # global admission/telemetry ONLY, never combat or rewards
 
@@ -1060,7 +1059,7 @@ def spawn_mobs():
             name='หมูป่า' if species=='boar' else 'หมาป่า'
         else:
             assert species in BAMBOO_MONSTER_NAMES
-            level=MONSTER_PRESET_LEVEL or min(5,1+(PUBLIC_MAP_IDS.index(room)-1)+index%3)
+            level=slot.get('level') or MONSTER_PRESET_LEVEL or min(5,1+(PUBLIC_MAP_IDS.index(room)-1)+index%3)
             name=BAMBOO_MONSTER_NAMES[species]
         max_hp,defense=monster_balance.preset(level,False)
         monsters[mid]=Monster(id=mid,name=name,
@@ -1280,7 +1279,6 @@ def martial_world187():
             old_hp=v.hp;v.hp=max(0,v.hp-actual)
             if not is_mob:try_qi_shield(v)
             if is_mob:
-                if a is not None:v.retaliate_target=a.id;v.retaliate_until=time.monotonic()+12
                 if actual>0 and v.hp>0 and not v.guard:register_monster_shove(v,players[c['actor']].x if c['actor'] in players else v.x,c['dir'] if c.get('melee') else c['dir']*500)
             if old_hp>0 and v.hp<=0 and v.dead<=0:
                 v.dead=next_respawn_delay() if is_mob else 2.5;v.guard=False
@@ -1506,7 +1504,7 @@ def update_guest(p: Guest, dt, tick_now):
                         if 12 < abs(c[0] - p.x) <= 56
                         and c[1] - 3 <= p.y < c[2] - 8
                         and any(abs(y - p.y) < 6 and lo + 8 < min(p.x, c[0])
-                                and max(p.x, c[0]) < hi - 8 for lo, hi, y in active_ground())), None)
+                                and max(p.x, c[0]) < hi - 8 for lo, hi, y in climb_lanes_at(p.x))), None)
         if landing is not None:
             step = 205 * derived['moveSpeedMultiplier'] * dt
             p.x += clamp(landing[0] - p.x, -step, step)
@@ -1529,7 +1527,7 @@ def update_guest(p: Guest, dt, tick_now):
     sideways = int(bool(p.buttons & 2)) - int(bool(p.buttons & 1))
     if p.climb is not None and sideways and axis == 0 and p.stun <= 0 and not p.guard:
         cx, top, bottom = p.climb
-        landing = min((fy for lo, hi, fy in active_ground()
+        landing = min((fy for lo, hi, fy in climb_lanes_at(cx)
                        if lo + 28 < cx < hi - 28 and top + 20 < fy < bottom - 20
                        and abs(p.y - fy) <= 23),
                       key=lambda fy: abs(p.y - fy), default=None)
@@ -1550,7 +1548,7 @@ def update_guest(p: Guest, dt, tick_now):
         if axis < 0 and p.y <= top + 1:
             p.climb, p.climb_cd, p.y, p.x, p.ground = None, .28, top, expansion_dismount(EXPANSION_MAPS.get(p.room),cx,top,47), True
         elif axis > 0 and p.y >= bottom - 1:
-            p.climb, p.climb_cd, p.y, p.x, p.ground = None, .28, bottom, expansion_dismount(EXPANSION_MAPS.get(p.room),cx,bottom,45), True
+            p.climb, p.climb_cd, p.y, p.x, p.ground = None, .28, bottom, expansion_dismount(EXPANSION_MAPS.get(p.room),cx,bottom,45), not EXPANSION_MAPS.get(p.room,{}).get('surfaceContours')
         return
     move = int(bool(p.buttons & 2)) - int(bool(p.buttons & 1))
     if move and p.stun <= 0 and not p.guard:
@@ -1705,7 +1703,7 @@ def movement_validate(p,m,tick_now):
         if p.room in EXPANSION_MAPS:
             gy=expansion_ground_y(EXPANSION_MAPS[p.room],x)
             if gy is not None:supported=abs(y-gy)<=2 or any(not q.get('contourGround') and q['x']+8<x<q['x2']-8 and abs(y-q['y'])<=2 for q in EXPANSION_MAPS[p.room]['platforms'])
-        if p.room in EXPANSION_MAPS and EXPANSION_MAPS[p.room].get('caveContours'):
+        if p.room in EXPANSION_MAPS and (EXPANSION_MAPS[p.room].get('caveContours') or EXPANSION_MAPS[p.room].get('surfaceContours')):
             supported=any(q['x']+8<x<q['x2']-8 and abs(y-contour_platform_y(q,x))<=2 for q in EXPANSION_MAPS[p.room]['platforms'])
         if not supported:return 'invalid-ground'
     # Crossing a one-way solid from above to below (descending) is not legal.
@@ -1876,7 +1874,7 @@ def update_mob(m,dt,player_grid=None):
             m.ground=True;m.guard=False
             m.bite_started_at=-1e9;m.bite_hit_done=False
             m.bite_ready_at=t+.45
-            m.aggro_until=0;m.retaliate_target='';m.retaliate_until=0;
+            m.aggro_until=0;
             m.patrol_phase='idle';m.patrol_until=t+2+random.random()*2;m.last_combat=False;m.mark_stacks.clear()
             m.spawn_at=t
         return
@@ -1901,16 +1899,6 @@ def update_mob(m,dt,player_grid=None):
         distance=abs(candidate.x-mx)
         if distance<BEAST_AGGRO+65 and distance<nearest:
             p=candidate;nearest=distance
-    if m.species in BAMBOO_MONSTER_NAMES:
-        if t>=m.retaliate_until:
-            m.retaliate_target=''
-        if not m.retaliate_target or p is None or p.id!=m.retaliate_target:
-            # A struck bamboo mob must not choose a different innocent bystander.
-            p=next((candidate for candidate in candidate_players_by_x(m,player_grid)
-                    if candidate.id==m.retaliate_target and
-                    reachable_player(m,candidate,target_lane)),None) if m.retaliate_target else None
-        if p is not None and abs(p.x-m.x)>=BEAST_AGGRO+65:
-            p=None
     if ENABLE_PERFORMANCE_PROFILER:_profile_add('monster.target_search',time.perf_counter_ns()-_mob_ai_start)
     if m.species=='brush_squirrel':
         return update_squirrel(m,dt,p,t)
@@ -2047,11 +2035,6 @@ def grant_monster_kill(s,m):
 
 
 def hit_by_shot(s,victim,damage,is_mob):
-    if is_mob and isinstance(victim,Monster) and victim.species in BAMBOO_MONSTER_NAMES:
-        attacker=players.get(s.owner)
-        if attacker is not None and attacker.room==current_world().room:
-            victim.retaliate_target=attacker.id
-            victim.retaliate_until=time.monotonic()+12.0
     previous_alive=victim.hp>0 and victim.dead<=0
     previous_hp=victim.hp
     actual=mitigate(damage,victim.defense) if is_mob else damage
@@ -2067,8 +2050,6 @@ def bonus_hit(killer, victim, raw,kind='qi_echo'):
     """Qi bonus is a real server-side damage event; never trust client hits."""
     if victim.dead>0 or victim.hp<=0:return 0
     value=mitigate(prog.jsround(raw),victim.defense)  # same DEF/(250+DEF) as Offline
-    if victim.species in BAMBOO_MONSTER_NAMES:
-        victim.retaliate_target=killer.id;victim.retaliate_until=time.monotonic()+12.0
     victim.hp=max(0,victim.hp-value)
     register_monster_shove(victim,killer.x)
     victim.stun=max(victim.stun,.2)
@@ -2255,8 +2236,8 @@ def derived_for_snapshot(p):
     return p.stable_derived_stats
 
 def private_progression(p):
-    return {**owned215.snapshot(p),'trainedSets':getattr(p,'trained_sets',{}),'expWithinLevel':p.exp,'expToNext':prog.exp_to_next(p.level),
-            'statPoints':p.stat_points,'skillPoints':p.skill_points,'totalKills':p.total_kills,
+    return {**owned215.snapshot(p),'partyVitals':social215.party_vitals(p.id),'trainedSets':getattr(p,'trained_sets',{}),'expWithinLevel':p.exp,'expToNext':prog.exp_to_next(p.level),
+            'statPoints':p.stat_points,'skillPoints':p.skill_points,'totalKills':p.total_kills,'taels':p.taels,
             'stats':p.stats,'skillRanks':p.skill_ranks,
             'sp':round(p.sp,2),'maxSp':p.max_sp,'sta':round(p.sta,2),'maxSta':p.max_sta,
             'defense':p.defense,'derived':derived_for_snapshot(p),
@@ -2898,6 +2879,9 @@ async def game_loop():
                     _profile_add('player.auto_setup',time.perf_counter_ns()-_prof_substage)
                 _prof_substage=time.perf_counter_ns() if ENABLE_PERFORMANCE_PROFILER else 0
                 for p in list(players.values()):
+                    if getattr(p, 'roster_id', None) and tick_now >= p.location_due:
+                        checkpoint_location(p)
+                        p.location_due = tick_now + 30
                     if p.auto_state.enabled:
                         # Check queued human casts EVERY simulation tick, before AUTO
                         # makes its 10Hz decision. No double cast in one cooldown.
@@ -3076,6 +3060,8 @@ async def switch_channel(p, target):
     # No new player object; inventory/EXP and account state cannot be copied.
     _world_context.set(new_world)
     p.buttons=0;p.vx=0;p.vy=0;p.x=175+(len(new_world.players)-1)%8*35;p.y=550
+    if EXPANSION_MAPS.get(p.room,{}).get('surfaceContours'):
+        p.x,p.y=EXPANSION_MAPS[p.room]['spawn']
     p.ground=True;p.climb=None;p.guard=False
     p.auto_state.enabled=False;p.auto_state.stay_alert=False
     p.auto_state.anchor=None;p.auto_state.goal=None
@@ -3199,6 +3185,7 @@ async def switch_map(p, target, via='selector'):
     p.auto_state.enabled=False;p.auto_state.stay_alert=False
     p.auto_state.anchor=None;p.auto_state.goal=None
     p.manual_target_id=None;p.manual_auto_skill=None;p.manual_guard=False
+    checkpoint_location(p)
     p.map_switch_at=now
     p.fast_self_epoch+=1;p.fast_self_last=None
     while not p.fast_self_outbox.empty():
@@ -3239,10 +3226,9 @@ async def handle_connection(ws):
                 await ws.close(code=1013, reason='Account service unavailable');return
             finally:
                 del raw
-            if record['id'] in active_roster_ids:
+            if not await reserve_character(record['id'], ws):
                 await ws.close(code=1008, reason='Character already online');return
             roster_id = record['id']
-            active_roster_ids.add(roster_id)
             hello = {'t':'join', 'avatar':record['avatar'], 'protocol':hello['protocol'], 'channel':hello['channel']}
         elif not ALLOW_LEGACY_GUESTS and not (isinstance(hello,dict) and hello.get('stressTest') is True and ENABLE_CHANNEL_STRESS):
             await ws.close(code=1008, reason='Signed-in character required');return
@@ -3274,7 +3260,15 @@ async def handle_connection(ws):
                 print('JIANGHU_STRESS_JOIN_REJECT disabled_or_bad_flag ch=',hello.get('channel'),flush=True)
                 await ws.close(code=1008,reason='Stress mode disabled');return
             stress_test = True
-        room=hello.get('room','bamboo_1' if record else 'forest')
+        room=hello.get('room',START_MAP if record else 'forest')
+        location = ((progress or {}).get('progress_details') or {}).get('location')
+        old_location = location
+        location = migrate_bamboo_location(location)
+        migrated_location = location != old_location
+        if valid_location(location):
+            room = location['room']
+        else:
+            location = None
         channel=hello.get('channel',1)
         if not stress_test and channel not in PUBLIC_CHANNEL_IDS:
             await ws.close(code=1008,reason='Private stress channel');return
@@ -3307,14 +3301,23 @@ async def handle_connection(ws):
         guest_id = 'g-' + secrets.token_hex(8)
         name = record['name'] if record else 'Guest-' + guest_id[-4:].upper()
         # All legal spawn points are server-defined, never supplied by client.
-        spawn_x = 150 if room=='bamboo_1' else 175 + (len(players) % 8) * 35
+        spawn_x,spawn_y = EXPANSION_MAPS[room]['spawn'] if room in EXPANSION_MAPS else (175 + (len(players) % 8) * 35,550)
         guest_level = progress['level'] if progress else 1
         guest_hp=prog.base_hp_for_level(guest_level,hp_reference)
-        p = Guest(id=guest_id, x=spawn_x, y=550, hp=guest_hp, max_hp=guest_hp, room=room, face=1 if room=='bamboo_1' else -1,
+        p = Guest(id=guest_id, x=spawn_x, y=spawn_y, hp=guest_hp, max_hp=guest_hp, room=room, face=1 if room in BAMBOO_START_IDS else -1,
                   avatar=hello['avatar'], ws=ws, level=guest_level, channel=channel, world_ref=world_ref, stress_test=stress_test)
         p.roster_id = roster_id
+        p.saved_location = location
+        p.location_due = time.monotonic() + 30
+        if location:
+            p.x, p.y = location['x'], location['y']
+            p.face = 1 if location.get('face', 1) == 1 else -1
+            p.ground = False
         if progress:
             roster_progress.restore(p, progress)
+            if migrated_location:
+                p.saved_progress['progress_details']['location'] = old_location
+                roster_progress.changed(p)
         p.roster_display_name = name if record else None
         if p.avatar in classes181.AVATARS:
             basic=classes181.spec(classes181.profession(p.avatar),'attack')
@@ -3348,6 +3351,7 @@ async def handle_connection(ws):
         features.append('suburb-gate-7worlds-v1')
         # City V8 uses flat roads; old two-tier handshake retired
         features.append(WORLD_V56['feature'])
+        features.extend(dict.fromkeys(m['requiredFeature'] for m in EXPANSION_MAPS.values() if m.get('requiredFeature')))
         features.append('minimap-v69-mapwide-v1')
         features.append(cave_ice.FEATURE)
         features.extend(('city-master-v1','city-single-floor-v8-v9','peach-exit-map10-v3','forest-fork-map11-v21-clean-ropes','forest-granite-chain-v3-map3-four-long-decks','granite-ascent-v64-single-map','granite-wall-chain-v64-single-ascent-link'))
@@ -3359,7 +3363,7 @@ async def handle_connection(ws):
         features.append('combat-layers-v184-v1')
         features.extend((martial187.FEATURE,martial187.LOCK_FEATURE,martial187.FLOW_FEATURE,martial187.GUARD_FEATURE,martial187.TURN_FEATURE,martial187.COMBO_FEATURE,martial187.TEMPO_FEATURE,martial187.FALLBACK_FEATURE))
         features.extend(('hud-v219','party-agency-v220','training-v221'));features.extend(('hud-owned-equipment-v215-v1','hud-social-v215-v1','qi-slots-10-25-40-v215-v1'))
-        if record: features.extend(('roster-v1','gm-mail-v1'))
+        if record: features.extend(('roster-v1','gm-mail-v1','session-probe-v1'))
         features.append('event-journal-v80ek')
         features.append('auto-ack-v80em')
         if ENABLE_EL_SNAPSHOT_SCHED: features.append('writer-sample-phase-v80el')
@@ -3376,6 +3380,27 @@ async def handle_connection(ws):
                 await ws.close(code=1008,reason='Invalid message');break
             # RTT probe is display-only: bounded, rate-limited, never used by
             # movement, damage, rewind or anti-cheat decisions.
+            if roster_id and m.get('t') in ('session_probe_ready','session_probe_ack'):
+                owner = active_roster_ids[roster_id]
+                if m['t'] == 'session_probe_ready':
+                    owner.player = p
+                elif owner.probe and not owner.probe.done():
+                    owner.probe.set_result(True)
+                continue
+            if m.get('t')=='medicine_use':
+                if not roster_id or not check_rate(p.action_times, 12):
+                    continue
+                def save_bag(bag):
+                    with game_mail.transaction() as db:
+                        game_mail.save_inventory(db, roster_id, bag, p.owned_equipment215)
+                try:
+                    result = medicine.consume(p, m.get('item'), save_bag)
+                except ValueError as exc:
+                    result = {'error': str(exc)}
+                except sqlite3.Error:
+                    result = {'error': 'บันทึกกระเป๋าไม่ได้ กรุณาลองอีกครั้ง'}
+                await send215(p, dict(t='medicine_result', **result))
+                continue
             if m.get('t')=='game_mail':
                 if not roster_id or not check_rate(p.social_times215,12,2):
                     await send215(p,{'t':'game_mail','error':'กรุณาลองอีกครั้ง'});continue
@@ -3802,6 +3827,8 @@ async def handle_connection(ws):
     finally:
         try:
             if pending_held:_pending_joins -= 1
+            if guest_id in connected_players:
+                _world_context.set(connected_players[guest_id].world_ref)
             if guest_id and players.get(guest_id) and players[guest_id].ws is ws:
                 active=players[guest_id].snapshot_task
                 if active:
@@ -3816,6 +3843,7 @@ async def handle_connection(ws):
                 for nav in SWAMP_RECOVERY.values():nav.reset(guest_id)
                 p = players.pop(guest_id)
                 connected_players.pop(guest_id,None)
+                checkpoint_location(p)
                 if roster_id in roster_progress.pending:
                     try:
                         await roster_progress.flush(roster_id)
@@ -3831,7 +3859,10 @@ async def handle_connection(ws):
                 hibernate_world(admitted_world)
         finally:
             if roster_id is not None:
-                active_roster_ids.discard(roster_id)
+                owner = active_roster_ids.pop(roster_id)
+                owner.released.set()
+                if owner.probe and not owner.probe.done():
+                    owner.probe.set_result(False)
 
 
 async def send215(p,payload):
@@ -3853,7 +3884,7 @@ async def social_refresh215(ids):
 
 def process_request(connection, request):
     if request.path == '/healthz':
-        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V225 roster-progress-v1 gm-mail-v1 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
+        return connection.respond(HTTPStatus.OK, 'JIANGHU_BACKEND_V239 peach-seven-v239 bamboo-slim-rope-v239 bamboo-main-v235 medicine-party-taels-v1 JIANGHU_BACKEND_V226 last-location-v1 JIANGHU_BACKEND_V225 roster-progress-v1 gm-mail-v1 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52\n')
     if request.path != '/ws':
         return connection.respond(HTTPStatus.NOT_FOUND, 'Use /ws for WebSockets\n')
     return None
@@ -3862,7 +3893,7 @@ def process_request(connection, request):
 async def main():
     game_mail.initialize()
     load_from_supabase()
-    print('JIANGHU_BACKEND_V225 roster-progress-v1 gm-mail-v1 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
+    print('JIANGHU_BACKEND_V239 peach-seven-v239 bamboo-slim-rope-v239 bamboo-main-v235 medicine-party-taels-v1 JIANGHU_BACKEND_V226 last-location-v1 JIANGHU_BACKEND_V225 roster-progress-v1 gm-mail-v1 flute-contact-v225 JIANGHU_BACKEND_ROSTER_V1 roster-v1 JIANGHU_BACKEND_V223 gm-announce-v223 JIANGHU_BACKEND_V221 class-damage-v221 JIANGHU_BACKEND_V220 party-agency-v220 JIANGHU_BACKEND_V219 hud-v219 JIANGHU_BACKEND_V215 hud-owned-equipment-v215-v1 hud-social-v215-v1 qi-slots-10-25-40-v215-v1 JIANGHU_BACKEND_V213 martial-lock-fallback-v213-v1 JIANGHU_BACKEND_V187_6 martial-tempo-v1876-v1 martial-rebalance-v1875-v1 martial-turn-v1874-v1 martial-guard360-v1873-v1 martial-playflow-v1872-v1 martial-lock-state-v1871-v1 martial-combat-v187-v1 classes-v183-combat-v1 combat-layers-v184-v1 avatars=8 world=52',flush=True)
     print('Combat balance: '+source,flush=True)
     ok=prog.load_exp_balance(os.environ.get('SUPABASE_URL','https://uxxkyptoocbswedwizct.supabase.co'),os.environ.get('SUPABASE_PUBLISHABLE_KEY','sb_publishable_GDhK1Y-OrFCwzWRunfc-UQ_56NeDD4M'))
     print('EXP balance: '+prog.EXP_SOURCE,flush=True)
@@ -3875,7 +3906,7 @@ async def main():
     ws_extensions=([ServerPerMessageDeflateFactory(compress_settings={'level':1,'memLevel':5})]
                    if WS_COMPRESSION=='deflate' else None)
     async with serve(handle_connection, HOST, PORT, max_size=16384, max_queue=16,
-                     ping_interval=20, ping_timeout=20, process_request=process_request,
+                     ping_interval=8, ping_timeout=8, close_timeout=2, process_request=process_request,
                      compression=None, extensions=ws_extensions):
         print(f'WUXIA online server ready on {HOST}:{PORT} | guest limit {CHANNEL_TOTAL_GUEST_CAP} | WS compression {WS_COMPRESSION} | slots {STAGGER_SLOTS} | background view snapshots {AUTO_BG_SNAP_HZ}Hz | self A/B v8.0EO public CH1-3 + opted-in stress CH1-15 + lazy hibernation + EK stagger/event-journal', flush=True)
         console = asyncio.create_task(gm_announce_v223.listen(PORT,publish_announcement))

@@ -8,6 +8,7 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import medicine
 from owned_equipment_v215 import CAPACITY, CAT
 
 PAGE = 20
@@ -47,7 +48,7 @@ def deliver(recipient, subject, body, item=None, quantity=1):
     recipient = str(UUID(recipient))
     if not (subject.strip() and len(subject) <= 100 and body.strip() and len(body) <= 2000):
         raise ValueError('กรอกหัวข้อ 1–100 และข้อความ 1–2000 ตัวอักษร')
-    if item is not None and (item not in CAT or not 1 <= quantity <= CAPACITY):
+    if item is not None and (item not in CAT and item not in medicine.ITEMS or not 1 <= quantity <= CAPACITY):
         raise ValueError('รหัสไอเทมหรือจำนวนไม่ถูกต้อง')
     with transaction() as db:
         return db.execute('INSERT INTO mail(recipient,subject,body,item,quantity,sent) VALUES(?,?,?,?,?,?)',
@@ -96,11 +97,14 @@ def claim(p, mid):
         item, qty, claimed = row
         if claimed:
             return 'รับของไปแล้ว'
-        if item not in CAT:
+        if item not in CAT and item not in medicine.ITEMS:
             raise ValueError('ไม่พบไอเทมในระบบ กรุณาติดต่อ GM')
-        if len(p.inventory) + qty > CAPACITY:
-            raise ValueError('ช่องกระเป๋าไม่พอ ของยังอยู่ในจดหมาย')
-        bag = p.inventory + [dict(uid='mail-'+uuid4().hex, item_id=item, obtainedAt=int(time.time()*1000)) for _ in range(qty)]
+        if item in medicine.ITEMS:
+            bag = medicine.add_stack(p.inventory, item, qty, CAPACITY)
+        else:
+            if len(p.inventory) + qty > CAPACITY:
+                raise ValueError('ช่องกระเป๋าไม่พอ ของยังอยู่ในจดหมาย')
+            bag = p.inventory + [dict(uid='mail-'+uuid4().hex, item_id=item, obtainedAt=int(time.time()*1000)) for _ in range(qty)]
         save_inventory(db, p.roster_id, bag, p.owned_equipment215)
         db.execute('UPDATE mail SET opened=1,claimed=1 WHERE id=?',(mid,))
     p.inventory = bag

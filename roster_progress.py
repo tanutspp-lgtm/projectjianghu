@@ -68,13 +68,14 @@ def write(character, revision, state):
 def snapshot(p):
     return {'level': p.level, 'exp': p.exp, 'progress_details': {
         name: getattr(p, name).copy() if isinstance(getattr(p, name), dict) else getattr(p, name)
-        for name in DETAIL_FIELDS}}
+        for name in DETAIL_FIELDS} | {'taels': p.taels} | ({'location': p.saved_location} if getattr(p, 'saved_location', None) else {})}
 
 
 def restore(p, row):
     p.level = row['level']
     p.exp = row['exp']
     details = row['progress_details']
+    p.taels = (details or {}).get('taels', 0)
     if details:
         for field in DETAIL_FIELDS:
             setattr(p, field, details[field])

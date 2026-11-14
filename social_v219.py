@@ -59,6 +59,25 @@ class Hub(GuestHub):
         g['cursor']=(start+extra)%len(ids)
         return [(self.people[i]['actor'],each+int((n-start)%len(ids)<extra)) for n,i in enumerate(ids)]
 
+    def party_vitals(self, member_id):
+        gid = self.people.get(member_id, {}).get('party')
+        party = self.parties.get(gid)
+        if not party:
+            return None
+        now = time.monotonic()
+        if now < party.get('vitals_until', 0):
+            return party['vitals']
+        members = {}
+        for uid in party['members']:
+            person = self.people[uid]
+            if person['online']:
+                actor = person['actor']
+                members[uid] = dict(hp=math.ceil(actor.hp), maxHp=actor.max_hp,
+                                    dead=actor.dead > 0, auto=bool(actor.auto_state.enabled))
+        party['vitals'] = dict(id=gid, members=members)
+        party['vitals_until'] = now + 0.5
+        return party['vitals']
+
     def group(self,id,kind):
         data=super().group(id,kind)
         if not data:return None
@@ -116,6 +135,15 @@ class Hub(GuestHub):
             gid='party-'+secrets.token_hex(6);s['party']=gid;p.party_id=gid
             self.parties[gid]=dict(name='ปาร์ตี้ของ '+s['name'],leader=p.id,members=[p.id])
             return ok('สร้างปาร์ตี้แล้ว')
+        if action=='party_kick' and args=={'target','group'}:
+            gid=s['party']
+            g=self.parties.get(gid)
+            if not g or m['group']!=gid or g['leader']!=p.id:
+                return fail('ต้องเป็นหัวหน้าปาร์ตี้นี้')
+            if not other or target==p.id or other['party']!=gid or target not in g['members']:
+                return fail('เลือกสมาชิกคนอื่นในปาร์ตี้')
+            result=super().command(other['actor'],dict(t='hud_social',action='leave_party'))
+            return ok('นำสมาชิกออกจากปาร์ตี้แล้ว') if result[0] else result
         if action=='leave_party' and not args:
             g=self.parties.get(s['party'])
             if g and g['leader']==p.id:

@@ -1,0 +1,148 @@
+{
+  "version": "V235",
+  "baseline": "JIANGHU_BACKEND_V219_FULL.zip",
+  "baseline_sha256": "457ce4c7ae78638d1e6f38fd1b7d6bc368beedc5efea667e8e68442165e107b0",
+  "files": [
+    {
+      "path": "ACTIVATE_ACCOUNTS_TH.md",
+      "kind": "added",
+      "sha256": "9633afe2c6c347dbb381600536a425f09ab2fa6c52ee581485293447398d3eb5"
+    },
+    {
+      "path": "HANDOFF_GAME_ENTRY_TH.md",
+      "kind": "added",
+      "sha256": "03026cb9c657755cd0a42f7559c3fcb5caabebb84e31872a02da7bad5f655b43"
+    },
+    {
+      "path": "HANDOFF_LATEST_TH.md",
+      "kind": "modified",
+      "sha256": "72d8dbc9f1aa1f589157f9209094a54ca72c25030b9a0d0cd7d32ff0e7129827"
+    },
+    {
+      "path": "README_V235_TH.txt",
+      "kind": "added",
+      "sha256": "04d61831ecb5678a2ab2444d674a44b493d3b5d27e65e91e718c26c2a4f27ab0"
+    },
+    {
+      "path": "RESTART_AND_VERIFY_V235.sh",
+      "kind": "added",
+      "sha256": "e9575bc3af6612bf925b1730bbb223a24293bbd121231db8009e824918b56547"
+    },
+    {
+      "path": "START_HERE_FULL_TH.txt",
+      "kind": "modified",
+      "sha256": "d2cf7a05278ba9880e9adf3f41869f302bc1d5ff723770b1e04ca1f9a989c894"
+    },
+    {
+      "path": "archived_maps/bamboo_legacy.json",
+      "kind": "added",
+      "sha256": "df4f9cd764faaddc0156af8101ee70b1cb6d1a1b03a73f064c59ecb22cfdeaa5"
+    },
+    {
+      "path": "cave_contours_v145.py",
+      "kind": "modified",
+      "sha256": "b770d1297dd5141b4236e65654079947c0b23dfe9542e552d97831144f3b3b09"
+    },
+    {
+      "path": "combat_progression_v80bs.py",
+      "kind": "modified",
+      "sha256": "ff5f6e7b88c75e48488bd5245892501fb8636de6425a38ab9841388ec9be3352"
+    },
+    {
+      "path": "database/character_deletion.sql",
+      "kind": "added",
+      "sha256": "580a746003c87439119c808f1edf3232aa9b4ee61b9eba48a1f5fc5433ff92d5"
+    },
+    {
+      "path": "database/character_roster.sql",
+      "kind": "added",
+      "sha256": "c75ea291c74fb906ef7173893cc59d500b353c49ec4cb33bfbb8c53b8f3f5742"
+    },
+    {
+      "path": "database/roster_level_and_name_spelling.sql",
+      "kind": "added",
+      "sha256": "ba30ac7220a79575dbda79aebe3ffde9ad932c64b2d5278f4bfe3c2fea40a464"
+    },
+    {
+      "path": "database/roster_progress.sql",
+      "kind": "added",
+      "sha256": "83a78e3fc2da16babec0f2afd15f35f972b3d4a9b383eb87d84cec2608119956"
+    },
+    {
+      "path": "database/terms_sw2.sql",
+      "kind": "added",
+      "sha256": "1da623a87ea3f9adb85cc56839c26edb17434c9bb481da479e62037ab415af1e"
+    },
+    {
+      "path": "database/terms_sw3.sql",
+      "kind": "added",
+      "sha256": "dda6d7ec59f92f76449a9645fa9f1505aab726abf8e785923a41fdcbd3e3f714"
+    },
+    {
+      "path": "game_mail.py",
+      "kind": "added",
+      "sha256": "bff554e5837c89cdb6be1bb288530f9a31e1c6c49d59353614ae73d08a496c19"
+    },
+    {
+      "path": "gm_announce_v223.py",
+      "kind": "added",
+      "sha256": "072e4624a98c9c0c62134051e2abb6d3a583c27d49c57f7504741694ee4689a9"
+    },
+    {
+      "path": "martial_combat_v187.py",
+      "kind": "modified",
+      "sha256": "6ad37e4bdae54c400b86ca4db53953f81b0cdf14bf5c3bf1e685d12eb649cbcd"
+    },
+    {
+      "path": "medicine.py",
+      "kind": "added",
+      "sha256": "e960408b5ac1c249dc6ff4e1cc2ae1545bbb6e2c3e52d2439639e1b6d390dd0c"
+    },
+    {
+      "path": "party_agency_v220.py",
+      "kind": "added",
+      "sha256": "084ce5b4ce74d3efaa0b0fc5d3a1e239c9d4a74fe48ea344f16346483cb66025"
+    },
+    {
+      "path": "roster_admission.py",
+      "kind": "added",
+      "sha256": "9e9e47873983f2e59d2a243694da532a52b1cda46a4617e327bf07415ab1d7bb"
+    },
+    {
+      "path": "roster_progress.py",
+      "kind": "added",
+      "sha256": "2a0d18ee2f5fd083d7b82c546d93cd53ba986c3102004ecf31a85913f10140ac"
+    },
+    {
+      "path": "server.py",
+      "kind": "modified",
+      "sha256": "fbb2d636dfa2dfc004e1ac5a26c87d94b98ecb2bb8ecde5c9c16c053ded1dd02"
+    },
+    {
+      "path": "social_v215.py",
+      "kind": "modified",
+      "sha256": "64904251b9956749d1cc4b1bb08a59f2911427a0194ac29b1bf846a0f4aec0d1"
+    },
+    {
+      "path": "social_v219.py",
+      "kind": "modified",
+      "sha256": "b90ab2a04e0e70081920d55e17947bd98cedd018b1752f154211e1e8714c8e4c"
+    },
+    {
+      "path": "training_xp_v221.py",
+      "kind": "added",
+      "sha256": "6cf8919c44c7f3dad4817b09b6d57b12e40c0540124eece64f70ff3e46305a50"
+    },
+    {
+      "path": "world_physics_v56.py",
+      "kind": "modified",
+      "sha256": "271ace274948d1c14bc454002118f6df4594251f088020ab0b6016b381605287"
+    },
+    {
+      "path": "world_v56.json",
+      "kind": "modified",
+      "sha256": "ff0400be9310ee278cf9e946c7d3dfda2725c9ed7abdcd7915adf1a231ec6e67"
+    }
+  ],
+  "removed": []
+}

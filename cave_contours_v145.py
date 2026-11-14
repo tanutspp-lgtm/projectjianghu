@@ -22,10 +22,10 @@ def polygon_intervals(points,x):
     ys.sort()
     return list(zip(ys[::2],ys[1::2]))
 
-def intervals(m,x):
-    out=[(-10000,height(m['caveRoof'],x))]
+def intervals(m,x,ignore=None):
+    out=[(-10000,height(m['caveRoof'],x))] if m.get('caveRoof') else []
     for p in m['platforms']:
-        if not p.get('oneWay') and p.get('solidBounds',{}).get('left',p['x'])<x<p.get('solidBounds',{}).get('right',p['x2']):
+        if p is not ignore and not p.get('oneWay') and p.get('solidBounds',{}).get('left',p['x'])<x<p.get('solidBounds',{}).get('right',p['x2']):
             if p.get('bodyPolygon') and (x<p['x']+p['rockEnds']['left']['edgeWidth'] or x>p['x2']-p['rockEnds']['right']['edgeWidth']):
                 side='left' if x<p['x']+p['rockEnds']['left']['edgeWidth'] else 'right'
                 out.extend(polygon_intervals(p['bodyEndPolygons'][side],x));continue
@@ -41,7 +41,7 @@ def intervals(m,x):
 
 def overlaps(m,x,y,grounded=True):return any(y>a+.2 and y-head_height(grounded)<b-.2 for xx in (x,) for a,b in intervals(m,xx))
 
-def body_overlap(m,x,y,h=HEIGHT):return any(y>a+.1 and y-h<b-.1 for xx in (x-20,x,x+20) for a,b in intervals(m,xx))
+def body_overlap(m,x,y,h=HEIGHT,ignore=None):return any(y>a+.1 and y-h<b-.1 for xx in (x-20,x,x+20) for a,b in intervals(m,xx,ignore))
 
 def step(p,dt,m):
     p.x=max(27,min(m['worldWidth']-27,p.x))
@@ -49,7 +49,7 @@ def step(p,dt,m):
     h=head_height(p.ground)
     ox=p.x-p.vx*dt;oy=p.y;was=p.ground
     support=next((q for q in m['platforms'] if q['x']+7<ox<q['x2']-7 and abs(platform_y(q,ox)-oy)<3),None) if was else None
-    follow=support is not None and support['x']+8<p.x<support['x2']-8 and p.vy>=0
+    follow=support is not None and support['x']+8<p.x<support['x2']-8 and p.vy>=0 and (not m.get('paintedSolids') or not body_overlap(m,p.x,platform_y(support,p.x),h,support))
     if follow:p.y=platform_y(support,p.x);p.vy=0;p.ground=True;return
     if m.get('rockEndsV147'):
         if p.x!=ox and not body_overlap(m,ox,oy,h) and body_overlap(m,p.x,oy,h):

@@ -1,5 +1,2 @@
-Seven Wind · Backend V223 FULL สำหรับ Frontend V224
-แตก ZIP ลงโฟลเดอร์ backend แยกจาก frontend รากโฟลเดอร์มี server.py, requirements.txt และ world_v56.json
-ใช้ Python 3.11 ขึ้นไป ติดตั้ง dependency ใน virtualenv ด้วย python -m pip install -r requirements.txt
-ตั้งค่า environment ตามโฮสต์เดิม แล้วรัน python CHECK_BEFORE_RESTART.py ก่อนเริ่ม python server.py
-เมื่อตรวจ /healthz จะเห็น JIANGHU_BACKEND_V223 และ gm-announce-v223
+V239: อ่าน README_V239_TH.txt ก่อน
+แพตช์สะสม FROM_V219; ใช้ RESTART_AND_VERIFY_V239.sh หลัง git pull

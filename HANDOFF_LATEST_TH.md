@@ -1,3 +1,7 @@
+# V239 current map release
+อ่าน README_V239_TH.txt; ใช้ RESTART_AND_VERIFY_V239.sh
+เปลี่ยนเจ็ดแมพ peach_* และเชือก BAM_START_01/03; ไม่เปลี่ยนฟิสิกส์รวม
+
 # Project Jianghu V221
 
 ใช้ Frontend และ Backend V221 คู่กัน บนฐาน V220 ให้แตกแพตช์ FROM_V220 แต่ละฝั่งทับที่ root แล้วรีสตาร์ต Backend ตามขั้นตอนเดิม
